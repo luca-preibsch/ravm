@@ -13,6 +13,7 @@ import manifest from './manifest.json';
 // Domain to observe 
 const VM_DOMAIN="transparent-vm.net";
 const MEASURED_LOCATION= "*://"+VM_DOMAIN+"/*";
+// ! url to remote attestation report
 const REPORT_URL= "https://"+VM_DOMAIN+":8080/guest_report.bin"
 
 // For now hardcoded hash of the measurment this information needs 
@@ -133,6 +134,7 @@ async function sha512(str) {
   });
 }
 
+// ? what does this do?
 async function exportAndFormatCryptoKey(key) {
   const exported = await window.crypto.subtle.exportKey(
     "spki",
@@ -162,17 +164,22 @@ ${exportedAsBase64.substring(64*6,64*6+8)}
 // return: sha521 of the public key 
 async function querySSLFingerprint(requestId){
 
+  // ! information about TLS connection of requestId, received through onHeadersReceived
+  // ! await to resolve the promise
   var securityInfo =  await browser.webRequest.getSecurityInfo(requestId, {
     "rawDER" : true,
-    "certificateChain" : true, 
+    "certificateChain" : true, // ? why is this needed? Isn't only the server certificate used, also present if certificateChain is false?
    });
 
   try {
     
+    // ! excludes weak or broken TLS connections
     if (securityInfo.state === "secure" || securityInfo.state === "unsafe") {
      
       const serverCert= securityInfo.certificates[0]; 
 
+      // ! ASN1 encoded certificate data
+      // ? maybe rename stuff isn't really telling that this is a certificate
       const stuff = new Uint8Array(serverCert.rawDER).buffer 
 
       // We collect the rawDER encoded certificate 
@@ -198,6 +205,7 @@ async function querySSLFingerprint(requestId){
 
 function listenerOnHeadersReceived(details) {
 
+  // ? remote attestation only once globaly?
   if (isValidated){ 
     // Perform remote attestion only once this needs more work.
     // What about different tabs etc. 
@@ -205,8 +213,10 @@ function listenerOnHeadersReceived(details) {
     return {};
   }else {
 
+  // ! gets the public key of the host connection as sha512 hash
   querySSLFingerprint(details.requestId).then(ssl_sha512 => {
 
+    // ? set only when attestation actually went through?
     isValidated=true; 
 
     // Request attesation report from VM 
@@ -222,11 +232,13 @@ function listenerOnHeadersReceived(details) {
         if (asn1.offset === -1) {
           throw new Error("Incorrect encoded ASN.1 data");
         }
+        // ! this is the VCEK
         var cert_simpl = new pkijs.Certificate({ schema: asn1.result });
 
         // Validate that the VCEK ic correctly signed by AMD root cert
         validateWithCertChain(cert_simpl);
 
+        // ! read public key out of attestation report through converting to json and back
         // Hack: We cannot directly ask the cert object for the public key as
         // it triggers a 'not supported' execption.  
         const publicKeyInfo =  cert_simpl.subjectPublicKeyInfo;
@@ -235,14 +247,16 @@ function listenerOnHeadersReceived(details) {
         // console.log("VCEK certificate included pub key: " + jsonPubKey.valueBlock.valueHex);
         
         importPubKey(util.hex_decode(jsonPubKey.valueBlock.valueHex)).then(pubKey => {
+          // ? what does this verify exactly? Just that the "hack" worked?
          if(verifyMessage(pubKey, ar.signature,ar.getSignedData)){
           
           console.log("1. Attestation report has been validated by the AMD keyserver.");
 
+          // ? Is the actual check if the ar.measurement is equal to the expected measurement missing here?
           // TODO 2. VM has been initalized in the expected state
           console.log("2. Expected state: " + util.arrayBufferToHex(ar.measurment))
           
-          // 3. Comnunication terminates inside the secured VM 
+          // 3. Communication terminates inside the secured VM 
           if (util.arrayBufferToHex(ar.report_data) === ssl_sha512 ){
             console.log("3. Comnunication terminates inside the secured VM: \n" +ssl_sha512);
           } else {
@@ -262,6 +276,9 @@ function listenerOnHeadersReceived(details) {
 // to validate the public key of the SSL connection
 browser.webRequest.onHeadersReceived.addListener(
   listenerOnHeadersReceived,          
-  {urls: [MEASURED_LOCATION]}, 
-  ["blocking", "responseHeaders"]
+  {urls: [MEASURED_LOCATION]},
+  // ! inside manifest file: plugin should run on all hosts (websites)
+  // ! though, only specific requests (to specific hosts) should be intercepted
+  // ? only for testing purposes, since in the end the plugin should check all requests?
+  ["blocking", "responsseHeaders"]
 )
