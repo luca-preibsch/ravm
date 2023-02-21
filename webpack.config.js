@@ -1,44 +1,100 @@
-const path = require('path');
-const HtmlWebpackPlugin = require('html-webpack-plugin');
+const path = require('path')
+const CopyWebpackPlugin = require('copy-webpack-plugin')
+const TransformJson = require('transform-json-webpack-plugin')
+const package = require('./package.json')
 
-module.exports = {
-  mode: 'development',
-  entry: './src/background.js',
-  devtool: 'inline-source-map',
-  plugins: [
-    new HtmlWebpackPlugin({
-      title: 'Development',
-    }),
-  ],
-  module: {
-    rules: [
-      {
-        test: /\.json/,
-        type: 'asset/resource',
-        generator: {
-          filename: '[name][ext]'
-        },
-      },
-      {
-        test: /\.der/,
-        type: 'asset/resource',
-          generator: {
-          filename: '[name][ext]'
-        },
-      }, 
-      {
-        test: /\.svg/,
-        type: 'asset/resource',
-          generator: {
-          filename: '[name][ext]'
-        },
-      },
+const mode = 'development'
 
+const _resolve = {
+    extensions: ['.jsx', '.js'],
+    modules: [
+        path.resolve(__dirname, 'node_modules'),
+        'node_modules'
     ]
-  },
-  
-  output: {
-    filename: 'background.js',
-    path: path.resolve(__dirname, 'dist'),
-  },
-};
+}
+
+const _module = {
+    rules: [
+        {
+          test: /\.css$/,
+          use: [{
+            loader: 'style-loader'
+          }, {
+            loader: 'css-loader'
+          }]
+        },
+        {
+          test: /\.der/,
+          type: 'asset/resource',
+            generator: {
+            filename: '[name][ext]'
+          },
+        },
+    ]
+}
+
+module.exports = [
+    {   // manifest and static
+        mode: mode,
+        entry: [
+          path.resolve(__dirname, 'src', 'manifest.json',)
+        ],
+        output: {
+            path: path.resolve(__dirname, 'build'),
+        },
+        plugins: [
+            new CopyWebpackPlugin({
+                patterns: [
+                    { from: "static" },
+                ]
+            }),
+            new TransformJson({
+                source: path.resolve(__dirname, 'src', 'manifest.json'),
+                filename: 'manifest.json',
+                object: {
+                  description: package.description,
+                  version: package.version
+                }
+            }),
+        ],
+    },
+    {   // background
+      devtool: 'inline-source-map',
+      mode: mode,
+      entry: [
+        path.resolve(__dirname, 'src', 'background', 'index.js')
+      ],
+      output: {
+        path: path.resolve(__dirname, 'build'),
+        filename: path.join('background', 'index.js')
+      },
+      resolve: _resolve,
+      module: _module
+    },
+    {   // settings
+        devtool: 'inline-source-map',
+        mode: mode,
+        entry: [
+          path.resolve(__dirname, 'src', 'settings', 'index.js')
+        ],
+        output: {
+          path: path.resolve(__dirname, 'build'),
+          filename: path.join('settings', 'index.js')
+        },
+        resolve: _resolve,
+        module: _module
+    },
+    {   // popup
+        devtool: 'inline-source-map',
+        mode: mode,
+        entry: [
+          path.resolve(__dirname, 'src', 'popup', 'index.js')
+        ],
+        output: {
+          path: path.resolve(__dirname, 'build'),
+          filename: path.join('popup', 'index.js')
+        },
+        resolve: _resolve,
+        module: _module
+    },
+]

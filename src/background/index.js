@@ -1,14 +1,10 @@
 import *  as pkijs from "pkijs";
 import *  as asn1js from "asn1js";
-import *  as attestation from "./attestation";
-import *  as util from "./util";
+import *  as attestation from "../misc/attestation";
+import *  as util from "../misc/util";
 
-import ask from './ask.der';
-import ark from './ark.der';
-
-// Only listed here to make webpack happy to include it into the distribution
-import ravm_icon from './ravm.svg';
-import manifest from './manifest.json';
+import ask from '../certificates/ask.der';
+import ark from '../certificates/ark.der';
 
 // Domain to observe 
 const VM_DOMAIN="transparent-vm.net";

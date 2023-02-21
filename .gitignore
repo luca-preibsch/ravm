@@ -1,2 +1,6 @@
-dist/
+build/
 node_modules/
+package-lock.json
+jsconfig.json
+.DS_STORE
+demo-site/
