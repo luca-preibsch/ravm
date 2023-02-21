@@ -23,7 +23,7 @@ To start the local development instance:
 
 ## Web server (https://transparent-vm.net:8080)
 * Enable local resolve to transparent-vm.ne (e.g., by adding to /etc/hosts `127.0.0.1 transparent-vm.net`) 
-* Please not the private key for https certificate is not included in the repository 
+* Please note the private key for https certificate is not included in the repository 
 * Run `http-server -C cert.pem  -K key.pem -S` in `demo-site`
 
 ## Interactive development 

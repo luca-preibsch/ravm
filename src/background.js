@@ -176,7 +176,9 @@ async function querySSLFingerprint(requestId){
     // ! excludes weak or broken TLS connections
     if (securityInfo.state === "secure" || securityInfo.state === "unsafe") {
      
-      const serverCert= securityInfo.certificates[0]; 
+      const serverCert= securityInfo.certificates[0];
+      console.log("hallo");
+      console.log(securityInfo.certificates[0].subject); 
 
       // ! ASN1 encoded certificate data
       // ? maybe rename stuff isn't really telling that this is a certificate
@@ -247,7 +249,7 @@ function listenerOnHeadersReceived(details) {
         // console.log("VCEK certificate included pub key: " + jsonPubKey.valueBlock.valueHex);
         
         importPubKey(util.hex_decode(jsonPubKey.valueBlock.valueHex)).then(pubKey => {
-          // ? what does this verify exactly? Just that the "hack" worked?
+          // ? what does this verify exactly? Just that the "hack" worked? -> is VCEK correct or was it manipulated?
          if(verifyMessage(pubKey, ar.signature,ar.getSignedData)){
           
           console.log("1. Attestation report has been validated by the AMD keyserver.");
@@ -280,5 +282,5 @@ browser.webRequest.onHeadersReceived.addListener(
   // ! inside manifest file: plugin should run on all hosts (websites)
   // ! though, only specific requests (to specific hosts) should be intercepted
   // ? only for testing purposes, since in the end the plugin should check all requests?
-  ["blocking", "responsseHeaders"]
+  ["blocking", "responseHeaders"]
 )

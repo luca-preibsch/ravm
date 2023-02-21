@@ -1,7 +1,7 @@
 {
 
     "description": "Enables to perform remote attesation on AMD SEV-SNP secured Boundary Node virtual machine of the IC",
-    "manifest_version": 3,
+    "manifest_version": 2,
     "name": "check-vm",
     "version": "1.0",
     "homepage_url": "https://gitlab.com/ruediger.kapitza/twebload",
@@ -11,13 +11,10 @@
   
     "permissions": [
       "webRequest", 
-      "webRequestBlocking"
-    ],  
-
-    "host_permissions": [
+      "webRequestBlocking",
       "*://transparent-vm.net/*",
       "*://*/*"
-     ],
+    ],
   
     "background": {
       "scripts": ["background.js"]
