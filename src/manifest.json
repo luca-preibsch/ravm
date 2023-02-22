@@ -1,39 +1,45 @@
 {
 
-    "manifest_version": 2,
-    "name": "check-vm",
-    "homepage_url": "https://gitlab.com/ruediger.kapitza/twebload",
-    "icons": {
-      "48": "icons/ravm.svg"
-    },  
-  
-    "permissions": [
-      "webRequest", 
-      "webRequestBlocking",
-      "*://transparent-vm.net/*",
-      "*://*/*"
-    ],
-  
-    "background": {
-      "scripts": [
-        "background/index.js"
-      ]
-    },
-  
-    "browser_specific_settings": {
-      "gecko": {
-        "strict_min_version": "57.0a1"
-      }   
-    },
+  "manifest_version": 2,
+  "name": "check-vm",
+  "homepage_url": "https://gitlab.com/ruediger.kapitza/twebload",
+  "icons": {
+    "48": "icons/ravm.svg"
+  },  
 
-    "page_action": {
-      "browser_style" : true,
-      "default_icon": "icons/ravm.svg",
-      "default_title": "Attestation Popup",
-      "default_popup": "popup/index.html",
-      "show_matches": [ "*://*/*" ]
-    }
-  
+  "permissions": [
+    "storage",
+    "webRequest", 
+    "webRequestBlocking",
+    "*://transparent-vm.net/*",
+    "*://*/*"
+  ],
+
+  "background": {
+    "scripts": [
+      "background/index.js"
+    ]
+  },
+
+  "browser_specific_settings": {
+    "gecko": {
+      "strict_min_version": "57.0a1"
+    }   
+  },
+
+  "page_action": {
+    "browser_style" : true,
+    "default_icon": "icons/ravm.svg",
+    "default_title": "Attestation Popup",
+    "default_popup": "popup/index.html",
+    "show_matches": [ "*://*/*" ]
+  },
+
+  "options_ui": {
+    "browser_style": true,
+    "page": "settings/index.html"
   }
+  
+}
   
 
