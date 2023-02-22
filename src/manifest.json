@@ -24,6 +24,14 @@
       "gecko": {
         "strict_min_version": "57.0a1"
       }   
+    },
+
+    "page_action": {
+      "browser_style" : true,
+      "default_icon": "icons/ravm.svg",
+      "default_title": "Attestation Popup",
+      "default_popup": "popup/index.html",
+      "show_matches": [ "*://*/*" ]
     }
   
   }

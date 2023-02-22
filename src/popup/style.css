@@ -1,0 +1,49 @@
+.attestation-grid {
+    display: grid;
+    grid-template-columns: [start] auto auto auto [end];
+    margin: 20px;
+}
+
+#attestation-icon {
+    grid-row-start: 1;
+    grid-row-end: span 2;
+    grid-column: 1;
+    margin-right: 10px;
+    margin-bottom: 10px;
+    width: 75px;
+    height: 75px;
+}
+
+#attestation-header {
+    grid-row: 1;
+    grid-column-start: 2;
+    grid-column-end: span end;
+    text-align: left;
+    font-size: 30px;
+    margin-top: auto;
+    margin-bottom: 0;
+}
+
+#attestation-url {
+    grid-row: 2;
+    grid-column-start: 2;
+    grid-column-end: span end;
+    text-align: left;
+    color: grey;
+    margin-top: 0;
+    margin-bottom: auto;
+}
+
+#attestation-info {
+    grid-row: auto;
+    grid-column-start: start;
+    grid-column-end: span 2;
+    display: flex;
+    align-items: center;
+}
+
+.button {
+    grid-row: auto;
+    margin-left: auto;
+    margin-right: 0;
+}
