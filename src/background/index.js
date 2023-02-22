@@ -1,7 +1,7 @@
 import *  as pkijs from "pkijs";
 import *  as asn1js from "asn1js";
-import *  as attestation from "../misc/attestation";
-import *  as util from "../misc/util";
+import *  as attestation from "../helpers/attestation";
+import *  as util from "../helpers/util";
 
 import ask from '../certificates/ask.der';
 import ark from '../certificates/ark.der';
