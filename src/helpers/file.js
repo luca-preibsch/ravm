@@ -1,5 +1,6 @@
 // import { validate } from "schema-utils"
 // import schema from  "./remote-attestation.schema.json"
+// const schema = require("./remote-attestation.schema.json")
 
 // TODO: error handling
 export async function fetchFile(url) {
