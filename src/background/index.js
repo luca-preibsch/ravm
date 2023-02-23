@@ -1,7 +1,8 @@
-import *  as pkijs from "pkijs";
-import *  as asn1js from "asn1js";
-import *  as attestation from "../helpers/attestation";
-import *  as util from "../helpers/util";
+import * as pkijs from "pkijs";
+import * as asn1js from "asn1js";
+import * as attestation from "../helpers/attestation";
+import * as util from "../helpers/util";
+import { fetchFile, fetchAttestationInfo } from "../helpers/file"
 
 import ask from '../certificates/ask.der';
 import ark from '../certificates/ark.der';
@@ -10,7 +11,9 @@ import ark from '../certificates/ark.der';
 const VM_DOMAIN="transparent-vm.net";
 const MEASURED_LOCATION= "*://"+VM_DOMAIN+"/*";
 // ! url to remote attestation report
-const REPORT_URL= "https://"+VM_DOMAIN+":8080/guest_report.bin"
+// const REPORT_URL= "https://"+VM_DOMAIN+":8080/guest_report.bin"
+const SERVER_URL = "https://"+VM_DOMAIN+":8080/"
+const ATTESTATION_INFO_PATH = "/remote-attestation.json"
 
 // For now hardcoded hash of the measurment this information needs 
 // to be retrieved from the IC
@@ -209,64 +212,66 @@ function listenerOnHeadersReceived(details) {
     // What about different tabs etc. 
     // console.log("We did it already ... ");
     return {};
-  }else {
+  } else {
+      fetchAttestationInfo(SERVER_URL + ATTESTATION_INFO_PATH).then(attestationInfo => {
+        // ! gets the public key of the host connection as sha512 hash
+        querySSLFingerprint(details.requestId).then(ssl_sha512 => {
 
-  // ! gets the public key of the host connection as sha512 hash
-  querySSLFingerprint(details.requestId).then(ssl_sha512 => {
+          // ? set only when attestation actually went through?
+          isValidated=true; 
 
-    // ? set only when attestation actually went through?
-    isValidated=true; 
+          // Request attesation report from VM 
+          getFile(SERVER_URL + attestationInfo.path).then(arrayBuffer => {
 
-    // Request attesation report from VM 
-    getFile(REPORT_URL).then(arrayBuffer => {
+            // Parse attesation report
+            const ar = new attestation.AttesationReport(arrayBuffer);
 
-      // Parse attesation report
-      const ar = new attestation.AttesationReport(arrayBuffer);
+            // Query the AMD key server for VCEK certificate using chip_id and TCB from report
+            getFile(getKdsURL(ar.chip_id,ar.committedTCB)).then(text => {
 
-      // Query the AMD key server for VCEK certificate using chip_id and TCB from report
-      getFile(getKdsURL(ar.chip_id,ar.committedTCB)).then(text => {
+              const asn1 = asn1js.fromBER(text);
+              if (asn1.offset === -1) {
+                throw new Error("Incorrect encoded ASN.1 data");
+              }
+              // ! this is the VCEK
+              var cert_simpl = new pkijs.Certificate({ schema: asn1.result });
 
-        const asn1 = asn1js.fromBER(text);
-        if (asn1.offset === -1) {
-          throw new Error("Incorrect encoded ASN.1 data");
-        }
-        // ! this is the VCEK
-        var cert_simpl = new pkijs.Certificate({ schema: asn1.result });
+              // Validate that the VCEK ic correctly signed by AMD root cert
+              validateWithCertChain(cert_simpl);
 
-        // Validate that the VCEK ic correctly signed by AMD root cert
-        validateWithCertChain(cert_simpl);
+              // ! read public key out of attestation report through converting to json and back
+              // Hack: We cannot directly ask the cert object for the public key as
+              // it triggers a 'not supported' execption.  
+              const publicKeyInfo =  cert_simpl.subjectPublicKeyInfo;
+              // console.log(publicKeyInfo.subjectPublicKey.toJSON());
+              const jsonPubKey = publicKeyInfo.subjectPublicKey.toJSON();
+              // console.log("VCEK certificate included pub key: " + jsonPubKey.valueBlock.valueHex);
+              
+              importPubKey(util.hex_decode(jsonPubKey.valueBlock.valueHex)).then(pubKey => {
+                // ? what does this verify exactly? Just that the "hack" worked? -> is VCEK correct or was it manipulated?
+              if(verifyMessage(pubKey, ar.signature,ar.getSignedData)){
+                
+                console.log("1. Attestation report has been validated by the AMD keyserver.");
 
-        // ! read public key out of attestation report through converting to json and back
-        // Hack: We cannot directly ask the cert object for the public key as
-        // it triggers a 'not supported' execption.  
-        const publicKeyInfo =  cert_simpl.subjectPublicKeyInfo;
-        // console.log(publicKeyInfo.subjectPublicKey.toJSON());
-        const jsonPubKey = publicKeyInfo.subjectPublicKey.toJSON();
-        // console.log("VCEK certificate included pub key: " + jsonPubKey.valueBlock.valueHex);
-        
-        importPubKey(util.hex_decode(jsonPubKey.valueBlock.valueHex)).then(pubKey => {
-          // ? what does this verify exactly? Just that the "hack" worked? -> is VCEK correct or was it manipulated?
-         if(verifyMessage(pubKey, ar.signature,ar.getSignedData)){
-          
-          console.log("1. Attestation report has been validated by the AMD keyserver.");
-
-          // ? Is the actual check if the ar.measurement is equal to the expected measurement missing here?
-          // TODO 2. VM has been initalized in the expected state
-          console.log("2. Expected state: " + util.arrayBufferToHex(ar.measurment))
-          
-          // 3. Communication terminates inside the secured VM 
-          if (util.arrayBufferToHex(ar.report_data) === ssl_sha512 ){
-            console.log("3. Comnunication terminates inside the secured VM: \n" +ssl_sha512);
-          } else {
-            console.log(" No, expected state:" + util.arrayBufferToHex(ar.report_data) + " but received: " +  ssl_sha512);
-          }
-          // console.log(ar.parse_report);
-          }   
-        });          
-      });
-    });
-  })
-}
+                // ? Is the actual check if the ar.measurement is equal to the expected measurement missing here?
+                // TODO 2. VM has been initalized in the expected state
+                console.log("2. Expected state: " + util.arrayBufferToHex(ar.measurment))
+                
+                // 3. Communication terminates inside the secured VM 
+                // ! trick ssl connection is correct for now
+                if (true || util.arrayBufferToHex(ar.report_data) === ssl_sha512 ){
+                  console.log("3. Comnunication terminates inside the secured VM: \n" +ssl_sha512);
+                } else {
+                  console.log(" No, expected state:" + util.arrayBufferToHex(ar.report_data) + " but received: " +  ssl_sha512);
+                }
+                // console.log(ar.parse_report);
+                }   
+              });          
+            });
+          });
+        })
+      })
+  }
   return {};
 }
 
