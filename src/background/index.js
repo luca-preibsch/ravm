@@ -3,6 +3,7 @@ import * as asn1js from "asn1js";
 import * as attestation from "../helpers/attestation";
 import * as util from "../helpers/util";
 import { fetchFile, fetchAttestationInfo } from "../helpers/file"
+import * as settings from "../helpers/settings"
 
 import ask from '../certificates/ask.der';
 import ark from '../certificates/ark.der';
@@ -256,6 +257,40 @@ function listenerOnHeadersReceived(details) {
                 // ? Is the actual check if the ar.measurement is equal to the expected measurement missing here?
                 // TODO 2. VM has been initalized in the expected state
                 console.log("2. Expected state: " + util.arrayBufferToHex(ar.measurment))
+
+                console.log("saved: " + util.arrayBufferToHex(ar.measurment))
+                settings.setAttestationDomain(SERVER_URL, new Date(), new Date(), attestationInfo.technology, util.arrayBufferToHex(ar.measurment)).then(
+                  result => {
+                    settings.getAllAttestationDomains().then(
+                      got => {
+                        console.log(got)
+                        // console.log(JSON.stringify(got))
+                        console.log(JSON.stringify(got[SERVER_URL]))
+                        console.log("hier!")
+                        console.log("type:")
+                        console.log(got["type"])
+                        console.log(got[SERVER_URL]["type"])
+                        console.log(got[SERVER_URL].type)
+                      },
+                      reason => console.log(reason)
+                    )
+                  },
+                  reason => console.log(reason)
+                )
+                // settings.getAttestationDomain(SERVER_URL).then(
+                //   result => {
+                //     console.log("result ist " + result)
+                //     if (result == null) {
+                //       console.log("nicht vorhanden")
+                //       settings.setAttestationDomain(SERVER_URL, new Date(), new Date(), attestationInfo.technology, ar.measurment)
+                //     } else {
+                //       if (result.measurment == ar.measurment)
+                //         console.log("passt so")
+                //       else
+                //         console.log("passt nicht " + result.measurment + " " + ar.measurment)
+                //     }
+                //   }
+                // )
                 
                 // 3. Communication terminates inside the secured VM 
                 // ! trick ssl connection is correct for now

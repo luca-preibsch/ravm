@@ -5,6 +5,9 @@ const package = require('./package.json')
 
 const mode = 'development'
 
+// 'inline-source-map'
+const devtool = "cheap-module-source-map"
+
 const _resolve = {
     extensions: ['.jsx', '.js'],
     modules: [
@@ -39,6 +42,7 @@ const _module = {
 
 module.exports = [
     {   // manifest and static
+        devtool: devtool,
         mode: mode,
         entry: [
           path.resolve(__dirname, 'src', 'manifest.json',)
@@ -63,7 +67,7 @@ module.exports = [
         ],
     },
     {   // background
-      devtool: 'inline-source-map',
+      devtool: devtool,
       mode: mode,
       entry: [
         path.resolve(__dirname, 'src', 'background', 'index.js')
@@ -76,7 +80,7 @@ module.exports = [
       module: _module
     },
     {   // settings
-        devtool: 'inline-source-map',
+        devtool: devtool,
         mode: mode,
         entry: [
           path.resolve(__dirname, 'src', 'settings', 'index.js')
@@ -89,7 +93,7 @@ module.exports = [
         module: _module
     },
     {   // popup
-        devtool: 'inline-source-map',
+        devtool: devtool,
         mode: mode,
         entry: [
           path.resolve(__dirname, 'src', 'popup', 'index.js')

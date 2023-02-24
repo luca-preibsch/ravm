@@ -10,7 +10,8 @@
     "http": "cd ./demo-site && http-server -C cert.pem  -K key.pem -S",
     "lint": "npx eslint src",
     "lint:fix": "npx eslint --fix src",
-    "build": "webpack build"
+    "build": "webpack build",
+    "debug": "cd ./build && web-ext run --url https://transparent-vm.net:8080 --devtools"
   },
   "keywords": [],
   "author": "",
