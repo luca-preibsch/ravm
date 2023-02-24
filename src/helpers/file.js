@@ -20,6 +20,7 @@ export async function fetchAttestationInfo(url) {
                 return false
             })
         .then(attestationInfo => {
+            // TODO validate attestationInfo against schema?
             // if (!validate(schema, attestationInfo)) {
             //     console.log("error: could not validate attestationInfo against schema")
             //     return false
