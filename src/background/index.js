@@ -261,16 +261,15 @@ function listenerOnHeadersReceived(details) {
                 console.log("saved: " + util.arrayBufferToHex(ar.measurment))
                 settings.setAttestationDomain(SERVER_URL, new Date(), new Date(), attestationInfo.technology, util.arrayBufferToHex(ar.measurment)).then(
                   result => {
-                    settings.getAllAttestationDomains().then(
+                    settings.getAttestationDomain(SERVER_URL).then(
                       got => {
                         console.log(got)
                         // console.log(JSON.stringify(got))
-                        console.log(JSON.stringify(got[SERVER_URL]))
+                        console.log(JSON.stringify(got))
                         console.log("hier!")
                         console.log("type:")
                         console.log(got["type"])
-                        console.log(got[SERVER_URL]["type"])
-                        console.log(got[SERVER_URL].type)
+                        console.log(got.type)
                       },
                       reason => console.log(reason)
                     )
