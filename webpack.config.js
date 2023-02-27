@@ -9,100 +9,70 @@ const mode = 'development'
 const devtool = "cheap-module-source-map"
 
 const _resolve = {
-    extensions: ['.jsx', '.js'],
-    modules: [
-        path.resolve(__dirname, 'node_modules'),
-        'node_modules'
-    ]
+  extensions: ['.js'],
+  modules: [
+    path.resolve(__dirname, 'node_modules'),
+    'node_modules'
+  ]
 }
 
 const _module = {
-    rules: [
-        // {
-        //   test: /\.json$/,
-        //   loader: 'json-loader'
-        // },
-        {
-          test: /\.css$/,
-          use: [{
-            loader: 'style-loader'
-          }, {
-            loader: 'css-loader'
-          }]
-        },
-        {
-          test: /\.der/,
-          type: 'asset/resource',
-            generator: {
-            filename: '[name][ext]'
-          },
-        },
-    ]
+  rules: [
+    {
+      test: /\.css$/i,
+      use: ["style-loader", "css-loader"],
+    },
+    {
+      test: /\.der/,
+      type: 'asset/resource',
+        generator: {
+        filename: '[name][ext]'
+      },
+    },
+    {
+      test: /\.html$/,
+      type: "asset/resource",
+      generator: {
+        filename: "[name][ext]",
+      },
+    },
+    {
+      test: /\.(png|svg|jpg|jpeg|gif)$/i,
+      type: 'asset/resource',
+    },
+  ]
 }
 
 module.exports = [
-    {   // manifest and static
-        devtool: devtool,
-        mode: mode,
-        entry: [
-          path.resolve(__dirname, 'src', 'manifest.json',)
-        ],
-        output: {
-            path: path.resolve(__dirname, 'build'),
-        },
-        plugins: [
-            new CopyWebpackPlugin({
-                patterns: [
-                    { from: "static" },
-                ]
-            }),
-            new TransformJson({
-                source: path.resolve(__dirname, 'src', 'manifest.json'),
-                filename: 'manifest.json',
-                object: {
-                  description: package.description,
-                  version: package.version
-                }
-            }),
-        ],
+  {
+    devtool: devtool,
+    mode: mode,
+    entry: {
+      'background' : path.resolve(__dirname, 'src', 'background', 'background.js'),
+      'popup' : path.resolve(__dirname, 'src', 'popup', 'popup.js'),
+      'settings' : path.resolve(__dirname, 'src', 'settings', 'settings.js'),
     },
-    {   // background
-      devtool: devtool,
-      mode: mode,
-      entry: [
-        path.resolve(__dirname, 'src', 'background', 'index.js')
-      ],
-      output: {
-        path: path.resolve(__dirname, 'build'),
-        filename: path.join('background', 'index.js')
-      },
-      resolve: _resolve,
-      module: _module
+    output: {
+      path: path.resolve(__dirname, 'build'),
+      filename: '[name].js',
+      assetModuleFilename: "[name][ext]",
     },
-    {   // settings
-        devtool: devtool,
-        mode: mode,
-        entry: [
-          path.resolve(__dirname, 'src', 'settings', 'index.js')
-        ],
-        output: {
-          path: path.resolve(__dirname, 'build'),
-          filename: path.join('settings', 'index.js')
-        },
-        resolve: _resolve,
-        module: _module
-    },
-    {   // popup
-        devtool: devtool,
-        mode: mode,
-        entry: [
-          path.resolve(__dirname, 'src', 'popup', 'index.js')
-        ],
-        output: {
-          path: path.resolve(__dirname, 'build'),
-          filename: path.join('popup', 'index.js')
-        },
-        resolve: _resolve,
-        module: _module
-    },
+    plugins: [
+      new TransformJson({
+        source: path.resolve(__dirname, 'src', 'manifest.json'),
+        filename: 'manifest.json',
+        object: {
+          description: package.description,
+          version: package.version
+        }
+      }),
+      new CopyWebpackPlugin({
+        patterns: [
+          { from: path.resolve(__dirname, 'src', 'icons') }
+        ]
+      })
+    ],
+    resolve: _resolve,
+    module: _module
+  },
 ]

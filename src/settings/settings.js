@@ -1,5 +1,7 @@
 import './style.css'
 import '../style/table.css'
+import './settings.html'
+
 import * as settings from '../helpers/settings'
 
 const tableWidth = document.getElementById("tableHead").rows[0].cells.length
