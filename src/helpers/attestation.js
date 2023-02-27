@@ -130,6 +130,7 @@ export class AttesationReport {
   }
   
   // uint8_t measurement[48];        /* 90h */
+  // TODO: rename typo
   get measurment(){
     return this.arrayBuffer.slice(144,144+48);
   }
