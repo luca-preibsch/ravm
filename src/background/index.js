@@ -6,6 +6,7 @@ import * as attestation from "../helpers/attestation";
 import * as util from "../helpers/util";
 import { fetchFile, fetchAttestationInfo } from "../helpers/file"
 import * as settings from "../helpers/settings"
+import { showDialogue } from "./ui/trust-dialogue";
 
 import ask from '../certificates/ask.der';
 import ark from '../certificates/ark.der';
@@ -263,6 +264,7 @@ function listenerOnHeadersReceived(details) {
                 settings.getAttestationDomain(SERVER_URL).then(result => {
                   if (result == null) {
                     console.log("unknown domain, saving measurement!")
+                    showDialogue()
                     settings.setAttestationDomain(SERVER_URL, new Date(), new Date(), attestationInfo.technology, ar.measurment)
                   } else {
                     console.log("known measurement!")
