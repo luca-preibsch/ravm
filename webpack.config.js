@@ -36,6 +36,10 @@ const _module = {
         filename: "[name][ext]",
       },
     },
+    // {
+    //   test: /\.html$/i,
+    //   loader: "html-loader",
+    // },
     {
       test: /\.(png|svg|jpg|jpeg|gif)$/i,
       type: 'asset/resource',
@@ -51,6 +55,7 @@ module.exports = [
       'background' : path.resolve(__dirname, 'src', 'background', 'background.js'),
       'popup' : path.resolve(__dirname, 'src', 'popup', 'popup.js'),
       'settings' : path.resolve(__dirname, 'src', 'settings', 'settings.js'),
+      'trust-dialogue' : path.resolve(__dirname, 'src', 'background', 'ui', 'trust-dialogue', 'trust-dialogue.js'),
     },
     output: {
       path: path.resolve(__dirname, 'build'),
@@ -68,7 +73,8 @@ module.exports = [
       }),
       new CopyWebpackPlugin({
         patterns: [
-          { from: path.resolve(__dirname, 'src', 'icons') }
+          { from: path.resolve(__dirname, 'static', 'icons') },
+          // { from: path.resolve(__dirname, 'static', 'html') },
         ]
       })
     ],
