@@ -73,7 +73,7 @@ module.exports = [
       }),
       new CopyWebpackPlugin({
         patterns: [
-          { from: path.resolve(__dirname, 'static', 'icons') },
+          { from: path.resolve(__dirname, 'src', 'icons') },
           // { from: path.resolve(__dirname, 'static', 'html') },
         ]
       })
