@@ -9,7 +9,7 @@ const package = require('./package.json')
  * copied to the build folder using copy-webpack-plugin.
  * 
  * Scripts used inside the html files or scripts used in the extensions manifest (like background.js) are entry
- * points for the application have to be configured as entries within webpack.
+ * points for the application and have to be configured as entries within webpack.
  * 
  * Disclaimer:
  * I would have liked to use the html-loader and using that automatically include scripts and graphics used
