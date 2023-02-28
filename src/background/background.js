@@ -175,7 +175,10 @@ async function querySSLFingerprint(requestId){
    });
 
   try {
-    
+
+    if (securityInfo == null)
+      console.log("ist null")
+
     // ! excludes weak or broken TLS connections
     if (securityInfo.state === "secure" || securityInfo.state === "unsafe") {
      
@@ -217,9 +220,11 @@ function listenerOnHeadersReceived(details) {
     // console.log("We did it already ... ");
     return {};
   } else {
-      fetchAttestationInfo(SERVER_URL + ATTESTATION_INFO_PATH).then(attestationInfo => {
-        // ! gets the public key of the host connection as sha512 hash
-        querySSLFingerprint(details.requestId).then(ssl_sha512 => {
+      // ! gets the public key of the host connection as sha512 hash
+      // ! for some reason, querySSLFingerprint has to be executed before fetchAttestationInfo. Otherwise, securityInfo is null
+      querySSLFingerprint(details.requestId).then(ssl_sha512 => {
+        
+        fetchAttestationInfo(SERVER_URL + ATTESTATION_INFO_PATH).then(attestationInfo => {
 
           // ? set only when attestation actually went through?
           isValidated=true; 
