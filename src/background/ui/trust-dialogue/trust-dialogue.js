@@ -10,9 +10,9 @@ export function showDialogue() {
     height: 100
   }
   browser.windows.create(createData)
-    
 }
 
+// called when the dialogue window is loaded
 window.onload = function() {
   document.getElementById("ignore-button").onclick = function () { console.log("ja man lets goooooo") }
 }
