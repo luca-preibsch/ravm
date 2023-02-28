@@ -1,8 +1,7 @@
 import './style.css'
 import '../style/table.css'
-import './settings.html'
 
-import * as settings from '../helpers/settings'
+import * as storage from '../lib/storage'
 
 const tableWidth = document.getElementById("tableHead").rows[0].cells.length
 const table = document.getElementById("tableBody")
@@ -13,7 +12,7 @@ document.getElementById("testButton").onclick = function () { saveItem(counter++
 
 function loadAllItems() {
     table.innerHTML = ""
-    settings.getAllAttestationDomains().then((items) => {
+    storage.getAllAttestationDomains().then((items) => {
 
         // console.log(items)
         // console.log(JSON.stringify(items))
@@ -40,7 +39,7 @@ function loadAllItems() {
 }
 
 function saveItem(domain, trustedSince, lastTrusted, type, measurement) {
-    settings.setAttestationDomain(domain, trustedSince, lastTrusted, type, measurement)
+    storage.setAttestationDomain(domain, trustedSince, lastTrusted, type, measurement)
     console.log("save")
     loadAllItems()
 }

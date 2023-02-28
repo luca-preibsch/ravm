@@ -4,20 +4,23 @@ const TransformJson = require('transform-json-webpack-plugin')
 const package = require('./package.json')
 
 /**
- * Disclaimer:
- * Due the html-loader not working for a webpack - webextension setup
- * (html files would have to be loaded, but also exist as actual html files in the build),
- * html files have to be treated as assets and files contained in the html file (svgs, scripts, ...) have to be manually
- * put into the build folder at the correct destination.
+ * Heads up:
+ * Static files and assets like svg-, png-, html-files have to be placed into the static folder and are
+ * copied to the build folder using copy-webpack-plugin.
  * 
- * I chose to use the CopyWebpackPlugin for static things like svgs and to treat needed scripts as their own
- * entry points with webpack.
+ * Scripts used inside the html files or scripts used in the extensions manifest (like background.js) are entry
+ * points for the application have to be configured as entries within webpack.
+ * 
+ * Disclaimer:
+ * I would have liked to use the html-loader and using that automatically include scripts and graphics used
+ * inside the html files, but there seems to be a problem with the extract-loader, that would also be needed for that
+ * and thus I gave up and chose this configuration, that is not quite as automatic, but seems to be working fine.
  */
 
-const mode = 'development'
+const _mode = 'development'
 
 // 'inline-source-map'
-const devtool = "cheap-module-source-map"
+const _devtool = "cheap-module-source-map"
 
 const _resolve = {
   extensions: ['.js'],
@@ -67,13 +70,13 @@ const _module = {
 
 module.exports = [
   {
-    devtool: devtool,
-    mode: mode,
+    devtool: _devtool,
+    mode: _mode,
     entry: {
       'background' : path.resolve(__dirname, 'src', 'background', 'background.js'),
       'popup' : path.resolve(__dirname, 'src', 'popup', 'popup.js'),
       'settings' : path.resolve(__dirname, 'src', 'settings', 'settings.js'),
-      'trust-dialogue' : path.resolve(__dirname, 'src', 'background', 'ui', 'trust-dialogue', 'trust-dialogue.js'),
+      'trust-dialogue' : path.resolve(__dirname, 'src', 'trust-dialogue', 'trust-dialogue.js'),
     },
     output: {
       path: path.resolve(__dirname, 'build'),
@@ -91,8 +94,8 @@ module.exports = [
       }),
       new CopyWebpackPlugin({
         patterns: [
-          { from: path.resolve(__dirname, 'src', 'icons') },
-          // { from: path.resolve(__dirname, 'static', 'html') },
+          { from: path.resolve(__dirname, 'static', 'icons') },
+          { from: path.resolve(__dirname, 'static', 'html') },
         ]
       })
     ],

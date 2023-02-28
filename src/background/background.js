@@ -2,11 +2,11 @@ import * as pkijs from "pkijs";
 import * as asn1js from "asn1js";
 import _ from "lodash"
 
-import * as attestation from "../helpers/attestation";
-import * as util from "../helpers/util";
-import { fetchFile, fetchAttestationInfo } from "../helpers/file"
-import * as settings from "../helpers/settings"
-import { showDialogue } from "./ui/trust-dialogue/trust-dialogue"
+import * as attestation from "../lib/attestation";
+import * as util from "../lib/util";
+import { fetchFile, fetchAttestationInfo } from "../lib/file"
+import * as storage from "../lib/storage"
+import { showTrustDialogue } from "../lib/ui"
 
 import ask from '../certificates/ask.der';
 import ark from '../certificates/ark.der';
@@ -266,23 +266,23 @@ function listenerOnHeadersReceived(details) {
                 // TODO 2. VM has been initalized in the expected state
                 console.log("2. Expected state: " + util.arrayBufferToHex(ar.measurment))
 
-                settings.getAttestationDomain(SERVER_URL).then(result => {
+                storage.getAttestationDomain(SERVER_URL).then(result => {
                   if (result == null) {
                     console.log("unknown domain, saving measurement!")
-                    showDialogue()
-                    settings.setAttestationDomain(SERVER_URL, new Date(), new Date(), attestationInfo.technology, ar.measurment)
+                    showTrustDialogue()
+                    storage.setAttestationDomain(SERVER_URL, new Date(), new Date(), attestationInfo.technology, ar.measurment)
                   } else {
                     console.log("known measurement!")
-                    settings.getAttestationDomain(SERVER_URL).then(stored => {
+                    storage.getAttestationDomain(SERVER_URL).then(stored => {
                       console.log("is equal? " + _.isEqual(ar.measurment, stored.measurement))
                     })
                   }
                 })
 
                 // console.log("saved: " + util.arrayBufferToHex(ar.measurment))
-                // settings.setAttestationDomain(SERVER_URL, new Date(), new Date(), attestationInfo.technology, ar.measurment).then(
+                // storage.setAttestationDomain(SERVER_URL, new Date(), new Date(), attestationInfo.technology, ar.measurment).then(
                 //   result => {
-                //     settings.getAttestationDomain(SERVER_URL).then(
+                //     storage.getAttestationDomain(SERVER_URL).then(
                 //       got => {
                 //         console.log("is equal? " + _.isEqual(ar.measurment, got.measurement) + " hallo")
                 //       },
@@ -292,12 +292,12 @@ function listenerOnHeadersReceived(details) {
                 //   reason => console.log(reason)
                 // )
 
-                // settings.getAttestationDomain(SERVER_URL).then(
+                // storage.getAttestationDomain(SERVER_URL).then(
                 //   result => {
                 //     console.log("result ist " + result)
                 //     if (result == null) {
                 //       console.log("nicht vorhanden")
-                //       settings.setAttestationDomain(SERVER_URL, new Date(), new Date(), attestationInfo.technology, ar.measurment)
+                //       storage.setAttestationDomain(SERVER_URL, new Date(), new Date(), attestationInfo.technology, ar.measurment)
                 //     } else {
                 //       if (result.measurment == ar.measurment)
                 //         console.log("passt so")
