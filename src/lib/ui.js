@@ -8,3 +8,10 @@ export function showTrustDialogue() {
     }
     browser.windows.create(createData)
 }
+
+export function injectDialog() {
+    console.log("injecting")
+    browser.tabs.executeScript({
+        file: "./trust-dialog.js"
+    })
+}
