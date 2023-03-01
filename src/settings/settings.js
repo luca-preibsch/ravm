@@ -14,12 +14,6 @@ function loadAllItems() {
     table.innerHTML = ""
     storage.getAllAttestationDomains().then((items) => {
 
-        // console.log(items)
-        // console.log(JSON.stringify(items))
-        // console.log("test: ")
-        // console.log(JSON.stringify(items["https://transparent-vm.net:8080/"]))
-        // console.log("hier!")
-
         let domains = Object.keys(items)
         for (let domain of domains) {
             let row = table.insertRow()
@@ -28,9 +22,8 @@ function loadAllItems() {
             row.insertCell().innerHTML = data.trustedSince.toString()
             row.insertCell().innerHTML = data.lastTrusted.toString()
             row.insertCell().innerHTML = data.type
-
-            // console.log(data.type)
         }
+        
     },
     (reason) => { 
         console.log("error while loading options")
