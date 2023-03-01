@@ -2,4 +2,3 @@ build/
 node_modules/
 jsconfig.json
 .DS_STORE
-demo-site/

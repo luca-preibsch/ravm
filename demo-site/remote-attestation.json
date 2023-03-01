@@ -1,0 +1,6 @@
+{
+    "version": 0,
+    "path": "/guest_report.bin",
+    "vendor": "AMD",
+    "technology": "AMD-SEV-SNP"
+}
