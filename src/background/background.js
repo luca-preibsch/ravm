@@ -6,7 +6,7 @@ import * as attestation from "../lib/attestation";
 import * as util from "../lib/util";
 import { fetchFile, fetchAttestationInfo } from "../lib/file"
 import * as storage from "../lib/storage"
-import { showTrustDialogue } from "../lib/ui"
+import { showTrustDialogue, injectDialog } from "../lib/ui"
 
 import ask from '../certificates/ask.der';
 import ark from '../certificates/ark.der';
@@ -269,7 +269,8 @@ function listenerOnHeadersReceived(details) {
                 storage.getAttestationDomain(SERVER_URL).then(result => {
                   if (result == null) {
                     console.log("unknown domain, saving measurement!")
-                    showTrustDialogue()
+                    // showTrustDialogue()
+                    injectDialog()
                     storage.setAttestationDomain(SERVER_URL, new Date(), new Date(), attestationInfo.technology, ar.measurment)
                   } else {
                     console.log("known measurement!")

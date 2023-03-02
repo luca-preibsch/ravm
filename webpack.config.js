@@ -43,17 +43,17 @@ const _module = {
         filename: '[name][ext]'
       },
     },
-    {
-      test: /\.html$/,
-      type: "asset/resource",
-      generator: {
-        filename: "[name][ext]",
-      },
-    },
     // {
-    //   test: /\.html$/i,
-    //   loader: "html-loader",
+    //   test: /\.html$/,
+    //   type: "asset/resource",
+    //   generator: {
+    //     filename: "[name][ext]",
+    //   },
     // },
+    {
+      test: /\.html$/i,
+      loader: "html-loader",
+    },
     {
       test: /\.(png|svg|jpg|jpeg|gif)$/i,
       type: 'asset/resource',
@@ -77,6 +77,7 @@ module.exports = [
       'popup' : path.resolve(__dirname, 'src', 'popup', 'popup.js'),
       'settings' : path.resolve(__dirname, 'src', 'settings', 'settings.js'),
       'trust-dialogue' : path.resolve(__dirname, 'src', 'trust-dialogue', 'trust-dialogue.js'),
+      'trust-dialog' : path.resolve(__dirname, 'src', 'content', 'trust-dialog', 'trust-dialog.js'),
     },
     output: {
       path: path.resolve(__dirname, 'build'),
