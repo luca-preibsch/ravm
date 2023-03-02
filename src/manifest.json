@@ -11,6 +11,7 @@
     "storage",
     "webRequest", 
     "webRequestBlocking",
+    "activeTab",
     "*://transparent-vm.net/*",
     "*://*/*"
   ],
