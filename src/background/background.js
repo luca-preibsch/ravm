@@ -160,8 +160,6 @@ ${exportedAsBase64.substring(64*6,64*6+8)}
   return pemExported;
 }
 
-
-
 // Function requests the SecurityInfo of the established https connection
 // and extracts the public key.
 // return: sha521 of the public key 
@@ -269,7 +267,6 @@ function listenerOnHeadersReceived(details) {
                 storage.getAttestationDomain(SERVER_URL).then(result => {
                   if (result == null) {
                     console.log("unknown domain, saving measurement!")
-                    // showTrustDialogue()
                     injectDialog()
                     storage.setAttestationDomain(SERVER_URL, new Date(), new Date(), attestationInfo.technology, ar.measurment)
                   } else {
