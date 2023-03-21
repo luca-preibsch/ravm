@@ -263,23 +263,6 @@ function listenerOnHeadersReceived(details) {
                 
                 console.log("1. Attestation report has been validated by the AMD keyserver.");
 
-                // ? Is the actual check if the ar.measurement is equal to the expected measurement missing here?
-                // TODO 2. VM has been initalized in the expected state
-                console.log("2. Expected state: " + util.arrayBufferToHex(ar.measurment))
-
-                storage.getAttestationDomain(SERVER_URL).then(result => {
-                  if (result == null) {
-                    console.log("unknown domain, saving measurement!")
-                    injectDialog()
-                    storage.setAttestationDomain(SERVER_URL, new Date(), new Date(), attestationInfo.technology, ar.measurment)
-                  } else {
-                    console.log("known measurement!")
-                    storage.getAttestationDomain(SERVER_URL).then(stored => {
-                      console.log("is equal? " + _.isEqual(ar.measurment, stored.measurement))
-                    })
-                  }
-                })
-
                 // console.log("saved: " + util.arrayBufferToHex(ar.measurment))
                 // storage.setAttestationDomain(SERVER_URL, new Date(), new Date(), attestationInfo.technology, ar.measurment).then(
                 //   result => {
@@ -308,13 +291,30 @@ function listenerOnHeadersReceived(details) {
                 //   }
                 // )
                 
-                // 3. Communication terminates inside the secured VM 
+                // 2. Communication terminates inside the secured VM
                 // ! trick ssl connection is correct for now
                 if (true || util.arrayBufferToHex(ar.report_data) === ssl_sha512 ){
-                  console.log("3. Comnunication terminates inside the secured VM: \n" +ssl_sha512);
+                  console.log("2. Comnunication terminates inside the secured VM: \n" +ssl_sha512);
                 } else {
                   console.log(" No, expected state:" + util.arrayBufferToHex(ar.report_data) + " but received: " +  ssl_sha512);
                 }
+
+                // ? Is the actual check if the ar.measurement is equal to the expected measurement missing here?
+                // TODO 3. VM has been initalized in the expected state
+                console.log("3. Expected state: " + util.arrayBufferToHex(ar.measurment))
+
+                storage.getAttestationDomain(SERVER_URL).then(result => {
+                  if (result == null) {
+                    console.log("unknown domain, saving measurement!")
+                    injectDialog()
+                    storage.setAttestationDomain(SERVER_URL, new Date(), new Date(), attestationInfo.technology, ar.measurment)
+                  } else {
+                    console.log("known measurement!")
+                    storage.getAttestationDomain(SERVER_URL).then(stored => {
+                      console.log("is equal? " + _.isEqual(ar.measurment, stored.measurement))
+                    })
+                  }
+                })
                 // console.log(ar.parse_report);
                 }   
               });          
