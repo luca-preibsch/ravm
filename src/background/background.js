@@ -215,7 +215,7 @@ async function querySSLFingerprint(requestId){
 function listenerOnHeadersReceived(details) {
 
   // ? remote attestation only once globaly?
-  if (isValidated){ 
+  if (isValidated){
     // Perform remote attestion only once this needs more work.
     // What about different tabs etc. 
     // console.log("We did it already ... ");
@@ -228,7 +228,7 @@ function listenerOnHeadersReceived(details) {
         fetchAttestationInfo(SERVER_URL + ATTESTATION_INFO_PATH).then(attestationInfo => {
 
           // ? set only when attestation actually went through?
-          isValidated=true; 
+          isValidated=true;
 
           // Request attesation report from VM 
           getFile(SERVER_URL + attestationInfo.path).then(arrayBuffer => {
@@ -335,6 +335,7 @@ async function listenerOnMessageReceived(message, sender, sendResponse) {
   console.log("Message to background received: " + message)
   const url = new URL(message.url)
   const domain = url.hostname
+  console.log(domain)
   if (AttestationQueue.hasOwnProperty(domain)) {
     await storage.setAttestationDomain(domain, AttestationQueue[domain])
     delete AttestationQueue[domain]
