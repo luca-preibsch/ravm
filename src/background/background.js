@@ -27,6 +27,9 @@ const VM_MEASUREMENT = "";
 const KDSINF= "https://kdsintf.amd.com/vcek/v1/Milan/";
 const AMD_ARK_ASK_REVOKATION= "https://kdsintf.amd.com/vcek/v1/Milan/crl"
 
+// Queue of domains that use RemoteAttestation, but need input by the user to either trust or don't trust
+const AttestationQueue = {}
+
 // Check if we previously validated the attestaion report 
 var isValidated=false;
 
@@ -322,6 +325,23 @@ function listenerOnHeadersReceived(details) {
   }
   return {};
 }
+
+async function listenerOnMessageReceived(message, sender, sendResponse) {
+  if (sender.id !== browser.runtime.id) {
+    // only accept messages by this extension
+    console.log("Message by unknown sender received: " + message)
+    return
+  }
+  console.log("Message to background received: " + message)
+  const url = new URL(message.url)
+  const domain = url.hostname
+  if (AttestationQueue.hasOwnProperty(domain)) {
+    await storage.setAttestationDomain(domain, AttestationQueue[domain])
+    delete AttestationQueue[domain]
+  }
+}
+
+browser.runtime.onMessage.addListener(listenerOnMessageReceived)
 
 // We need to register this listener, since we require the SecurityInfo object
 // to validate the public key of the SSL connection

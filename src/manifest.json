@@ -12,6 +12,7 @@
     "webRequest", 
     "webRequestBlocking",
     "activeTab",
+    "runtime",
     "*://transparent-vm.net/*",
     "*://*/*"
   ],

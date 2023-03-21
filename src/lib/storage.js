@@ -10,6 +10,12 @@ export function setAttestationDomain(domain, trustedSince, lastTrusted, type, me
     })
 }
 
+export function setAttestationDomainInfoObj(domain, infoObj) {
+    return browser.storage.local.set({
+        [domain] : infoObj
+    })
+}
+
 export async function getAllAttestationDomains() {
     return browser.storage.local.get(null)
 }
