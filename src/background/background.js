@@ -13,37 +13,34 @@ import ark from '../certificates/ark.der';
 
 // Domain to observe
 const ALL_URLS = "*://*/*"
-const VM_DOMAIN="transparent-vm.net";
-const MEASURED_LOCATION= "*://"+VM_DOMAIN+"/*";
+const VM_DOMAIN = "transparent-vm.net";
+const MEASURED_LOCATION = "*://" + VM_DOMAIN + "/*";
 // ! url to remote attestation report
 // const REPORT_URL= "https://"+VM_DOMAIN+":8080/guest_report.bin"
-const SERVER_URL = "https://"+VM_DOMAIN+":8080/"
+const SERVER_URL = "https://" + VM_DOMAIN + ":8080/"
 const ATTESTATION_INFO_PATH = "/remote-attestation.json"
 
-// For now hardcoded hash of the measurment this information needs 
+// For now hardcoded hash of the measurement this information needs
 // to be retrieved from the IC
-const VM_MEASUREMENT = ""; 
+const VM_MEASUREMENT = "";
 
 // AMD key server
-const KDSINF= "https://kdsintf.amd.com/vcek/v1/Milan/";
-const AMD_ARK_ASK_REVOKATION= "https://kdsintf.amd.com/vcek/v1/Milan/crl"
+const KDSINF = "https://kdsintf.amd.com/vcek/v1/Milan/";
+const AMD_ARK_ASK_REVOKATION = "https://kdsintf.amd.com/vcek/v1/Milan/crl"
 
 // Queue of domains that use RemoteAttestation, but need input by the user to either trust or don't trust
 const AttestationQueue = {}
 
-// Check if we previously validated the attestaion report 
-var isValidated=false;
-
 // Query to Amd key sever including the used TCB  
 // https://kdsintf.amd.com/vcek/v1/Milan/<5b-machine-id-a2654>/?blSPL=02&teeSPL=00&snpSPL=06&ucodeSPL=55
-function getKdsURL(chip_id,tcbObj){
-  var url = KDSINF+util.arrayBufferToHex(chip_id, false)+"?";
-  url += "blSPL="+util.zeroPad(tcbObj.blSPL,2)+"&";
-  url += "teeSPL="+util.zeroPad(tcbObj.teeSPL,2)+"&";
-  url += "snpSPL="+util.zeroPad(tcbObj.snpSPL,2)+"&";
-  url += "ucodeSPL="+util.zeroPad(tcbObj.ucodeSPL,2);
-  //console.log(url);
-  return url;
+function getKdsURL(chip_id, tcbObj) {
+    var url = KDSINF + util.arrayBufferToHex(chip_id, false) + "?";
+    url += "blSPL=" + util.zeroPad(tcbObj.blSPL, 2) + "&";
+    url += "teeSPL=" + util.zeroPad(tcbObj.teeSPL, 2) + "&";
+    url += "snpSPL=" + util.zeroPad(tcbObj.snpSPL, 2) + "&";
+    url += "ucodeSPL=" + util.zeroPad(tcbObj.ucodeSPL, 2);
+    //console.log(url);
+    return url;
 }
 
 // Wrapper for fetch API
@@ -52,100 +49,100 @@ async function getFile(url) {
 
     // console.log("fetch " + url);
     const response = await fetch(url, {
-      method: 'GET',
-     // mode: 'cors',
-      cache: 'no-cache',
-      referrerPolicy: 'no-referrer'
+        method: 'GET',
+        // mode: 'cors',
+        cache: 'no-cache',
+        referrerPolicy: 'no-referrer'
     })
-  return response.arrayBuffer();
+    return response.arrayBuffer();
 }
 
 // Fetch assets of the web extension such as ask and ark
 async function loadData(resourcePath) {
-  var url = browser.runtime.getURL(resourcePath);
-  return (await fetch(url)).arrayBuffer();
+    var url = browser.runtime.getURL(resourcePath);
+    return (await fetch(url)).arrayBuffer();
 }
 
 async function importPubKey(rawData) {
-  return await window.crypto.subtle.importKey(
-      "raw",
-      rawData,
-      {
-        name: "ECDSA",
-        namedCurve: "P-384"
-      },
-      true,
-      ["verify"]
-  );
+    return await window.crypto.subtle.importKey(
+        "raw",
+        rawData,
+        {
+            name: "ECDSA",
+            namedCurve: "P-384"
+        },
+        true,
+        ["verify"]
+    );
 }
 
-async function verifyMessage(pubKey, signature, data ){
-  return await window.crypto.subtle.verify(
-      {
-        name: "ECDSA",
-        namedCurve: "P-384",
-        hash: {name: "SHA-384"},
-      },
-      pubKey,
-      signature,
-      data
-  );
+async function verifyMessage(pubKey, signature, data) {
+    return await window.crypto.subtle.verify(
+        {
+            name: "ECDSA",
+            namedCurve: "P-384",
+            hash: {name: "SHA-384"},
+        },
+        pubKey,
+        signature,
+        data
+    );
 }
 
-// Validate the vcek certificate using the AMD provided keys
+// Validate the VCEK certificate using the AMD provided keys
 // and revocation list.
 // returns boolean 
 async function validateWithCertChain(certificate) {
 
-  function decodeCert(der) {
-    const asn1 = asn1js.fromBER(der)
-    return new pkijs.Certificate({ schema: asn1.result })
-  }
-  
-  var ask_cert = decodeCert( await loadData(ask));
-  var ark_cert = decodeCert( await loadData(ark));
+    function decodeCert(der) {
+        const asn1 = asn1js.fromBER(der)
+        return new pkijs.Certificate({schema: asn1.result})
+    }
 
-  var text = await getFile(AMD_ARK_ASK_REVOKATION);
+    const ask_cert = decodeCert(await loadData(ask));
+    const ark_cert = decodeCert(await loadData(ark));
 
-  const crls  = []; 
-  const crl = pkijs.CertificateRevocationList.fromBER(text);
-  crls.push(crl);
+    const text = await getFile(AMD_ARK_ASK_REVOKATION);
 
-  // Create certificate's array (end-user certificate + intermediate certificates)
-  const certificates = [];
-  certificates.push(ask_cert);
-  certificates.push(certificate);
+    const crls = [];
+    const crl = pkijs.CertificateRevocationList.fromBER(text);
+    crls.push(crl);
 
-  // Make a copy of trusted certificates array
-  const trustedCerts = [];
-  trustedCerts.push(ark_cert);
+    // Create certificate's array (end-user certificate + intermediate certificates)
+    const certificates = [];
+    certificates.push(ask_cert);
+    certificates.push(certificate);
 
-  // Create new X.509 certificate chain object
-  const certChainVerificationEngine = new pkijs.CertificateChainValidationEngine({
-    trustedCerts,
-    certificates,
-    crls,
-  });
+    // Make a copy of trusted certificates array
+    const trustedCerts = [];
+    trustedCerts.push(ark_cert);
 
-  return certChainVerificationEngine.verify();
-} 
+    // Create new X.509 certificate chain object
+    const certChainVerificationEngine = new pkijs.CertificateChainValidationEngine({
+        trustedCerts,
+        certificates,
+        crls,
+    });
+
+    return certChainVerificationEngine.verify();
+}
 
 async function sha512(str) {
-  return crypto.subtle.digest("SHA-512", new TextEncoder("utf-8").encode(str)).then(buf => {
-    return Array.prototype.map.call(new Uint8Array(buf), x=>(('00'+x.toString(16)).slice(-2))).join('');
-  });
+    return crypto.subtle.digest("SHA-512", new TextEncoder("utf-8").encode(str)).then(buf => {
+        return Array.prototype.map.call(new Uint8Array(buf), x => (('00' + x.toString(16)).slice(-2))).join('');
+    });
 }
 
 // ? what does this do?
 async function exportAndFormatCryptoKey(key) {
-  const exported = await window.crypto.subtle.exportKey(
-    "spki",
-    key
-  );
-  const exportedAsString = util.ab2str(exported);
-  const exportedAsBase64 = window.btoa(exportedAsString);
+    const exported = await window.crypto.subtle.exportKey(
+        "spki",
+        key
+    );
+    const exportedAsString = util.ab2str(exported);
+    const exportedAsBase64 = window.btoa(exportedAsString);
 
-  return `-----BEGIN PUBLIC KEY-----
+    return `-----BEGIN PUBLIC KEY-----
 ${exportedAsBase64.substring(0, 64)}
 ${exportedAsBase64.substring(64, 64 * 2)}
 ${exportedAsBase64.substring(64 * 2, 64 * 3)}
@@ -158,181 +155,135 @@ ${exportedAsBase64.substring(64 * 6, 64 * 6 + 8)}
 
 // Function requests the SecurityInfo of the established https connection
 // and extracts the public key.
-// return: sha521 of the public key 
-async function querySSLFingerprint(requestId){
+// return: sha521 of the public key
+// TODO: refactor / rewrite to return a Promise?
+async function querySSLFingerprint(requestId) {
 
-  // ! information about TLS connection of requestId, received through onHeadersReceived
-  // ! await to resolve the promise
-  var securityInfo =  await browser.webRequest.getSecurityInfo(requestId, {
-    "rawDER" : true,
-    "certificateChain" : true, // ? why is this needed? Isn't only the server certificate used, also present if certificateChain is false?
-   });
+    const securityInfo = await browser.webRequest.getSecurityInfo(requestId, {
+        "rawDER": true,
+    });
 
-  try {
-    // ! excludes weak or broken TLS connections
-    if (securityInfo.state === "secure" || securityInfo.state === "unsafe") {
-     
-      const serverCert= securityInfo.certificates[0];
+    try {
+        if (securityInfo.state === "secure" || securityInfo.state === "unsafe") {
 
-      // ! ASN1 encoded certificate data
-      // ? maybe rename stuff isn't really telling that this is a certificate
-      const stuff = new Uint8Array(serverCert.rawDER).buffer 
+            const serverCert = securityInfo.certificates[0];
 
-      // We collect the rawDER encoded certificate 
-      const asn1 = asn1js.fromBER(stuff);
-      if (asn1.offset === -1) {
-        throw new Error("Incorrect encoded ASN.1 data");
-      }
-      const cert_simpl = new pkijs.Certificate({ schema: asn1.result });
-      var pubKey = await cert_simpl.getPublicKey();
+            // raw ASN1 encoded certificate data
+            const rawDER = new Uint8Array(serverCert.rawDER).buffer
 
-      const exported = await exportAndFormatCryptoKey(pubKey);
-      // console.log(exported);
-      return await sha512(exported);
-    } else {
-      console.error("querySSLFingerprint: Cannot validate connection in state " +securityInfo.state );
+            // We collect the rawDER encoded certificate
+            const asn1 = asn1js.fromBER(rawDER);
+            if (asn1.offset === -1) {
+                // TODO: variable caught locally
+                throw new Error("Incorrect encoded ASN.1 data");
+            }
+            const cert_simpl = new pkijs.Certificate({schema: asn1.result});
+            var pubKey = await cert_simpl.getPublicKey();
+
+            const exported = await exportAndFormatCryptoKey(pubKey);
+            // console.log(exported);
+            return await sha512(exported);
+        } else {
+            console.error("querySSLFingerprint: Cannot validate connection in state " + securityInfo.state);
+        }
+    } catch (error) {
+        console.error("querySSLFingerprint: " + error);
     }
-  }
-  catch(error) {
-    console.error("querySSLFingerprint: "+error);
-  }
 }
 
-function listenerOnHeadersReceived(details) {
+// if the extension already saved a measurement for the given domain, this checks if the measurements equal,
+// otherwise the web extension asks the user whether to trust the website with the corresponding measurement
+async function checkMeasurement(measurement, attestationInfo) {
+    let url = new URL(SERVER_URL)
+    storage.getAttestationDomain(url.hostname).then(result => {
+        if (result == null) {
+            console.log("unknown domain, saving measurement!")
+            AttestationQueue[url.hostname] = {
+                trustedSince: new Date(),
+                lastTrusted: new Date(),
+                type: attestationInfo.technology,
+                measurement: measurement
+            }
+            injectDialog()
+        } else {
+            console.log("known measurement!")
+            storage.getAttestationDomain(url.hostname).then(stored => {
+                console.log("is equal? " + _.isEqual(measurement, stored.measurement))
+            })
+        }
+    })
+}
 
-  // ? remote attestation only once globaly?
-  if (isValidated){
-    // Perform remote attestion only once this needs more work.
-    // What about different tabs etc. 
-    // console.log("We did it already ... ");
+async function listenerOnHeadersReceived(details) {
+    // has to be executed before further web requests like fetchAttestationInfo
+    // TODO: error handling
+    const ssl_sha512 = await querySSLFingerprint(details.requestId)
+
+    // TODO: error handling
+    const attestationInfo = await fetchAttestationInfo(SERVER_URL + ATTESTATION_INFO_PATH)
+
+    // Request attestation report from VM
+    // TODO: error handling
+    const attestationReport = new attestation.AttesationReport(
+        await getFile(SERVER_URL + attestationInfo.path)
+    )
+
+    // TODO: error handling
+    // TODO: cache kds, because it rejects multiple quick requests
+    // Query the AMD key server for VCEK certificate using chip_id and TCB from report
+    const rawData = await getFile(getKdsURL(attestationReport.chip_id, attestationReport.committedTCB))
+
+    const asn1 = asn1js.fromBER(rawData);
+    if (asn1.offset === -1) {
+        throw new Error("Incorrect encoded ASN.1 data");
+    }
+
+    const vcek = new pkijs.Certificate({schema: asn1.result});
+
+    // Validate that the VCEK ic correctly signed by AMD root cert
+    // TODO: nop
+    validateWithCertChain(vcek);
+
+    // Hack: We cannot directly ask the cert object for the public key as
+    // it triggers a 'not supported' exception. Thus convert to JSON and back.
+    const jsonPubKey = vcek.subjectPublicKeyInfo.subjectPublicKey.toJSON();
+
+    // TODO: error handling
+    const pubKey = await importPubKey(util.hex_decode(jsonPubKey.valueBlock.valueHex))
+    if (await verifyMessage(pubKey, attestationReport.signature, attestationReport.getSignedData)) {
+
+        console.log("1. Attestation report has been validated by the AMD keyserver.");
+
+        // 2. Communication terminates inside the secured VM
+        // ! trick ssl connection is correct for now
+        if (true || util.arrayBufferToHex(attestationReport.report_data) === ssl_sha512) {
+            console.log("2. Communication terminates inside the secured VM: \n" + ssl_sha512);
+        } else {
+            console.log(" No, expected state:" + util.arrayBufferToHex(attestationReport.report_data) + " but received: " + ssl_sha512);
+        }
+
+        // 3. VM has been initialized in the expected state
+        console.log("3. Expected state: " + util.arrayBufferToHex(attestationReport.measurement))
+
+        await checkMeasurement(attestationReport.measurement, attestationInfo)
+    }
     return {};
-  } else {
-      // ! gets the public key of the host connection as sha512 hash
-      // ! for some reason, querySSLFingerprint has to be executed before fetchAttestationInfo. Otherwise, securityInfo is null
-      querySSLFingerprint(details.requestId).then(ssl_sha512 => {
-        
-        fetchAttestationInfo(SERVER_URL + ATTESTATION_INFO_PATH).then(attestationInfo => {
-
-          // ? set only when attestation actually went through?
-          isValidated=false;
-
-          // Request attesation report from VM 
-          getFile(SERVER_URL + attestationInfo.path).then(arrayBuffer => {
-
-            // Parse attesation report
-            const ar = new attestation.AttesationReport(arrayBuffer);
-
-            // Query the AMD key server for VCEK certificate using chip_id and TCB from report
-            getFile(getKdsURL(ar.chip_id,ar.committedTCB)).then(text => {
-
-              const asn1 = asn1js.fromBER(text);
-              if (asn1.offset === -1) {
-                throw new Error("Incorrect encoded ASN.1 data");
-              }
-              // ! this is the VCEK
-              var cert_simpl = new pkijs.Certificate({ schema: asn1.result });
-
-              // Validate that the VCEK ic correctly signed by AMD root cert
-              validateWithCertChain(cert_simpl);
-
-              // ! read public key out of attestation report through converting to json and back
-              // Hack: We cannot directly ask the cert object for the public key as
-              // it triggers a 'not supported' execption.  
-              const publicKeyInfo =  cert_simpl.subjectPublicKeyInfo;
-              // console.log(publicKeyInfo.subjectPublicKey.toJSON());
-              const jsonPubKey = publicKeyInfo.subjectPublicKey.toJSON();
-              // console.log("VCEK certificate included pub key: " + jsonPubKey.valueBlock.valueHex);
-              
-              importPubKey(util.hex_decode(jsonPubKey.valueBlock.valueHex)).then(pubKey => {
-                // ? what does this verify exactly? Just that the "hack" worked? -> is VCEK correct or was it manipulated?
-              if(verifyMessage(pubKey, ar.signature,ar.getSignedData)){
-                
-                console.log("1. Attestation report has been validated by the AMD keyserver.");
-
-                // console.log("saved: " + util.arrayBufferToHex(ar.measurment))
-                // storage.setAttestationDomain(SERVER_URL, new Date(), new Date(), attestationInfo.technology, ar.measurment).then(
-                //   result => {
-                //     storage.getAttestationDomain(SERVER_URL).then(
-                //       got => {
-                //         console.log("is equal? " + _.isEqual(ar.measurment, got.measurement) + " hallo")
-                //       },
-                //       reason => console.log(reason)
-                //     )
-                //   },
-                //   reason => console.log(reason)
-                // )
-
-                // storage.getAttestationDomain(SERVER_URL).then(
-                //   result => {
-                //     console.log("result ist " + result)
-                //     if (result == null) {
-                //       console.log("nicht vorhanden")
-                //       storage.setAttestationDomain(SERVER_URL, new Date(), new Date(), attestationInfo.technology, ar.measurment)
-                //     } else {
-                //       if (result.measurment == ar.measurment)
-                //         console.log("passt so")
-                //       else
-                //         console.log("passt nicht " + result.measurment + " " + ar.measurment)
-                //     }
-                //   }
-                // )
-                
-                // 2. Communication terminates inside the secured VM
-                // ! trick ssl connection is correct for now
-                if (true || util.arrayBufferToHex(ar.report_data) === ssl_sha512 ){
-                  console.log("2. Comnunication terminates inside the secured VM: \n" +ssl_sha512);
-                } else {
-                  console.log(" No, expected state:" + util.arrayBufferToHex(ar.report_data) + " but received: " +  ssl_sha512);
-                }
-
-                // ? Is the actual check if the ar.measurement is equal to the expected measurement missing here?
-                // TODO 3. VM has been initalized in the expected state
-                console.log("3. Expected state: " + util.arrayBufferToHex(ar.measurment))
-
-                let url = new URL(SERVER_URL)
-                storage.getAttestationDomain(url.hostname).then(result => {
-                  if (result == null) {
-                    console.log("unknown domain, saving measurement!")
-                    AttestationQueue[url.hostname] = {
-                      trustedSince : new Date(),
-                      lastTrusted : new Date(),
-                      type : attestationInfo.technology,
-                      measurement : ar.measurment
-                    }
-                    injectDialog()
-                    // storage.setAttestationDomain(SERVER_URL, new Date(), new Date(), attestationInfo.technology, ar.measurment)
-                  } else {
-                    console.log("known measurement!")
-                    storage.getAttestationDomain(url.hostname).then(stored => {
-                      console.log("is equal? " + _.isEqual(ar.measurment, stored.measurement))
-                    })
-                  }
-                })
-                // console.log(ar.parse_report);
-                }   
-              });          
-            });
-          });
-        })
-      })
-  }
-  return {};
 }
 
 async function listenerOnMessageReceived(message, sender, sendResponse) {
-  if (sender.id !== browser.runtime.id) {
-    // only accept messages by this extension
-    console.log("Message by unknown sender received: " + message)
-    return
-  }
-  console.log("Message to background received: " + message)
-  const url = new URL(message.url)
-  const domain = url.hostname
-  console.log(domain)
-  if (AttestationQueue.hasOwnProperty(domain)) {
-    await storage.setAttestationDomain(domain, AttestationQueue[domain])
-    delete AttestationQueue[domain]
-  }
+    if (sender.id !== browser.runtime.id) {
+        // only accept messages by this extension
+        console.log("Message by unknown sender received: " + message)
+        return
+    }
+    console.log("Message to background received: " + message)
+    const url = new URL(message.url)
+    const domain = url.hostname
+    console.log(domain)
+    if (AttestationQueue.hasOwnProperty(domain)) {
+        await storage.setAttestationDomain(domain, AttestationQueue[domain])
+        delete AttestationQueue[domain]
+    }
 }
 
 browser.runtime.onMessage.addListener(listenerOnMessageReceived)
@@ -340,15 +291,15 @@ browser.runtime.onMessage.addListener(listenerOnMessageReceived)
 // We need to register this listener, since we require the SecurityInfo object
 // to validate the public key of the SSL connection
 browser.webRequest.onHeadersReceived.addListener(
-  listenerOnHeadersReceived,          
-  {
-    urls: [ALL_URLS],
-    // only listen to the top level document getting loaded for now
-    // TODO needs more work! All connections should get verified
-    types: ["main_frame"]
-  },
-  // ! inside manifest file: plugin should run on all hosts (websites)
-  // ! though, only specific requests (to specific hosts) should be intercepted
-  // ? only for testing purposes, since in the end the plugin should check all requests?
-  ["blocking", "responseHeaders"]
+    listenerOnHeadersReceived,
+    {
+        urls: [ALL_URLS],
+        // only listen to the top level document getting loaded for now
+        // TODO needs more work! All connections should get verified
+        types: ["main_frame"]
+    },
+    // ! inside manifest file: plugin should run on all hosts (websites)
+    // ! though, only specific requests (to specific hosts) should be intercepted
+    // ? only for testing purposes, since in the end the plugin should check all requests?
+    ["blocking", "responseHeaders"]
 )

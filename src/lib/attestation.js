@@ -1,7 +1,7 @@
 import *  as util from "./util";
 
 // Parses the TCB information provided by 
-// the attesation report.
+// the attestation report.
 export class TCBVersion {
 
   constructor(arrayBuffer) {
@@ -131,7 +131,7 @@ export class AttesationReport {
   
   // uint8_t measurement[48];        /* 90h */
   // TODO: rename typo
-  get measurment(){
+  get measurement(){
     return this.arrayBuffer.slice(144,144+48);
   }
 
@@ -141,7 +141,7 @@ export class AttesationReport {
       Version: ${this.version}
       Guest SVN: ${this.guest_svn}
       Report Data: ${util.arrayBufferToHex(this.report_data)}
-      Measurement: ${util.arrayBufferToHex(this.measurment)}
+      Measurement: ${util.arrayBufferToHex(this.measurement)}
       Chip ID: ${util.arrayBufferToHex(this.chip_id)}
       Signature: ${util.arrayBufferToHex(this.signature)}
 

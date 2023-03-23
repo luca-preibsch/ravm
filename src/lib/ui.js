@@ -10,7 +10,8 @@ export function showTrustDialogue() {
 }
 
 export function injectDialog() {
-    console.log("injecting")
+    // TODO: be sure to use the correct tab; if the user switches tabs during the attestation, the injection might happen
+    // inside the wring tab
     browser.tabs.executeScript({
         file: "./trust-dialog.js"
     })
