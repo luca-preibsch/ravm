@@ -1,5 +1,5 @@
 import './style.css'
-// TODO: unique ids for html elements
+// TODO: unique ids for html elements (html-loader preprocessor?)
 import html from "./trust-dialog.html"
 import "../../style/button.css"
 
