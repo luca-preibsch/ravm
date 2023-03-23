@@ -3,7 +3,6 @@ import './style.css'
 import html from "./trust-dialog.html"
 import "../../style/button.css"
 
-console.log("hallo du schlingel!")
 const body = document.getElementsByTagName('body')[0]
 body.innerHTML = body.innerHTML + html
 
@@ -22,7 +21,6 @@ ignoreButton.addEventListener("click", () => {
 })
 
 trustButton.addEventListener("click",  () => {
-  console.log("sending message to background from: " + document.location.href)
   browser.runtime.sendMessage({
     url: document.location.href
   })
