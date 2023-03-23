@@ -17,7 +17,7 @@ const modal = document.querySelector("#modal")
 modal.showModal()
 
 ignoreButton.addEventListener("click", () => {
-  modal.close();
+  modal.close()
 })
 
 trustButton.addEventListener("click",  () => {
@@ -25,4 +25,5 @@ trustButton.addEventListener("click",  () => {
   browser.runtime.sendMessage({
     url: document.location.href
   })
+  modal.close()
 })

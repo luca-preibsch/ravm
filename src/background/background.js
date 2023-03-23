@@ -11,7 +11,8 @@ import { showTrustDialogue, injectDialog } from "../lib/ui"
 import ask from '../certificates/ask.der';
 import ark from '../certificates/ark.der';
 
-// Domain to observe 
+// Domain to observe
+const ALL_URLS = "*://*/*"
 const VM_DOMAIN="transparent-vm.net";
 const MEASURED_LOCATION= "*://"+VM_DOMAIN+"/*";
 // ! url to remote attestation report
@@ -176,16 +177,10 @@ async function querySSLFingerprint(requestId){
    });
 
   try {
-
-    if (securityInfo == null)
-      console.log("ist null")
-
     // ! excludes weak or broken TLS connections
     if (securityInfo.state === "secure" || securityInfo.state === "unsafe") {
      
       const serverCert= securityInfo.certificates[0];
-      console.log("hallo");
-      console.log(securityInfo.certificates[0].subject); 
 
       // ! ASN1 encoded certificate data
       // ? maybe rename stuff isn't really telling that this is a certificate
@@ -228,7 +223,7 @@ function listenerOnHeadersReceived(details) {
         fetchAttestationInfo(SERVER_URL + ATTESTATION_INFO_PATH).then(attestationInfo => {
 
           // ? set only when attestation actually went through?
-          isValidated=true;
+          isValidated=false;
 
           // Request attesation report from VM 
           getFile(SERVER_URL + attestationInfo.path).then(arrayBuffer => {
@@ -303,14 +298,21 @@ function listenerOnHeadersReceived(details) {
                 // TODO 3. VM has been initalized in the expected state
                 console.log("3. Expected state: " + util.arrayBufferToHex(ar.measurment))
 
-                storage.getAttestationDomain(SERVER_URL).then(result => {
+                let url = new URL(SERVER_URL)
+                storage.getAttestationDomain(url.hostname).then(result => {
                   if (result == null) {
                     console.log("unknown domain, saving measurement!")
+                    AttestationQueue[url.hostname] = {
+                      trustedSince : new Date(),
+                      lastTrusted : new Date(),
+                      type : attestationInfo.technology,
+                      measurement : ar.measurment
+                    }
                     injectDialog()
-                    storage.setAttestationDomain(SERVER_URL, new Date(), new Date(), attestationInfo.technology, ar.measurment)
+                    // storage.setAttestationDomain(SERVER_URL, new Date(), new Date(), attestationInfo.technology, ar.measurment)
                   } else {
                     console.log("known measurement!")
-                    storage.getAttestationDomain(SERVER_URL).then(stored => {
+                    storage.getAttestationDomain(url.hostname).then(stored => {
                       console.log("is equal? " + _.isEqual(ar.measurment, stored.measurement))
                     })
                   }
@@ -348,7 +350,12 @@ browser.runtime.onMessage.addListener(listenerOnMessageReceived)
 // to validate the public key of the SSL connection
 browser.webRequest.onHeadersReceived.addListener(
   listenerOnHeadersReceived,          
-  {urls: [MEASURED_LOCATION]},
+  {
+    urls: [ALL_URLS],
+    // only listen to the top level document getting loaded for now
+    // TODO needs more work! All connections should get verified
+    types: ["main_frame"]
+  },
   // ! inside manifest file: plugin should run on all hosts (websites)
   // ! though, only specific requests (to specific hosts) should be intercepted
   // ? only for testing purposes, since in the end the plugin should check all requests?
