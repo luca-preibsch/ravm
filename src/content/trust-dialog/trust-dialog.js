@@ -1,4 +1,5 @@
 import './style.css'
+// TODO: unique ids for html elements
 import html from "./trust-dialog.html"
 import "../../style/button.css"
 
@@ -26,4 +27,9 @@ trustButton.addEventListener("click",  () => {
     url: document.location.href
   })
   modal.close()
+})
+
+noTrustButton.addEventListener("click", () => {
+  // TODO: safe pages that are not trusted and do not trust in the futute
+  body.innerHTML = "Site is deemed unsafe!"
 })
