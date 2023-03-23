@@ -4,7 +4,7 @@ import _ from "lodash"
 
 import * as attestation from "../lib/attestation";
 import * as util from "../lib/util";
-import {fetchAttestationInfo} from "../lib/file"
+import {fetchArrayBuffer, fetchAttestationInfo} from "../lib/file"
 import * as storage from "../lib/storage"
 import {injectDialog} from "../lib/ui"
 
@@ -15,8 +15,6 @@ import ark from '../certificates/ark.der';
 const ALL_URLS = "*://*/*"
 const VM_DOMAIN = "transparent-vm.net";
 const MEASURED_LOCATION = "*://" + VM_DOMAIN + "/*";
-// ! url to remote attestation report
-// const REPORT_URL= "https://"+VM_DOMAIN+":8080/guest_report.bin"
 const SERVER_URL = "https://" + VM_DOMAIN + ":8080/"
 const ATTESTATION_INFO_PATH = "/remote-attestation.json"
 
@@ -41,20 +39,6 @@ function getKdsURL(chip_id, tcbObj) {
     url += "ucodeSPL=" + util.zeroPad(tcbObj.ucodeSPL, 2);
     //console.log(url);
     return url;
-}
-
-// Wrapper for fetch API
-// TODO: Error handling... 
-async function getFile(url) {
-
-    // console.log("fetch " + url);
-    const response = await fetch(url, {
-        method: 'GET',
-        // mode: 'cors',
-        cache: 'no-cache',
-        referrerPolicy: 'no-referrer'
-    })
-    return response.arrayBuffer();
 }
 
 // Fetch assets of the web extension such as ask and ark
@@ -102,7 +86,7 @@ async function validateWithCertChain(certificate) {
     const ask_cert = decodeCert(await loadData(ask));
     const ark_cert = decodeCert(await loadData(ark));
 
-    const text = await getFile(AMD_ARK_ASK_REVOKATION);
+    const text = await fetchArrayBuffer(AMD_ARK_ASK_REVOKATION);
 
     const crls = [];
     const crl = pkijs.CertificateRevocationList.fromBER(text);
@@ -225,13 +209,13 @@ async function listenerOnHeadersReceived(details) {
     // Request attestation report from VM
     // TODO: error handling
     const attestationReport = new attestation.AttesationReport(
-        await getFile(SERVER_URL + attestationInfo.path)
+        await fetchArrayBuffer(SERVER_URL + attestationInfo.path)
     )
 
     // TODO: error handling
     // TODO: cache kds, because it rejects multiple quick requests
     // Query the AMD key server for VCEK certificate using chip_id and TCB from report
-    const rawData = await getFile(getKdsURL(attestationReport.chip_id, attestationReport.committedTCB))
+    const rawData = await fetchArrayBuffer(getKdsURL(attestationReport.chip_id, attestationReport.committedTCB))
 
     const asn1 = asn1js.fromBER(rawData);
     if (asn1.offset === -1) {
@@ -276,10 +260,8 @@ async function listenerOnMessageReceived(message, sender, sendResponse) {
         console.log("Message by unknown sender received: " + message)
         return
     }
-    console.log("Message to background received: " + message)
     const url = new URL(message.url)
     const domain = url.hostname
-    console.log(domain)
     if (AttestationQueue.hasOwnProperty(domain)) {
         await storage.setAttestationDomain(domain, AttestationQueue[domain])
         delete AttestationQueue[domain]

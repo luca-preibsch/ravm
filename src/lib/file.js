@@ -1,11 +1,15 @@
 
 // TODO: error handling
-export async function fetchFile(url) {
+async function fetchFile(url) {
     return await fetch(url, {
         method: "GET",
         cache: "no-cache",
         referrerPolicy: "no-referrer"
     })
+}
+
+export async function fetchArrayBuffer(url) {
+    return await (await fetchFile(url)).arrayBuffer()
 }
 
 export async function fetchAttestationInfo(url) {
