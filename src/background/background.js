@@ -4,9 +4,9 @@ import _ from "lodash"
 
 import * as attestation from "../lib/attestation";
 import * as util from "../lib/util";
-import { fetchFile, fetchAttestationInfo } from "../lib/file"
+import {fetchAttestationInfo} from "../lib/file"
 import * as storage from "../lib/storage"
-import { showTrustDialogue, injectDialog } from "../lib/ui"
+import {injectDialog} from "../lib/ui"
 
 import ask from '../certificates/ask.der';
 import ark from '../certificates/ark.der';
@@ -67,34 +67,29 @@ async function loadData(resourcePath) {
 }
 
 async function importPubKey(rawData) {
-
-  const pubKeyObj = await window.crypto.subtle.importKey(
-       "raw",
-       rawData, 
-       {
+  return await window.crypto.subtle.importKey(
+      "raw",
+      rawData,
+      {
         name: "ECDSA",
         namedCurve: "P-384"
-       },
-       true,
-       ["verify"]
-    );
-
-  return pubKeyObj;
+      },
+      true,
+      ["verify"]
+  );
 }
 
 async function verifyMessage(pubKey, signature, data ){
-
-  const result =  await window.crypto.subtle.verify(
-    {
-      name: "ECDSA",
-      namedCurve: "P-384",
-      hash: {name: "SHA-384"},
-    },
-    pubKey, 
-    signature, 
-    data
-    );
-  return result;
+  return await window.crypto.subtle.verify(
+      {
+        name: "ECDSA",
+        namedCurve: "P-384",
+        hash: {name: "SHA-384"},
+      },
+      pubKey,
+      signature,
+      data
+  );
 }
 
 // Validate the vcek certificate using the AMD provided keys
@@ -150,18 +145,15 @@ async function exportAndFormatCryptoKey(key) {
   const exportedAsString = util.ab2str(exported);
   const exportedAsBase64 = window.btoa(exportedAsString);
 
-  const pemExported =
-`-----BEGIN PUBLIC KEY-----
-${exportedAsBase64.substring(0,64)}
-${exportedAsBase64.substring(64,64*2)}
-${exportedAsBase64.substring(64*2,64*3)}
-${exportedAsBase64.substring(64*3,64*4)}
-${exportedAsBase64.substring(64*4,64*5)}
-${exportedAsBase64.substring(64*5,64*6)}
-${exportedAsBase64.substring(64*6,64*6+8)}
+  return `-----BEGIN PUBLIC KEY-----
+${exportedAsBase64.substring(0, 64)}
+${exportedAsBase64.substring(64, 64 * 2)}
+${exportedAsBase64.substring(64 * 2, 64 * 3)}
+${exportedAsBase64.substring(64 * 3, 64 * 4)}
+${exportedAsBase64.substring(64 * 4, 64 * 5)}
+${exportedAsBase64.substring(64 * 5, 64 * 6)}
+${exportedAsBase64.substring(64 * 6, 64 * 6 + 8)}
 -----END PUBLIC KEY-----\n`;
-  
-  return pemExported;
 }
 
 // Function requests the SecurityInfo of the established https connection
@@ -196,8 +188,7 @@ async function querySSLFingerprint(requestId){
 
       const exported = await exportAndFormatCryptoKey(pubKey);
       // console.log(exported);
-      var sha = await sha512(exported);      
-      return sha;
+      return await sha512(exported);
     } else {
       console.error("querySSLFingerprint: Cannot validate connection in state " +securityInfo.state );
     }
