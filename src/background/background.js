@@ -6,7 +6,7 @@ import * as attestation from "../lib/attestation";
 import * as util from "../lib/util";
 import {fetchArrayBuffer, fetchAttestationInfo} from "../lib/file"
 import * as storage from "../lib/storage"
-import {injectDialog} from "../lib/ui"
+import * as ui from "../lib/ui"
 
 import ask from '../certificates/ask.der';
 import ark from '../certificates/ark.der';
@@ -187,7 +187,7 @@ async function checkMeasurement(measurement, attestationInfo) {
                 type: attestationInfo.technology,
                 measurement: measurement
             }
-            injectDialog()
+            ui.showDialog(ui.DialogType.newDomain, url)
         } else {
             console.log("known measurement!")
             storage.getTrusted(url.hostname).then(stored => {
