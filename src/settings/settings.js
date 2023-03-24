@@ -12,7 +12,7 @@ document.getElementById("testButton").onclick = function () { saveItem(counter++
 
 function loadAllItems() {
     table.innerHTML = ""
-    storage.getAllAttestationDomains().then((items) => {
+    storage.getTrusted().then((items) => {
 
         let domains = Object.keys(items)
         for (let domain of domains) {
@@ -32,7 +32,7 @@ function loadAllItems() {
 }
 
 function saveItem(domain, trustedSince, lastTrusted, type, measurement) {
-    storage.setAttestationDomain(domain, trustedSince, lastTrusted, type, measurement)
+    storage.setTrusted(domain, trustedSince, lastTrusted, type, measurement)
     console.log("save")
     loadAllItems()
 }

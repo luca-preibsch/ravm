@@ -117,7 +117,6 @@ async function sha512(str) {
     });
 }
 
-// ? what does this do?
 async function exportAndFormatCryptoKey(key) {
     const exported = await window.crypto.subtle.exportKey(
         "spki",
@@ -179,7 +178,7 @@ async function querySSLFingerprint(requestId) {
 // otherwise the web extension asks the user whether to trust the website with the corresponding measurement
 async function checkMeasurement(measurement, attestationInfo) {
     let url = new URL(SERVER_URL)
-    storage.getAttestationDomain(url.hostname).then(result => {
+    storage.getTrusted(url.hostname).then(result => {
         if (result == null) {
             console.log("unknown domain, saving measurement!")
             AttestationQueue[url.hostname] = {
@@ -191,7 +190,7 @@ async function checkMeasurement(measurement, attestationInfo) {
             injectDialog()
         } else {
             console.log("known measurement!")
-            storage.getAttestationDomain(url.hostname).then(stored => {
+            storage.getTrusted(url.hostname).then(stored => {
                 console.log("is equal? " + _.isEqual(measurement, stored.measurement))
             })
         }
@@ -263,7 +262,7 @@ async function listenerOnMessageReceived(message, sender, sendResponse) {
     const url = new URL(message.url)
     const domain = url.hostname
     if (AttestationQueue.hasOwnProperty(domain)) {
-        await storage.setAttestationDomain(domain, AttestationQueue[domain])
+        await storage.setTrustedObj(domain, AttestationQueue[domain])
         delete AttestationQueue[domain]
     }
 }

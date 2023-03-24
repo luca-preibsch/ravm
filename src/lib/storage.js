@@ -1,5 +1,5 @@
 
-export function setAttestationDomain(domain, trustedSince, lastTrusted, type, measurement) {
+export function setTrusted(domain, trustedSince, lastTrusted, type, measurement) {
     return browser.storage.local.set({
         [domain] : {
             trustedSince : trustedSince,
@@ -10,21 +10,21 @@ export function setAttestationDomain(domain, trustedSince, lastTrusted, type, me
     })
 }
 
-export function setAttestationDomainInfoObj(domain, infoObj) {
+export function setTrustedObj(domain, infoObj) {
     return browser.storage.local.set({
         [domain] : infoObj
     })
 }
 
-export async function getAllAttestationDomains() {
-    return browser.storage.local.get(null)
+export async function getTrusted(domain) {
+    if (domain) {
+        const result = await browser.storage.local.get(domain)
+        return result[domain]
+    } else {
+        return browser.storage.local.get(null)
+    }
 }
 
-export async function getAttestationDomain(domain) {
-    const result = await browser.storage.local.get(domain)
-    return result[domain]
-}
-
-export function removeAttestationDomain(domain) {
+export function removeTrusted(domain) {
     return browser.storage.local.remove(domain)
 }
