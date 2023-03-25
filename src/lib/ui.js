@@ -10,14 +10,15 @@ export function showTrustDialogue() {
 }
 
 // TODO Texte überarbeiten
-export function showDialog(type, domain) {
+export function showDialog(type, domain, tabId) {
     switch (type) {
         case DialogType.newDomain:
             injectDialog(
                 "Remote Attestation",
                 "This site offers remote attestation, do you want to trust it?",
                 domain,
-                type
+                type,
+                tabId
             )
             break
         case DialogType.measurementDiffers:
@@ -25,7 +26,8 @@ export function showDialog(type, domain) {
                 "WARNING: Remote Attestation",
                 "You recently trusted this website, but the remote attestation measurement changed!",
                 domain,
-                type
+                type,
+                tabId
             )
             break
         case DialogType.siteBlocked:
@@ -33,7 +35,8 @@ export function showDialog(type, domain) {
                 "BLOCKED: Remote Attestation",
                 "You blocked this website!",
                 domain,
-                type
+                type,
+                tabId
             )
             break
     }
@@ -45,7 +48,7 @@ export const DialogType = {
     siteBlocked: 2
 }
 
-function injectDialog(title, description, domain, type) {
+function injectDialog(title, description, domain, type, tabId) {
     const param = {
         title: title,
         description: description,
@@ -54,10 +57,10 @@ function injectDialog(title, description, domain, type) {
     }
     // TODO: be sure to use the correct tab; if the user switches tabs during the attestation, the injection might happen
     // inside the wrong tab
-    browser.tabs.executeScript({
+    browser.tabs.executeScript(tabId, {
         code: 'const param = ' + JSON.stringify(param)
     }, function () {
-        browser.tabs.executeScript({
+        browser.tabs.executeScript(tabId, {
             file: "./trust-dialog.js"
         })
     })

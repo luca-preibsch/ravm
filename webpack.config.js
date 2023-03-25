@@ -76,7 +76,6 @@ module.exports = [
       'background' : path.resolve(__dirname, 'src', 'background', 'background.js'),
       'popup' : path.resolve(__dirname, 'src', 'popup', 'popup.js'),
       'settings' : path.resolve(__dirname, 'src', 'settings', 'settings.js'),
-      'trust-dialogue' : path.resolve(__dirname, 'src', 'trust-dialogue', 'trust-dialogue.js'),
       'trust-dialog' : path.resolve(__dirname, 'src', 'content', 'trust-dialog', 'trust-dialog.js'),
     },
     output: {

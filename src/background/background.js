@@ -176,7 +176,7 @@ async function querySSLFingerprint(requestId) {
 
 // if the extension already saved a measurement for the given domain, this checks if the measurements equal,
 // otherwise the web extension asks the user whether to trust the website with the corresponding measurement
-async function checkMeasurement(measurement, attestationInfo) {
+async function checkMeasurement(measurement, attestationInfo, tabId) {
     let url = new URL(SERVER_URL)
     storage.getTrusted(url.hostname).then(result => {
         if (result == null) {
@@ -187,7 +187,7 @@ async function checkMeasurement(measurement, attestationInfo) {
                 type: attestationInfo.technology,
                 measurement: measurement
             }
-            ui.showDialog(ui.DialogType.newDomain, url)
+            ui.showDialog(ui.DialogType.newDomain, url, tabId)
         } else {
             console.log("known measurement!")
             storage.getTrusted(url.hostname).then(stored => {
@@ -248,7 +248,7 @@ async function listenerOnHeadersReceived(details) {
         // 3. VM has been initialized in the expected state
         console.log("3. Expected state: " + util.arrayBufferToHex(attestationReport.measurement))
 
-        await checkMeasurement(attestationReport.measurement, attestationInfo)
+        await checkMeasurement(attestationReport.measurement, attestationInfo, details.tabId)
     }
     return {};
 }
