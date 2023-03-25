@@ -4,7 +4,7 @@ import _ from "lodash"
 
 import * as attestation from "../lib/attestation";
 import * as util from "../lib/util";
-import {fetchArrayBuffer, fetchAttestationInfo} from "../lib/file"
+import {fetchArrayBuffer, fetchAttestationInfo, getVCEK} from "../lib/file"
 import * as storage from "../lib/storage"
 import * as ui from "../lib/ui"
 
@@ -23,23 +23,10 @@ const ATTESTATION_INFO_PATH = "/remote-attestation.json"
 const VM_MEASUREMENT = "";
 
 // AMD key server
-const KDSINF = "https://kdsintf.amd.com/vcek/v1/Milan/";
 const AMD_ARK_ASK_REVOKATION = "https://kdsintf.amd.com/vcek/v1/Milan/crl"
 
 // Queue of domains that use RemoteAttestation, but need input by the user to either trust or don't trust
 const AttestationQueue = {}
-
-// Query to Amd key sever including the used TCB  
-// https://kdsintf.amd.com/vcek/v1/Milan/<5b-machine-id-a2654>/?blSPL=02&teeSPL=00&snpSPL=06&ucodeSPL=55
-function getKdsURL(chip_id, tcbObj) {
-    var url = KDSINF + util.arrayBufferToHex(chip_id, false) + "?";
-    url += "blSPL=" + util.zeroPad(tcbObj.blSPL, 2) + "&";
-    url += "teeSPL=" + util.zeroPad(tcbObj.teeSPL, 2) + "&";
-    url += "snpSPL=" + util.zeroPad(tcbObj.snpSPL, 2) + "&";
-    url += "ucodeSPL=" + util.zeroPad(tcbObj.ucodeSPL, 2);
-    //console.log(url);
-    return url;
-}
 
 // Fetch assets of the web extension such as ask and ark
 async function loadData(resourcePath) {
@@ -180,6 +167,7 @@ async function checkMeasurement(measurement, attestationInfo, tabId) {
     let url = new URL(SERVER_URL)
     storage.getTrusted(url.hostname).then(result => {
         if (result == null) {
+            // this is a domain with no recordings -> ask the user what to do
             console.log("unknown domain, saving measurement!")
             AttestationQueue[url.hostname] = {
                 trustedSince: new Date(),
@@ -187,17 +175,27 @@ async function checkMeasurement(measurement, attestationInfo, tabId) {
                 type: attestationInfo.technology,
                 measurement: measurement
             }
-            ui.showDialog(ui.DialogType.newDomain, url, tabId)
+            ui.showDialog(ui.DialogType.newDomain, url.hostname, tabId)
         } else {
+            // this domain has recordings
             console.log("known measurement!")
             storage.getTrusted(url.hostname).then(stored => {
-                console.log("is equal? " + _.isEqual(measurement, stored.measurement))
+                if (_.isEqual(measurement, stored.measurement)) {
+                    // the current measurement does not equal the one stored -> ask the user what to do
+                    // TODO: implement
+                    ui.showDialog(ui.DialogType.measurementDiffers, url.hostname, tabId)
+                }
             })
         }
     })
 }
 
 async function listenerOnHeadersReceived(details) {
+    if (details.tabId === -1) {
+        console.log("header from non-tab received")
+        return {}
+    }
+
     // has to be executed before further web requests like fetchAttestationInfo
     // TODO: error handling
     const ssl_sha512 = await querySSLFingerprint(details.requestId)
@@ -211,17 +209,7 @@ async function listenerOnHeadersReceived(details) {
         await fetchArrayBuffer(SERVER_URL + attestationInfo.path)
     )
 
-    // TODO: error handling
-    // TODO: cache kds, because it rejects multiple quick requests
-    // Query the AMD key server for VCEK certificate using chip_id and TCB from report
-    const rawData = await fetchArrayBuffer(getKdsURL(attestationReport.chip_id, attestationReport.committedTCB))
-
-    const asn1 = asn1js.fromBER(rawData);
-    if (asn1.offset === -1) {
-        throw new Error("Incorrect encoded ASN.1 data");
-    }
-
-    const vcek = new pkijs.Certificate({schema: asn1.result});
+    const vcek = await getVCEK(attestationReport.chip_id, attestationReport.committedTCB)
 
     // Validate that the VCEK ic correctly signed by AMD root cert
     // TODO: nop
