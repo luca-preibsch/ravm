@@ -3,6 +3,8 @@ import './style.css'
 import html from "./trust-dialog.html"
 import "../../style/button.css"
 
+console.log("hier!!!")
+
 const config = param
 
 const body = document.getElementsByTagName('body')[0]
@@ -22,7 +24,10 @@ titleText.innerHTML = config.title
 domainText.innerHTML = config.domain
 descriptionText.innerHTML = config.description
 
-modal.showModal()
+console.log("hier!!!")
+
+if (!modal.open)
+  modal.showModal()
 
 ignoreButton.addEventListener("click", () => {
   modal.close()

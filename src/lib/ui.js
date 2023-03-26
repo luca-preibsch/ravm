@@ -49,19 +49,22 @@ export const DialogType = {
 }
 
 function injectDialog(title, description, domain, type, tabId) {
+    console.log("injecting into tab " + tabId)
+
     const param = {
         title: title,
         description: description,
         domain: domain,
         type: type,
     }
+
     // TODO: be sure to use the correct tab; if the user switches tabs during the attestation, the injection might happen
     // inside the wrong tab
     browser.tabs.executeScript(tabId, {
-        code: 'const param = ' + JSON.stringify(param)
+        code: 'const param = ' + JSON.stringify(param),
     }, function () {
         browser.tabs.executeScript(tabId, {
-            file: "./trust-dialog.js"
+            file: "./trust-dialog.js",
         })
     })
 }

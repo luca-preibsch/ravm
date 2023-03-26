@@ -191,6 +191,15 @@ async function checkMeasurement(measurement, attestationInfo, tabId) {
 }
 
 async function listenerOnHeadersReceived(details) {
+    console.log("received")
+    console.log(details)
+
+    // details.fromCache ||
+    if (details.statusCode === 304) {
+        console.log("skipping")
+        return {}
+    }
+
     if (details.tabId === -1) {
         console.log("header from non-tab received")
         return {}

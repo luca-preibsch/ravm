@@ -12,8 +12,9 @@
     "webRequest", 
     "webRequestBlocking",
     "activeTab",
+    "tabs",
     "*://transparent-vm.net/*",
-    "*://*/*"
+    "<all_urls>"
   ],
 
   "background": {
