@@ -34,14 +34,18 @@ import "../../style/button.css"
 
     trustButton.addEventListener("click",  () => {
       browser.runtime.sendMessage({
+        trust: true,
         url: document.location.href
       })
       modal.close()
     })
 
     noTrustButton.addEventListener("click", () => {
-      // TODO: safe pages that are not trusted and do not trust in the future
       body.innerHTML = "Site is deemed unsafe!"
+      browser.runtime.sendMessage({
+        trust: false,
+        url: document.location.href
+      })
     })
 
     titleText.innerHTML = m.title

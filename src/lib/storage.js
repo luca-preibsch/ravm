@@ -1,3 +1,4 @@
+const UNTRUSTED = "untrusted"
 
 export function setTrusted(domain, trustedSince, lastTrusted, type, measurement) {
     return browser.storage.local.set({
@@ -27,4 +28,20 @@ export async function getTrusted(domain) {
 
 export function removeTrusted(domain) {
     return browser.storage.local.remove(domain)
+}
+
+// TODO switch auf IndexedDB
+export async function setUntrusted(domain) {
+    let untrusted = await browser.storage.local.get(UNTRUSTED)
+
+    if (Object.keys(untrusted).length === 0) {
+        untrusted = [domain]
+    } else {
+        if (!untrusted[UNTRUSTED].includes(domain))
+            untrusted[UNTRUSTED].push(domain)
+    }
+
+    return browser.storage.local.set({
+        [UNTRUSTED] : untrusted
+    })
 }

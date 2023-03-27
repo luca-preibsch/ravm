@@ -259,8 +259,13 @@ async function listenerOnMessageReceived(message, sender, sendResponse) {
     const url = new URL(message.url)
     const domain = url.hostname
     if (AttestationQueue.hasOwnProperty(domain)) {
-        await storage.setTrustedObj(domain, AttestationQueue[domain])
-        delete AttestationQueue[domain]
+        if (message.trust) {
+            await storage.setTrustedObj(domain, AttestationQueue[domain])
+            delete AttestationQueue[domain]
+        } else {
+            await storage.setUntrusted(domain)
+            delete AttestationQueue[domain]
+        }
     }
 }
 
