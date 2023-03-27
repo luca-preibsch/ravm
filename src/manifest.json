@@ -12,6 +12,7 @@
     "webRequest", 
     "webRequestBlocking",
     "activeTab",
+    "scripting",
     "tabs",
     "*://transparent-vm.net/*",
     "<all_urls>"

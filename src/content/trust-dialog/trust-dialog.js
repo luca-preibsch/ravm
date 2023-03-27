@@ -3,7 +3,7 @@ import './style.css'
 import html from "./trust-dialog.html"
 import "../../style/button.css"
 
-console.log("hier!!!")
+console.log("still here!")
 
 const config = param
 
@@ -23,8 +23,6 @@ const modal = document.querySelector("#modal")
 titleText.innerHTML = config.title
 domainText.innerHTML = config.domain
 descriptionText.innerHTML = config.description
-
-console.log("hier!!!")
 
 if (!modal.open)
   modal.showModal()

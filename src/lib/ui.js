@@ -1,4 +1,3 @@
-
 export function showTrustDialogue() {
     let createData = {
         type: "detached_panel",
@@ -51,20 +50,107 @@ export const DialogType = {
 function injectDialog(title, description, domain, type, tabId) {
     console.log("injecting into tab " + tabId)
 
-    const param = {
+    const args = {
         title: title,
         description: description,
         domain: domain,
         type: type,
     }
 
-    // TODO: be sure to use the correct tab; if the user switches tabs during the attestation, the injection might happen
-    // inside the wrong tab
     browser.tabs.executeScript(tabId, {
-        code: 'const param = ' + JSON.stringify(param),
-    }, function () {
+        code: 'const param = ' + JSON.stringify(args),
+    }).then(() => {
         browser.tabs.executeScript(tabId, {
             file: "./trust-dialog.js",
+        }).catch((e) => {
+            console.log("Error while injecting JavaScript: " + e)
         })
+    }, (e) => {
+        console.log("Error while injecting param: " + e)
     })
+
+
+    // Manifest v3 tests:
+
+    // browser.scripting.executeScript({
+    //     target: { tabId: tabId },
+    //     args: [{title, description, domain, type}],
+    //     func: vars => {
+    //         Object.assign(self, vars)
+    //         return undefined
+    //     },
+    // }).then(() => {
+    //     browser.scripting.executeScript({
+    //         target: { tabId: tabId },
+    //         files: [ "./trust-dialog.js" ]
+    //     }).catch((e) => {
+    //         console.log("Error while injecting JavaScript: " + e)
+    //     })
+    // }, (e) => {
+    //     console.log("Error while injecting param: " + e)
+    // })
+    //
+    // browser.scripting.executeScript({
+    //     target: { tabId: tabId },
+    //     files: ["./trust-dialog.js"],
+    // }).then(() => {
+    //     console.log("we are here!")
+    //     browser.scripting.executeScript({
+    //         target: { tabId: tabId },
+    //         args: [title, description, domain, type],
+    //         func: (...args) => self.dialog(...args),
+    //     }).catch((e) => {
+    //         console.log("Error while executing dialog: " + e)
+    //     })
+    //     console.log("now here")
+    // }, (e) => {
+    //     console.log("Error while injecting JavaScript: " + e)
+    // })
+
+    // browser.scripting.executeScript({
+    //     target: { tabId: tabId },
+    //     args: [title, description, domain, type],
+    //     func: (title, description, domain, type) => {
+    //         console.log("Hallo!")
+    //         console.log(html)
+    //         // import './style.css'
+    //         // import html from "../content/trust-dialog/trust-dialog.html"
+    //         // import "../../style/button.css"
+    //
+    //         const body = document.getElementsByTagName('body')[0]
+    //         body.innerHTML = body.innerHTML + html
+    //
+    //         const titleText = document.getElementById("title")
+    //         const domainText = document.getElementById("domain")
+    //         const descriptionText = document.getElementById("description")
+    //         const ignoreButton = document.getElementById("ignore-button")
+    //         const noTrustButton = document.getElementById("do-not-trust-button")
+    //         const trustButton = document.getElementById("trust-button")
+    //         const modal = document.querySelector("#modal")
+    //
+    //         titleText.innerHTML = title
+    //         domainText.innerHTML = domain
+    //         descriptionText.innerHTML = description
+    //
+    //         if (!modal.open)
+    //             modal.showModal()
+    //
+    //         ignoreButton.addEventListener("click", () => {
+    //             modal.close()
+    //         })
+    //
+    //         trustButton.addEventListener("click",  () => {
+    //             browser.runtime.sendMessage({
+    //                 url: document.location.href
+    //             })
+    //             modal.close()
+    //         })
+    //
+    //         noTrustButton.addEventListener("click", () => {
+    //             // TODO: safe pages that are not trusted and do not trust in the future
+    //             body.innerHTML = "Site is deemed unsafe!"
+    //         })
+    //     }
+    // })
+
 }

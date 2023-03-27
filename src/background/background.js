@@ -194,8 +194,8 @@ async function listenerOnHeadersReceived(details) {
     console.log("received")
     console.log(details)
 
-    // details.fromCache ||
-    if (details.statusCode === 304) {
+    // details.fromCache || details.statusCode === 304
+    if (details.statusCode !== 200) {
         console.log("skipping")
         return {}
     }
