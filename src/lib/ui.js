@@ -57,18 +57,26 @@ function injectDialog(title, description, domain, type, tabId) {
         type: type,
     }
 
-    browser.tabs.executeScript(tabId, {
-        code: 'const param = ' + JSON.stringify(args),
-    }).then(() => {
-        browser.tabs.executeScript(tabId, {
-            file: "./trust-dialog.js",
-        }).catch((e) => {
-            console.log("Error while injecting JavaScript: " + e)
-        })
-    }, (e) => {
-        console.log("Error while injecting param: " + e)
-    })
+    // works on first load
+    // browser.tabs.executeScript(tabId, {
+    //     code: 'const param = ' + JSON.stringify(args),
+    // }).then(() => {
+    //     browser.tabs.executeScript(tabId, {
+    //         file: "./trust-dialog.js",
+    //     }).catch((e) => {
+    //         console.log("Error while injecting JavaScript: " + e)
+    //     })
+    // }, (e) => {
+    //     console.log("Error while injecting param: " + e)
+    // })
 
+    // works on first load
+    browser.scripting.executeScript({
+        target: { tabId: tabId },
+        files: [ "./trust-dialog.js" ],
+    }).then(() => {
+        browser.tabs.sendMessage(tabId, args)
+    }, console.log).catch(console.log)
 
     // Manifest v3 tests:
 

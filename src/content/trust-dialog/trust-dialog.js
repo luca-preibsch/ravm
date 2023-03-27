@@ -3,42 +3,52 @@ import './style.css'
 import html from "./trust-dialog.html"
 import "../../style/button.css"
 
-console.log("still here!")
+(function () {
+  if (window.hasRun) {
+    console.log("has run")
+    return;
+  }
+  window.hasRun = true;
 
-const config = param
+  console.log("fresh run")
 
-const body = document.getElementsByTagName('body')[0]
-body.innerHTML = body.innerHTML + html
+  browser.runtime.onMessage.addListener((m) => {
+    console.log("now listening!")
 
-// html injected
+    const body = document.getElementsByTagName('body')[0]
+    body.innerHTML = body.innerHTML + html
 
-const titleText = document.getElementById("title")
-const domainText = document.getElementById("domain")
-const descriptionText = document.getElementById("description")
-const ignoreButton = document.getElementById("ignore-button")
-const noTrustButton = document.getElementById("do-not-trust-button")
-const trustButton = document.getElementById("trust-button")
-const modal = document.querySelector("#modal")
+    // html injected
 
-titleText.innerHTML = config.title
-domainText.innerHTML = config.domain
-descriptionText.innerHTML = config.description
+    const titleText = document.getElementById("title")
+    const domainText = document.getElementById("domain")
+    const descriptionText = document.getElementById("description")
+    const ignoreButton = document.getElementById("ignore-button")
+    const noTrustButton = document.getElementById("do-not-trust-button")
+    const trustButton = document.getElementById("trust-button")
+    const modal = document.querySelector("#modal")
 
-if (!modal.open)
-  modal.showModal()
+    ignoreButton.addEventListener("click", () => {
+      modal.close()
+    })
 
-ignoreButton.addEventListener("click", () => {
-  modal.close()
-})
+    trustButton.addEventListener("click",  () => {
+      browser.runtime.sendMessage({
+        url: document.location.href
+      })
+      modal.close()
+    })
 
-trustButton.addEventListener("click",  () => {
-  browser.runtime.sendMessage({
-    url: document.location.href
+    noTrustButton.addEventListener("click", () => {
+      // TODO: safe pages that are not trusted and do not trust in the future
+      body.innerHTML = "Site is deemed unsafe!"
+    })
+
+    titleText.innerHTML = m.title
+    domainText.innerHTML = m.domain
+    descriptionText.innerHTML = m.description
+
+    if (!modal.open)
+      modal.showModal()
   })
-  modal.close()
-})
-
-noTrustButton.addEventListener("click", () => {
-  // TODO: safe pages that are not trusted and do not trust in the future
-  body.innerHTML = "Site is deemed unsafe!"
-})
+})()
