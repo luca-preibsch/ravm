@@ -180,7 +180,7 @@ async function checkMeasurement(measurement, attestationInfo, tabId) {
             // this domain has recordings
             console.log("known measurement!")
             storage.getTrusted(url.hostname).then(stored => {
-                if (_.isEqual(measurement, stored.measurement)) {
+                if (!_.isEqual(measurement, stored.measurement)) {
                     // the current measurement does not equal the one stored -> ask the user what to do
                     // TODO: implement
                     ui.showDialog(ui.DialogType.measurementDiffers, url.hostname, tabId)
