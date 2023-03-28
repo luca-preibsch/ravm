@@ -263,7 +263,16 @@ async function listenerOnMessageReceived(message, sender, sendResponse) {
             await storage.setTrustedObj(domain, AttestationQueue[domain])
             delete AttestationQueue[domain]
         } else {
+            console.log("hinzufügen gestartet")
+            // TODO pro Zeile console.log für debugging
             await storage.setUntrusted(domain)
+            // await storage.setUntrusted(domain)
+            // await storage.setUntrusted("test1")
+            // await storage.setUntrusted("test2")
+            // await storage.setUntrusted("test3")
+            // console.log("is " + await storage.isUntrusted("test1"))
+            // await storage.removeUntrusted("test1")
+            console.log("hinzufügen beendet")
             delete AttestationQueue[domain]
         }
     }

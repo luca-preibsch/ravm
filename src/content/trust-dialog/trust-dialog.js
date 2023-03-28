@@ -13,7 +13,7 @@ import "../../style/button.css"
   console.log("fresh run")
 
   browser.runtime.onMessage.addListener((m) => {
-    console.log("now listening!")
+    console.log("Nachricht erhalten! " + m)
 
     const body = document.getElementsByTagName('body')[0]
     body.innerHTML = body.innerHTML + html
@@ -41,6 +41,7 @@ import "../../style/button.css"
     })
 
     noTrustButton.addEventListener("click", () => {
+      modal.close()
       body.innerHTML = "Site is deemed unsafe!"
       browser.runtime.sendMessage({
         trust: false,
