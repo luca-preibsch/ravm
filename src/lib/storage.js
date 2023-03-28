@@ -1,5 +1,6 @@
 const UNTRUSTED = "untrusted"
 
+// TODO switch Trusted to use a category like untrusted?
 export function setTrusted(domain, trustedSince, lastTrusted, type, measurement) {
     return browser.storage.local.set({
         [domain] : {
@@ -30,7 +31,6 @@ export function removeTrusted(domain) {
     return browser.storage.local.remove(domain)
 }
 
-// TODO switch auf IndexedDB
 export async function setUntrusted(domain) {
     let untrusted = await browser.storage.local.get(UNTRUSTED)
 
@@ -44,4 +44,27 @@ export async function setUntrusted(domain) {
     return browser.storage.local.set({
         [UNTRUSTED] : untrusted
     })
+}
+
+export async function isUntrusted(domain) {
+    const untrusted = await browser.storage.local.get(UNTRUSTED)
+    if (Object.keys(untrusted).length === 0)
+        return false
+    return !untrusted[UNTRUSTED].includes(domain);
+
+}
+
+export async function getUntrusted() {
+    const untrusted = await browser.storage.local.get(UNTRUSTED)
+    if (Object.keys(untrusted).length === 0)
+        return null
+    return untrusted[UNTRUSTED]
+}
+
+export async function removeUntrusted(domain) {
+    const untrusted = await browser.storage.local.get(UNTRUSTED)
+    if (Object.keys(untrusted).length === 0)
+        return false
+    const newUntrusted = untrusted.filter(d => d !== domain)
+    return untrusted.length !== newUntrusted.length
 }
