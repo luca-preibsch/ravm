@@ -7,6 +7,7 @@ import * as util from "../lib/util";
 import {fetchArrayBuffer, fetchAttestationInfo, getVCEK} from "../lib/file"
 import * as storage from "../lib/storage"
 import * as ui from "../lib/ui"
+import * as messaging from "../lib/messaging"
 
 import ask from '../certificates/ask.der';
 import ark from '../certificates/ark.der';
@@ -194,7 +195,7 @@ async function checkMeasurement(measurement, attestationInfo, tabId) {
 // checks if the host behind the url supports remote attestation
 async function checkSupportsAttestation(url) {
     try {
-        const attestationInfo = await fetchAttestationInfo(new URL(ATTESTATION_INFO_PATH, url.href).href)
+        await fetchAttestationInfo(new URL(ATTESTATION_INFO_PATH, url.href).href)
         return true
     } catch (e) {
         console.log(e)
@@ -227,9 +228,16 @@ async function listenerOnHeadersReceived(details) {
     if (!await checkSupportsAttestation(url))
         return {}
 
+    // check if the host is already known by the extension
+    // if not:
+    // - add current domain to the session storage
+    // - redirect to the DIALOG_PAGE where attestation for the domain in session storage takes place
     if (!await storage.isKnownHost(url.host)) {
+        sessionStorage.setItem(details.tabId, url.href)
         return { redirectUrl: DIALOG_PAGE }
     }
+
+    return {}
 
     // has to be executed before further web requests like fetchAttestationInfo
     // TODO: error handling
@@ -317,32 +325,42 @@ Thus, in here do:
 // )
 
 async function listenerOnMessageReceived(message, sender, sendResponse) {
-    if (sender.id !== browser.runtime.id) {
-        // only accept messages by this extension
-        console.log("Message by unknown sender received: " + message)
-        return
+    // if (sender.id !== browser.runtime.id) {
+    //     // only accept messages by this extension
+    //     console.log("Message by unknown sender received: " + message)
+    //     return
+    // }
+
+    switch (message.type) {
+        case messaging.types.getHost:
+            console.log("an richtiger Stelle geantwortet")
+            const host = sessionStorage.getItem(sender.tab.id)
+            // sendResponse does not work
+            return Promise.resolve({ host: host })
+            break
     }
-    const url = new URL(message.url)
-    const domain = url.hostname
-    if (AttestationQueue.hasOwnProperty(domain)) {
-        if (message.trust) {
-            console.log("trusting")
-            await storage.setTrustedObj(domain, AttestationQueue[domain])
-            delete AttestationQueue[domain]
-        } else {
-            console.log("hinzufügen gestartet")
-            // TODO pro Zeile console.log für debugging
-            await storage.setUntrusted(domain)
-            // await storage.setUntrusted(domain)
-            // await storage.setUntrusted("test1")
-            // await storage.setUntrusted("test2")
-            // await storage.setUntrusted("test3")
-            // console.log("is " + await storage.isUntrusted("test1"))
-            // await storage.removeUntrusted("test1")
-            console.log("hinzufügen beendet")
-            delete AttestationQueue[domain]
-        }
-    }
+
+    // const url = new URL(message.url)
+    // const domain = url.hostname
+    // if (AttestationQueue.hasOwnProperty(domain)) {
+    //     if (message.trust) {
+    //         console.log("trusting")
+    //         await storage.setTrustedObj(domain, AttestationQueue[domain])
+    //         delete AttestationQueue[domain]
+    //     } else {
+    //         console.log("hinzufügen gestartet")
+    //         // TODO pro Zeile console.log für debugging
+    //         await storage.setUntrusted(domain)
+    //         // await storage.setUntrusted(domain)
+    //         // await storage.setUntrusted("test1")
+    //         // await storage.setUntrusted("test2")
+    //         // await storage.setUntrusted("test3")
+    //         // console.log("is " + await storage.isUntrusted("test1"))
+    //         // await storage.removeUntrusted("test1")
+    //         console.log("hinzufügen beendet")
+    //         delete AttestationQueue[domain]
+    //     }
+    // }
 }
 
 browser.runtime.onMessage.addListener(listenerOnMessageReceived)
