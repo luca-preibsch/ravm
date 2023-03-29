@@ -17,16 +17,7 @@ export async function fetchArrayBuffer(url) {
 }
 
 export async function fetchAttestationInfo(url) {
-    return await fetchFile(url)
-        .then(
-            response => response.json(),
-            reason => {
-                console.log("error: fetching file " + reason)
-                return false
-            })
-        .then(attestationInfo => {
-            return attestationInfo
-        })
+    return await (await fetchFile(url)).json()
 }
 
 // cached VCEK and its URL

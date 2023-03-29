@@ -12,11 +12,12 @@ import ask from '../certificates/ask.der';
 import ark from '../certificates/ark.der';
 
 // Domain to observe
-const ALL_URLS = "*://*/*"
+const ALL_URLS = "https://*/*"
 const VM_DOMAIN = "transparent-vm.net";
 const MEASURED_LOCATION = "*://" + VM_DOMAIN + "/*";
 const SERVER_URL = "https://" + VM_DOMAIN + ":8080/"
-const ATTESTATION_INFO_PATH = "/remote-attestation.json"
+const ATTESTATION_INFO_PATH = "./remote-attestation.json"
+const DIALOG_PAGE = browser.runtime.getURL("remote-attestation.html")
 
 // For now hardcoded hash of the measurement this information needs
 // to be retrieved from the IC
@@ -190,19 +191,44 @@ async function checkMeasurement(measurement, attestationInfo, tabId) {
     })
 }
 
-async function listenerOnHeadersReceived(details) {
-    console.log("received")
-    console.log(details)
-
-    // details.fromCache || details.statusCode === 304
-    if (details.statusCode !== 200) {
-        console.log("skipping")
-        return {}
+// checks if the host behind the url supports remote attestation
+async function checkSupportsAttestation(url) {
+    try {
+        const attestationInfo = await fetchAttestationInfo(new URL(ATTESTATION_INFO_PATH, url.href).href)
+        return true
+    } catch (e) {
+        console.log(e)
+        return false
     }
+}
 
-    if (details.tabId === -1) {
-        console.log("header from non-tab received")
+/*
+In the context of this event, we can get information about the TLS connection.
+Thus, in here do:
+ 1. verify TLS connection with the SSL pub key in the attestation report
+ */
+async function listenerOnHeadersReceived(details) {
+    // origin contains scheme (protocol), domain and port
+    const url = new URL(new URL(details.url).origin)
+
+    // TODO
+    // details.fromCache || details.statusCode === 304
+    // if (details.statusCode !== 200) {
+    //     console.log("skipping")
+    //     return {}
+    // }
+    //
+    // if (details.tabId === -1) {
+    //     console.log("header inside non-tab received")
+    //     return {}
+    // }
+
+    // skip hosts that do not support remote attestation
+    if (!await checkSupportsAttestation(url))
         return {}
+
+    if (!await storage.isKnownHost(url.host)) {
+        return { redirectUrl: DIALOG_PAGE }
     }
 
     // has to be executed before further web requests like fetchAttestationInfo
@@ -210,7 +236,7 @@ async function listenerOnHeadersReceived(details) {
     const ssl_sha512 = await querySSLFingerprint(details.requestId)
 
     // TODO: error handling
-    const attestationInfo = await fetchAttestationInfo(SERVER_URL + ATTESTATION_INFO_PATH)
+    const attestationInfo = fetchAttestationInfo(SERVER_URL + ATTESTATION_INFO_PATH)
 
     // Request attestation report from VM
     // TODO: error handling
@@ -247,8 +273,48 @@ async function listenerOnHeadersReceived(details) {
 
         await checkMeasurement(attestationReport.measurement, attestationInfo, details.tabId)
     }
-    return {};
+    // console.log("wir returnen")
+    // console.log(browser.runtime.getURL("remote-attestation.html"))
+    // return {
+    //     redirectUrl: browser.runtime.getURL("remote-attestation.html")
+    // }
 }
+
+// We need to register this listener, since we require the SecurityInfo object
+// to validate the public key of the SSL connection
+browser.webRequest.onHeadersReceived.addListener(
+    listenerOnHeadersReceived,
+    {
+        urls: [ALL_URLS],
+        // only listen to the top level document getting loaded for now
+        // TODO needs more work! All connections should get verified
+        types: ["main_frame"]
+    },
+    ["blocking"]
+)
+
+/*
+in the context of this event, requests can be canceled or redirected.
+Thus, in here do:
+ 1. validate attestation report against AMD server
+ 2. check if the measurement has been trusted or ask the user for trust
+ */
+// async function listenerOnBeforeRequest(details) {
+//     return {
+//         redirectUrl: browser.runtime.getURL("remote-attestation.html"),
+//     };
+// }
+//
+// browser.webRequest.onBeforeRequest.addListener(
+//     listenerOnBeforeRequest,
+//     {
+//         urls: [ALL_URLS],
+//         // only listen to the top level document getting loaded for now
+//         // TODO needs more work! All connections should get verified
+//         // types: ["main_frame"]
+//     },
+//     ["blocking"]
+// )
 
 async function listenerOnMessageReceived(message, sender, sendResponse) {
     if (sender.id !== browser.runtime.id) {
@@ -260,6 +326,7 @@ async function listenerOnMessageReceived(message, sender, sendResponse) {
     const domain = url.hostname
     if (AttestationQueue.hasOwnProperty(domain)) {
         if (message.trust) {
+            console.log("trusting")
             await storage.setTrustedObj(domain, AttestationQueue[domain])
             delete AttestationQueue[domain]
         } else {
@@ -279,19 +346,3 @@ async function listenerOnMessageReceived(message, sender, sendResponse) {
 }
 
 browser.runtime.onMessage.addListener(listenerOnMessageReceived)
-
-// We need to register this listener, since we require the SecurityInfo object
-// to validate the public key of the SSL connection
-browser.webRequest.onHeadersReceived.addListener(
-    listenerOnHeadersReceived,
-    {
-        urls: [ALL_URLS],
-        // only listen to the top level document getting loaded for now
-        // TODO needs more work! All connections should get verified
-        types: ["main_frame"]
-    },
-    // ! inside manifest file: plugin should run on all hosts (websites)
-    // ! though, only specific requests (to specific hosts) should be intercepted
-    // ? only for testing purposes, since in the end the plugin should check all requests?
-    ["blocking", "responseHeaders"]
-)

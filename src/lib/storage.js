@@ -1,9 +1,9 @@
 const UNTRUSTED = "untrusted"
 
 // TODO switch Trusted to use a category like untrusted?
-export function setTrusted(domain, trustedSince, lastTrusted, type, measurement) {
+export function setTrusted(host, trustedSince, lastTrusted, type, measurement) {
     return browser.storage.local.set({
-        [domain] : {
+        [host] : {
             trustedSince : trustedSince,
             lastTrusted : lastTrusted,
             type : type,
@@ -12,38 +12,38 @@ export function setTrusted(domain, trustedSince, lastTrusted, type, measurement)
     })
 }
 
-export function setTrustedObj(domain, infoObj) {
+export function setTrustedObj(host, infoObj) {
     return browser.storage.local.set({
-        [domain] : infoObj
+        [host] : infoObj
     })
 }
 
-export async function isTrusted(domain) {
-    const trusted = await browser.storage.local.get(domain)
+export async function isTrusted(host) {
+    const trusted = await browser.storage.local.get(host)
     return Object.keys(trusted).length !== 0
 }
 
-export async function getTrusted(domain) {
-    if (domain) {
-        const result = await browser.storage.local.get(domain)
-        return result[domain]
+export async function getTrusted(host) {
+    if (host) {
+        const result = await browser.storage.local.get(host)
+        return result[host]
     } else {
         return browser.storage.local.get(null)
     }
 }
 
-export function removeTrusted(domain) {
-    return browser.storage.local.remove(domain)
+export function removeTrusted(host) {
+    return browser.storage.local.remove(host)
 }
 
-export async function setUntrusted(domain) {
+export async function setUntrusted(host) {
     let untrusted = await browser.storage.local.get(UNTRUSTED)
 
     if (Object.keys(untrusted).length === 0) {
-        untrusted = [domain]
+        untrusted = [host]
     } else {
-        if (!untrusted[UNTRUSTED].includes(domain))
-            untrusted[UNTRUSTED].push(domain)
+        if (!untrusted[UNTRUSTED].includes(host))
+            untrusted[UNTRUSTED].push(host)
     }
 
     return browser.storage.local.set({
@@ -51,11 +51,11 @@ export async function setUntrusted(domain) {
     })
 }
 
-export async function isUntrusted(domain) {
+export async function isUntrusted(host) {
     const untrusted = await browser.storage.local.get(UNTRUSTED)
     if (Object.keys(untrusted).length === 0)
         return false
-    return untrusted[UNTRUSTED].includes(domain);
+    return untrusted[UNTRUSTED].includes(host);
 
 }
 
@@ -66,14 +66,14 @@ export async function getUntrusted() {
     return untrusted[UNTRUSTED]
 }
 
-export async function removeUntrusted(domain) {
+export async function removeUntrusted(host) {
     const untrusted = await browser.storage.local.get(UNTRUSTED)
     if (Object.keys(untrusted).length === 0)
         return false
-    const newUntrusted = untrusted.filter(d => d !== domain)
+    const newUntrusted = untrusted.filter(d => d !== host)
     return untrusted.length !== newUntrusted.length
 }
 
-export async function isKnownDomain(domain) {
-    return await isTrusted(domain) || await isUntrusted(domain)
+export async function isKnownHost(host) {
+    return await isTrusted(host) || await isUntrusted(host)
 }
