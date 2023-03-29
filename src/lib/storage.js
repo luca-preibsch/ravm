@@ -18,6 +18,11 @@ export function setTrustedObj(domain, infoObj) {
     })
 }
 
+export async function isTrusted(domain) {
+    const trusted = await browser.storage.local.get(domain)
+    return Object.keys(trusted).length !== 0
+}
+
 export async function getTrusted(domain) {
     if (domain) {
         const result = await browser.storage.local.get(domain)
@@ -50,7 +55,7 @@ export async function isUntrusted(domain) {
     const untrusted = await browser.storage.local.get(UNTRUSTED)
     if (Object.keys(untrusted).length === 0)
         return false
-    return !untrusted[UNTRUSTED].includes(domain);
+    return untrusted[UNTRUSTED].includes(domain);
 
 }
 
@@ -67,4 +72,8 @@ export async function removeUntrusted(domain) {
         return false
     const newUntrusted = untrusted.filter(d => d !== domain)
     return untrusted.length !== newUntrusted.length
+}
+
+export async function isKnownDomain(domain) {
+    return await isTrusted(domain) || await isUntrusted(domain)
 }
