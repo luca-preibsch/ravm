@@ -41,7 +41,11 @@
   "options_ui": {
     "browser_style": true,
     "page": "settings.html"
-  }
+  },
+
+  "web_accessible_resources": [
+    "remote-attestation.html"
+  ]
   
 }
   

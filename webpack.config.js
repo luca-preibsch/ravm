@@ -1,7 +1,7 @@
 const path = require('path')
 const CopyWebpackPlugin = require('copy-webpack-plugin')
 const TransformJson = require('transform-json-webpack-plugin')
-const package = require('./package.json')
+const node_package = require('./package.json')
 
 /**
  * Heads up:
@@ -76,7 +76,8 @@ module.exports = [
       'background' : path.resolve(__dirname, 'src', 'background', 'background.js'),
       'popup' : path.resolve(__dirname, 'src', 'popup', 'popup.js'),
       'settings' : path.resolve(__dirname, 'src', 'settings', 'settings.js'),
-      'trust-dialog' : path.resolve(__dirname, 'src', 'content', 'trust-dialog', 'trust-dialog.js'),
+      // 'trust-dialog' : path.resolve(__dirname, 'src', 'content', 'trust-dialog', 'trust-dialog.js'),
+      'dialog' : path.resolve(__dirname, 'src', 'content', 'dialog', 'dialog.js')
     },
     output: {
       path: path.resolve(__dirname, 'build'),
@@ -88,8 +89,8 @@ module.exports = [
         source: path.resolve(__dirname, 'src', 'manifest.json'),
         filename: 'manifest.json',
         object: {
-          description: package.description,
-          version: package.version
+          description: node_package.description,
+          version: node_package.version
         }
       }),
       new CopyWebpackPlugin({
