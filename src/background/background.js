@@ -240,19 +240,24 @@ async function listenerOnHeadersReceived(details) {
         return { redirectUrl: DIALOG_PAGE }
     }
 
+    // port step by step (done)
+
     // has to be executed before further web requests like fetchAttestationInfo
     // TODO: error handling
     const ssl_sha512 = await querySSLFingerprint(details.requestId)
 
+    // done
     // TODO: error handling
     // const attestationInfo = fetchAttestationInfo(SERVER_URL + ATTESTATION_INFO_PATH)
 
+    // done
     // Request attestation report from VM
     // TODO: error handling
     const attestationReport = new attestation.AttesationReport(
         await fetchArrayBuffer(SERVER_URL + attestationInfo.path)
     )
 
+    // done
     const vcek = await getVCEK(attestationReport.chip_id, attestationReport.committedTCB)
 
     // Validate that the VCEK ic correctly signed by AMD root cert

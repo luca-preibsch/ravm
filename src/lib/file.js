@@ -3,6 +3,7 @@
 import * as asn1js from "asn1js";
 import * as pkijs from "pkijs";
 import * as util from "./util";
+import * as attestation from "./attestation";
 
 async function fetchFile(url) {
     return await fetch(url, {
@@ -18,6 +19,11 @@ export async function fetchArrayBuffer(url) {
 
 export async function fetchAttestationInfo(url) {
     return await (await fetchFile(url)).json()
+}
+
+export async function fetchAttestationReport(url, path) {
+    const raw = await fetchArrayBuffer(new URL(path, url).href)
+    return new attestation.AttesationReport(raw)
 }
 
 // cached VCEK and its URL
