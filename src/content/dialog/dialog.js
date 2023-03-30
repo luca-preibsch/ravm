@@ -3,7 +3,7 @@ import '../../style/button.css';
 
 import { types } from '../../lib/messaging';
 import { fetchAttestationReport, getVCEK } from "../../lib/net";
-import { validateWithCertChain } from "../../lib/crypto";
+import { validateWithCertChain, validateAttestationReport } from "../../lib/crypto";
 
 const titleText = document.getElementById("title")
 const domainText = document.getElementById("domain")
@@ -19,8 +19,10 @@ async function getHostInfo() {
 }
 
 window.addEventListener("load", async () => {
+    // TODO url, ar zwischenspeichern und gegen reloads schützen? Oder einfach in background anforderbar lassen
     const {url, attestationInfo} = await getHostInfo()
 
+    // Request attestation report from VM
     let ar
     try {
         ar = await fetchAttestationReport(url, attestationInfo.path)
@@ -39,8 +41,14 @@ window.addEventListener("load", async () => {
         // TODO
     }
 
+    // Validate that the VCEK ic correctly signed by AMD root cert
     if (!await validateWithCertChain(vcek)) {
         // vcek could not be verified -> notify user, attestation not possible
+    }
+
+    if (!await validateAttestationReport(ar, vcek)) {
+        // attestation report could not be verified using vcek
+        // -> notify user, attestation not possible
     }
 
 })

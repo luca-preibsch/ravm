@@ -3,11 +3,12 @@ import * as pkijs from "pkijs";
 import ask from "../certificates/ask.der";
 import ark from "../certificates/ark.der";
 import {fetchArrayBuffer} from "./net";
+import * as util from "./util";
 
 // Validate the VCEK certificate using the AMD provided keys
 // and revocation list.
 // returns boolean
-export async function validateWithCertChain(certificate) {
+export async function validateWithCertChain(vcek) {
     // AMD key server
     const AMD_ARK_ASK_REVOCATION = "https://kdsintf.amd.com/vcek/v1/Milan/crl"
 
@@ -34,7 +35,7 @@ export async function validateWithCertChain(certificate) {
     // Create certificate's array (end-user certificate + intermediate certificates)
     const certificates = [];
     certificates.push(ask_cert);
-    certificates.push(certificate);
+    certificates.push(vcek);
 
     // Make a copy of trusted certificates array
     const trustedCerts = [];
@@ -48,4 +49,38 @@ export async function validateWithCertChain(certificate) {
     });
 
     return certChainVerificationEngine.verify();
+}
+
+export async function validateAttestationReport(ar, vcek) {
+    async function importPubKey(rawData) {
+        return await window.crypto.subtle.importKey(
+            "raw",
+            rawData,
+            {
+                name: "ECDSA",
+                namedCurve: "P-384"
+            },
+            true,
+            ["verify"]
+        );
+    }
+
+    async function verifyMessage(pubKey, signature, data) {
+        return await window.crypto.subtle.verify(
+            {
+                name: "ECDSA",
+                namedCurve: "P-384",
+                hash: {name: "SHA-384"},
+            },
+            pubKey,
+            signature,
+            data
+        );
+    }
+
+    // Hack: We cannot directly ask the cert object for the public key as
+    // it triggers a 'not supported' exception. Thus convert to JSON and back.
+    const jsonPubKey = vcek.subjectPublicKeyInfo.subjectPublicKey.toJSON()
+    const pubKey = await importPubKey(util.hex_decode(jsonPubKey.valueBlock.valueHex))
+    return await verifyMessage(pubKey, ar.signature, ar.getSignedData)
 }

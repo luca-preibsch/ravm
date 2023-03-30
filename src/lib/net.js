@@ -30,6 +30,7 @@ export async function fetchAttestationReport(url, path) {
 let cachedKdsURL
 let cachedVCEK
 
+// TODO cache VCEK in session storage, like this its broken
 export async function getVCEK(chipId, committedTCB) {
     // AMD key server
     const KDSINF = "https://kdsintf.amd.com/vcek/v1/Milan/";

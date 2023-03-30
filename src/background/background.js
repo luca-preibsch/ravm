@@ -24,32 +24,6 @@ const VM_MEASUREMENT = "";
 // Queue of domains that use RemoteAttestation, but need input by the user to either trust or don't trust
 const AttestationQueue = {}
 
-async function importPubKey(rawData) {
-    return await window.crypto.subtle.importKey(
-        "raw",
-        rawData,
-        {
-            name: "ECDSA",
-            namedCurve: "P-384"
-        },
-        true,
-        ["verify"]
-    );
-}
-
-async function verifyMessage(pubKey, signature, data) {
-    return await window.crypto.subtle.verify(
-        {
-            name: "ECDSA",
-            namedCurve: "P-384",
-            hash: {name: "SHA-384"},
-        },
-        pubKey,
-        signature,
-        data
-    );
-}
-
 async function sha512(str) {
     return crypto.subtle.digest("SHA-512", new TextEncoder("utf-8").encode(str)).then(buf => {
         return Array.prototype.map.call(new Uint8Array(buf), x => (('00' + x.toString(16)).slice(-2))).join('');
@@ -215,12 +189,13 @@ async function listenerOnHeadersReceived(details) {
     // TODO: nop
     validateWithCertChain(vcek);
 
+    // done
     // Hack: We cannot directly ask the cert object for the public key as
     // it triggers a 'not supported' exception. Thus convert to JSON and back.
-    const jsonPubKey = vcek.subjectPublicKeyInfo.subjectPublicKey.toJSON();
-
+    const jsonPubKey = vcek.subjectPublicKeyInfo.subjectPublicKey.toJSON()
     // TODO: error handling
     const pubKey = await importPubKey(util.hex_decode(jsonPubKey.valueBlock.valueHex))
+    // ? verifyMessage prüft, ob attestationReport richtig gesigned wurde
     if (await verifyMessage(pubKey, attestationReport.signature, attestationReport.getSignedData)) {
 
         console.log("1. Attestation report has been validated by the AMD keyserver.");
@@ -291,6 +266,7 @@ async function listenerOnMessageReceived(message, sender) {
     switch (message.type) {
         case messaging.types.getHostInfo:
             const hostInfo = JSON.parse(sessionStorage.getItem(sender.tab.id))
+            // sessionStorage.removeItem(sender.tab.id)
             // sendResponse does not work
             return Promise.resolve(hostInfo)
     }
