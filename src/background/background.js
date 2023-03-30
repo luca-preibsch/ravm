@@ -4,13 +4,10 @@ import _ from "lodash"
 
 import * as attestation from "../lib/attestation";
 import * as util from "../lib/util";
-import {fetchArrayBuffer, fetchAttestationInfo, getVCEK} from "../lib/file"
+import {fetchArrayBuffer, fetchAttestationInfo, getVCEK} from "../lib/net"
 import * as storage from "../lib/storage"
 import * as ui from "../lib/ui"
 import * as messaging from "../lib/messaging"
-
-import ask from '../certificates/ask.der';
-import ark from '../certificates/ark.der';
 
 // Domain to observe
 const ALL_URLS = "https://*/*"
@@ -24,17 +21,8 @@ const DIALOG_PAGE = browser.runtime.getURL("remote-attestation.html")
 // to be retrieved from the IC
 const VM_MEASUREMENT = "";
 
-// AMD key server
-const AMD_ARK_ASK_REVOKATION = "https://kdsintf.amd.com/vcek/v1/Milan/crl"
-
 // Queue of domains that use RemoteAttestation, but need input by the user to either trust or don't trust
 const AttestationQueue = {}
-
-// Fetch assets of the web extension such as ask and ark
-async function loadData(resourcePath) {
-    var url = browser.runtime.getURL(resourcePath);
-    return (await fetch(url)).arrayBuffer();
-}
 
 async function importPubKey(rawData) {
     return await window.crypto.subtle.importKey(
@@ -60,44 +48,6 @@ async function verifyMessage(pubKey, signature, data) {
         signature,
         data
     );
-}
-
-// Validate the VCEK certificate using the AMD provided keys
-// and revocation list.
-// returns boolean 
-async function validateWithCertChain(certificate) {
-
-    function decodeCert(der) {
-        const asn1 = asn1js.fromBER(der)
-        return new pkijs.Certificate({schema: asn1.result})
-    }
-
-    const ask_cert = decodeCert(await loadData(ask));
-    const ark_cert = decodeCert(await loadData(ark));
-
-    const text = await fetchArrayBuffer(AMD_ARK_ASK_REVOKATION);
-
-    const crls = [];
-    const crl = pkijs.CertificateRevocationList.fromBER(text);
-    crls.push(crl);
-
-    // Create certificate's array (end-user certificate + intermediate certificates)
-    const certificates = [];
-    certificates.push(ask_cert);
-    certificates.push(certificate);
-
-    // Make a copy of trusted certificates array
-    const trustedCerts = [];
-    trustedCerts.push(ark_cert);
-
-    // Create new X.509 certificate chain object
-    const certChainVerificationEngine = new pkijs.CertificateChainValidationEngine({
-        trustedCerts,
-        certificates,
-        crls,
-    });
-
-    return certChainVerificationEngine.verify();
 }
 
 async function sha512(str) {
@@ -260,6 +210,7 @@ async function listenerOnHeadersReceived(details) {
     // done
     const vcek = await getVCEK(attestationReport.chip_id, attestationReport.committedTCB)
 
+    // done
     // Validate that the VCEK ic correctly signed by AMD root cert
     // TODO: nop
     validateWithCertChain(vcek);
