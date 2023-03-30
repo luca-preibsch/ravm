@@ -156,13 +156,16 @@ async function listenerOnHeadersReceived(details) {
     // if not:
     // - add current domain to the session storage
     // - redirect to the DIALOG_PAGE where attestation for the domain in session storage takes place
-    if (!await storage.isKnownHost(url.host)) {
+    if (!await storage.isKnownHost(url.href)) {
         sessionStorage.setItem(details.tabId, JSON.stringify({
             url : url.href,
             attestationInfo : attestationInfo
         }))
         return { redirectUrl: DIALOG_PAGE }
     }
+
+    console.log("known host")
+    return {}
 
     // port step by step (done)
 
@@ -200,6 +203,7 @@ async function listenerOnHeadersReceived(details) {
 
         console.log("1. Attestation report has been validated by the AMD keyserver.");
 
+        // TODO: port
         // 2. Communication terminates inside the secured VM
         // ! trick ssl connection is correct for now
         if (true || util.arrayBufferToHex(attestationReport.report_data) === ssl_sha512) {
@@ -266,6 +270,7 @@ async function listenerOnMessageReceived(message, sender) {
     switch (message.type) {
         case messaging.types.getHostInfo:
             const hostInfo = JSON.parse(sessionStorage.getItem(sender.tab.id))
+            // TODO: if removed, dialog script cant get the item on reload
             // sessionStorage.removeItem(sender.tab.id)
             // sendResponse does not work
             return Promise.resolve(hostInfo)

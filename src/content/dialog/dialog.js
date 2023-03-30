@@ -4,6 +4,7 @@ import '../../style/button.css';
 import { types } from '../../lib/messaging';
 import { fetchAttestationReport, getVCEK } from "../../lib/net";
 import { validateWithCertChain, validateAttestationReport } from "../../lib/crypto";
+import * as storage from '../../lib/storage'
 
 const titleText = document.getElementById("title")
 const domainText = document.getElementById("domain")
@@ -12,15 +13,32 @@ const ignoreButton = document.getElementById("ignore-button")
 const noTrustButton = document.getElementById("do-not-trust-button")
 const trustButton = document.getElementById("trust-button")
 
+let url, attestationInfo, measurement
+
 async function getHostInfo() {
     return await browser.runtime.sendMessage({
         type : types.getHostInfo
     })
 }
 
+ignoreButton.addEventListener("click", () => {
+    // TODO
+})
+
+trustButton.addEventListener("click",  () => {
+    storage.setTrusted(url, new Date(), new Date(), attestationInfo.technology, measurement)
+    console.log("stored " + url)
+})
+
+noTrustButton.addEventListener("click", () => {
+    // TODO
+})
+
 window.addEventListener("load", async () => {
     // TODO url, ar zwischenspeichern und gegen reloads schützen? Oder einfach in background anforderbar lassen
-    const {url, attestationInfo} = await getHostInfo()
+    const hostInfo = await getHostInfo()
+    url = hostInfo.url
+    attestationInfo = hostInfo.attestationInfo
 
     // Request attestation report from VM
     let ar
@@ -51,4 +69,9 @@ window.addEventListener("load", async () => {
         // -> notify user, attestation not possible
     }
 
+    // check measurement -> ask user
+    titleText.innerText = "Remote Attestation"
+    domainText.innerText = url
+    descriptionText.innerText = "This site offers remote attestation, do you want to trust it?"
+    measurement = ar.measurement
 })
