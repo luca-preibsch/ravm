@@ -193,13 +193,12 @@ async function checkMeasurement(measurement, attestationInfo, tabId) {
 }
 
 // checks if the host behind the url supports remote attestation
-async function checkSupportsAttestation(url) {
+async function getAttestationInfo(url) {
     try {
-        await fetchAttestationInfo(new URL(ATTESTATION_INFO_PATH, url.href).href)
-        return true
+        return await fetchAttestationInfo(new URL(ATTESTATION_INFO_PATH, url.href).href)
     } catch (e) {
         console.log(e)
-        return false
+        return null
     }
 }
 
@@ -225,7 +224,8 @@ async function listenerOnHeadersReceived(details) {
     // }
 
     // skip hosts that do not support remote attestation
-    if (!await checkSupportsAttestation(url))
+    const attestationInfo = await getAttestationInfo(url)
+    if (!attestationInfo)
         return {}
 
     // check if the host is already known by the extension
@@ -233,18 +233,19 @@ async function listenerOnHeadersReceived(details) {
     // - add current domain to the session storage
     // - redirect to the DIALOG_PAGE where attestation for the domain in session storage takes place
     if (!await storage.isKnownHost(url.host)) {
-        sessionStorage.setItem(details.tabId, url.href)
+        sessionStorage.setItem(details.tabId, JSON.stringify({
+            url : url.href,
+            attestationInfo : attestationInfo
+        }))
         return { redirectUrl: DIALOG_PAGE }
     }
-
-    return {}
 
     // has to be executed before further web requests like fetchAttestationInfo
     // TODO: error handling
     const ssl_sha512 = await querySSLFingerprint(details.requestId)
 
     // TODO: error handling
-    const attestationInfo = fetchAttestationInfo(SERVER_URL + ATTESTATION_INFO_PATH)
+    // const attestationInfo = fetchAttestationInfo(SERVER_URL + ATTESTATION_INFO_PATH)
 
     // Request attestation report from VM
     // TODO: error handling
@@ -324,20 +325,18 @@ Thus, in here do:
 //     ["blocking"]
 // )
 
-async function listenerOnMessageReceived(message, sender, sendResponse) {
-    // if (sender.id !== browser.runtime.id) {
-    //     // only accept messages by this extension
-    //     console.log("Message by unknown sender received: " + message)
-    //     return
-    // }
+async function listenerOnMessageReceived(message, sender) {
+    if (sender.id !== browser.runtime.id) {
+        // only accept messages by this extension
+        console.log("Message by unknown sender received: " + message)
+        return
+    }
 
     switch (message.type) {
-        case messaging.types.getHost:
-            console.log("an richtiger Stelle geantwortet")
-            const host = sessionStorage.getItem(sender.tab.id)
+        case messaging.types.getHostInfo:
+            const hostInfo = JSON.parse(sessionStorage.getItem(sender.tab.id))
             // sendResponse does not work
-            return Promise.resolve({ host: host })
-            break
+            return Promise.resolve(hostInfo)
     }
 
     // const url = new URL(message.url)

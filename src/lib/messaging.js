@@ -1,4 +1,4 @@
 
 export const types = {
-    getHost : 0
+    getHostInfo : 0,
 }
