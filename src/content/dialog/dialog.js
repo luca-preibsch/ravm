@@ -13,7 +13,7 @@ const ignoreButton = document.getElementById("ignore-button")
 const noTrustButton = document.getElementById("do-not-trust-button")
 const trustButton = document.getElementById("trust-button")
 
-let url, attestationInfo, measurement
+let host, attestationInfo, measurement, url
 
 async function getHostInfo() {
     return await browser.runtime.sendMessage({
@@ -22,36 +22,48 @@ async function getHostInfo() {
 }
 
 ignoreButton.addEventListener("click", () => {
-    // TODO
+    browser.runtime.sendMessage({
+        type : types.redirect,
+        url : url
+    })
 })
 
-trustButton.addEventListener("click",  () => {
-    storage.setTrusted(url, new Date(), new Date(), attestationInfo.technology, measurement)
-    console.log("stored " + url)
+trustButton.addEventListener("click", () => {
+    storage.setTrusted(host, new Date(), new Date(), attestationInfo.technology, measurement)
+    console.log("stored " + host)
+    browser.runtime.sendMessage({
+        type : types.redirect,
+        url : url
+    })
 })
 
 noTrustButton.addEventListener("click", () => {
-    // TODO
+    storage.setUntrusted(host)
+    console.log("stored " + host)
 })
 
 window.addEventListener("load", async () => {
     // TODO url, ar zwischenspeichern und gegen reloads schützen? Oder einfach in background anforderbar lassen
     const hostInfo = await getHostInfo()
-    url = hostInfo.url
+    host = hostInfo.host
     attestationInfo = hostInfo.attestationInfo
+    url = hostInfo.url
 
     // Request attestation report from VM
     let ar
     try {
-        ar = await fetchAttestationReport(url, attestationInfo.path)
+        ar = await fetchAttestationReport(host, attestationInfo.path)
     } catch (e) {
         // no attestation report found -> notify user, attestation not possible
         console.log(e)
         // TODO
     }
 
+    measurement = ar.measurement
+
     let vcek
     try {
+        // TODO cache here in window storage?
         vcek = await getVCEK(ar.chip_id, ar.committedTCB)
     } catch (e) {
         // vcek could not be attained -> notify user, attestation not possible
@@ -71,7 +83,6 @@ window.addEventListener("load", async () => {
 
     // check measurement -> ask user
     titleText.innerText = "Remote Attestation"
-    domainText.innerText = url
+    domainText.innerText = host
     descriptionText.innerText = "This site offers remote attestation, do you want to trust it?"
-    measurement = ar.measurement
 })

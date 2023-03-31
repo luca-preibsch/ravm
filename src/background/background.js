@@ -133,7 +133,7 @@ Thus, in here do:
  */
 async function listenerOnHeadersReceived(details) {
     // origin contains scheme (protocol), domain and port
-    const url = new URL(new URL(details.url).origin)
+    const host = new URL(new URL(details.url).origin)
 
     // TODO
     // details.fromCache || details.statusCode === 304
@@ -148,7 +148,7 @@ async function listenerOnHeadersReceived(details) {
     // }
 
     // skip hosts that do not support remote attestation
-    const attestationInfo = await getAttestationInfo(url)
+    const attestationInfo = await getAttestationInfo(host)
     if (!attestationInfo)
         return {}
 
@@ -156,9 +156,10 @@ async function listenerOnHeadersReceived(details) {
     // if not:
     // - add current domain to the session storage
     // - redirect to the DIALOG_PAGE where attestation for the domain in session storage takes place
-    if (!await storage.isKnownHost(url.href)) {
+    if (!await storage.isKnownHost(host.href)) {
         sessionStorage.setItem(details.tabId, JSON.stringify({
-            url : url.href,
+            host : host.href,
+            url : details.url,
             attestationInfo : attestationInfo
         }))
         return { redirectUrl: DIALOG_PAGE }
@@ -274,6 +275,11 @@ async function listenerOnMessageReceived(message, sender) {
             // sessionStorage.removeItem(sender.tab.id)
             // sendResponse does not work
             return Promise.resolve(hostInfo)
+        case messaging.types.redirect:
+            // TODO works for demo site, but does this work for typical pages with scripts and resources?
+            browser.tabs.update(sender.tab.id, {
+                url : message.url
+            })
     }
 
     // const url = new URL(message.url)
