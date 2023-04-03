@@ -138,6 +138,7 @@ async function listenerOnHeadersReceived(details) {
             ssl_sha512 : ssl_sha512,
             dialog_type : DialogType.blockedHost
         }))
+        return { redirectUrl: DIALOG_PAGE }
     }
 
     console.log("known host")

@@ -115,6 +115,7 @@ window.addEventListener("load", async () => {
             break
         case DialogType.blockedHost:
             // TODO insert block ui
+            titleText.innerText = "BLOCKED"
             break
     }
 
