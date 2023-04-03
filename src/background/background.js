@@ -135,22 +135,12 @@ async function listenerOnHeadersReceived(details) {
     // origin contains scheme (protocol), domain and port
     const host = new URL(new URL(details.url).origin)
 
-    // TODO
-    // details.fromCache || details.statusCode === 304
-    // if (details.statusCode !== 200) {
-    //     console.log("skipping")
-    //     return {}
-    // }
-    //
-    // if (details.tabId === -1) {
-    //     console.log("header inside non-tab received")
-    //     return {}
-    // }
-
     // skip hosts that do not support remote attestation
     const attestationInfo = await getAttestationInfo(host)
     if (!attestationInfo)
         return {}
+
+    const ssl_sha512 = await querySSLFingerprint(details.requestId)
 
     // check if the host is already known by the extension
     // if not:
@@ -160,7 +150,8 @@ async function listenerOnHeadersReceived(details) {
         sessionStorage.setItem(details.tabId, JSON.stringify({
             host : host.href,
             url : details.url,
-            attestationInfo : attestationInfo
+            attestationInfo : attestationInfo,
+            ssl_sha512 : ssl_sha512
         }))
         return { redirectUrl: DIALOG_PAGE }
     }
@@ -170,9 +161,9 @@ async function listenerOnHeadersReceived(details) {
 
     // port step by step (done)
 
-    // has to be executed before further web requests like fetchAttestationInfo
+    // done
     // TODO: error handling
-    const ssl_sha512 = await querySSLFingerprint(details.requestId)
+    // const ssl_sha512 = await querySSLFingerprint(details.requestId)
 
     // done
     // TODO: error handling

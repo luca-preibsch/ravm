@@ -5,9 +5,7 @@ import { types } from '../../lib/messaging';
 import { fetchAttestationReport, getVCEK } from "../../lib/net";
 import { validateWithCertChain, validateAttestationReport } from "../../lib/crypto";
 import * as storage from '../../lib/storage'
-import * as lodash from 'lodash'
-import * as asn1js from "asn1js";
-import * as pkijs from "pkijs";
+import * as util from '../../lib/util'
 
 const titleText = document.getElementById("title")
 const domainText = document.getElementById("domain")
@@ -26,6 +24,7 @@ async function getHostInfo() {
 }
 
 ignoreButton.addEventListener("click", () => {
+    // TODO what to do on ignore?
     browser.runtime.sendMessage({
         type : types.redirect,
         url : url
@@ -34,7 +33,6 @@ ignoreButton.addEventListener("click", () => {
 
 trustButton.addEventListener("click", () => {
     storage.setTrusted(host, new Date(), new Date(), attestationInfo.technology, measurement)
-    console.log("stored " + host)
     browser.runtime.sendMessage({
         type : types.redirect,
         url : url
@@ -43,15 +41,19 @@ trustButton.addEventListener("click", () => {
 
 noTrustButton.addEventListener("click", () => {
     storage.setUntrusted(host)
-    console.log("stored " + host)
 })
 
 window.addEventListener("load", async () => {
-    // TODO url, ar zwischenspeichern und gegen reloads schützen? Oder einfach in background anforderbar lassen
     const hostInfo = await getHostInfo()
     host = hostInfo.host
     attestationInfo = hostInfo.attestationInfo
     url = hostInfo.url
+    const ssl_sha512 = hostInfo.ssl_sha512
+
+    // init UI
+    titleText.innerText = "Remote Attestation"
+    domainText.innerText = host
+    descriptionText.innerText = "PENDING"
 
     // Request attestation report from VM
     let ar
@@ -76,20 +78,30 @@ window.addEventListener("load", async () => {
         // TODO
     }
 
-    // Validate that the VCEK is correctly signed by AMD root cert
+    // 1. verify TLS connection
+    // ! trick ssl connection is correct for now
+    if (false && util.arrayBufferToHex(ar.report_data) !== ssl_sha512) {
+        // TLS connection pubkey is not equal to pubkey in attestation report
+        // -> notify user, attestation not possible
+        console.log("TLS connection invalid")
+    }
+
+    // 2. Validate that the VCEK is correctly signed by AMD root cert
     if (!await validateWithCertChain(vcek)) {
         // vcek could not be verified -> notify user, attestation not possible
         console.log("vcek invalid")
     }
 
+    // 3. Validate that the attestation report is correctly signed using the VCEK
     if (!await validateAttestationReport(ar, vcek)) {
         // attestation report could not be verified using vcek
         // -> notify user, attestation not possible
         console.log("attestation report invalid")
     }
 
-    // check measurement -> ask user
+    // 4. Trust the measurement? wait for user input
     titleText.innerText = "Remote Attestation"
     domainText.innerText = host
     descriptionText.innerText = "This site offers remote attestation, do you want to trust it?"
+
 })
