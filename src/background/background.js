@@ -6,7 +6,6 @@ import * as attestation from "../lib/attestation";
 import * as util from "../lib/util";
 import {fetchArrayBuffer, fetchAttestationInfo, getVCEK} from "../lib/net"
 import * as storage from "../lib/storage"
-import * as ui from "../lib/ui"
 import * as messaging from "../lib/messaging"
 
 // Domain to observe
@@ -87,35 +86,6 @@ async function querySSLFingerprint(requestId) {
     }
 }
 
-// if the extension already saved a measurement for the given domain, this checks if the measurements equal,
-// otherwise the web extension asks the user whether to trust the website with the corresponding measurement
-async function checkMeasurement(measurement, attestationInfo, tabId) {
-    let url = new URL(SERVER_URL)
-    storage.getTrusted(url.hostname).then(result => {
-        if (result == null) {
-            // this is a domain with no recordings -> ask the user what to do
-            console.log("unknown domain, saving measurement!")
-            AttestationQueue[url.hostname] = {
-                trustedSince: new Date(),
-                lastTrusted: new Date(),
-                type: attestationInfo.technology,
-                measurement: measurement
-            }
-            ui.showDialog(ui.DialogType.newDomain, url.hostname, tabId)
-        } else {
-            // this domain has recordings
-            console.log("known measurement!")
-            storage.getTrusted(url.hostname).then(stored => {
-                if (!_.isEqual(measurement, stored.measurement)) {
-                    // the current measurement does not equal the one stored -> ask the user what to do
-                    // TODO: implement
-                    ui.showDialog(ui.DialogType.measurementDiffers, url.hostname, tabId)
-                }
-            })
-        }
-    })
-}
-
 // checks if the host behind the url supports remote attestation
 async function getAttestationInfo(url) {
     try {
@@ -158,62 +128,6 @@ async function listenerOnHeadersReceived(details) {
 
     console.log("known host")
     return {}
-
-    // port step by step (done)
-
-    // done
-    // TODO: error handling
-    // const ssl_sha512 = await querySSLFingerprint(details.requestId)
-
-    // done
-    // TODO: error handling
-    // const attestationInfo = fetchAttestationInfo(SERVER_URL + ATTESTATION_INFO_PATH)
-
-    // done
-    // Request attestation report from VM
-    // TODO: error handling
-    const attestationReport = new attestation.AttesationReport(
-        await fetchArrayBuffer(SERVER_URL + attestationInfo.path)
-    )
-
-    // done
-    const vcek = await getVCEK(attestationReport.chip_id, attestationReport.committedTCB)
-
-    // done
-    // Validate that the VCEK ic correctly signed by AMD root cert
-    // TODO: nop
-    validateWithCertChain(vcek);
-
-    // done
-    // Hack: We cannot directly ask the cert object for the public key as
-    // it triggers a 'not supported' exception. Thus convert to JSON and back.
-    const jsonPubKey = vcek.subjectPublicKeyInfo.subjectPublicKey.toJSON()
-    // TODO: error handling
-    const pubKey = await importPubKey(util.hex_decode(jsonPubKey.valueBlock.valueHex))
-    // ? verifyMessage prüft, ob attestationReport richtig gesigned wurde
-    if (await verifyMessage(pubKey, attestationReport.signature, attestationReport.getSignedData)) {
-
-        console.log("1. Attestation report has been validated by the AMD keyserver.");
-
-        // TODO: port
-        // 2. Communication terminates inside the secured VM
-        // ! trick ssl connection is correct for now
-        if (true || util.arrayBufferToHex(attestationReport.report_data) === ssl_sha512) {
-            console.log("2. Communication terminates inside the secured VM: \n" + ssl_sha512);
-        } else {
-            console.log(" No, expected state:" + util.arrayBufferToHex(attestationReport.report_data) + " but received: " + ssl_sha512);
-        }
-
-        // 3. VM has been initialized in the expected state
-        console.log("3. Expected state: " + util.arrayBufferToHex(attestationReport.measurement))
-
-        await checkMeasurement(attestationReport.measurement, attestationInfo, details.tabId)
-    }
-    // console.log("wir returnen")
-    // console.log(browser.runtime.getURL("remote-attestation.html"))
-    // return {
-    //     redirectUrl: browser.runtime.getURL("remote-attestation.html")
-    // }
 }
 
 // We need to register this listener, since we require the SecurityInfo object
@@ -228,29 +142,6 @@ browser.webRequest.onHeadersReceived.addListener(
     },
     ["blocking"]
 )
-
-/*
-in the context of this event, requests can be canceled or redirected.
-Thus, in here do:
- 1. validate attestation report against AMD server
- 2. check if the measurement has been trusted or ask the user for trust
- */
-// async function listenerOnBeforeRequest(details) {
-//     return {
-//         redirectUrl: browser.runtime.getURL("remote-attestation.html"),
-//     };
-// }
-//
-// browser.webRequest.onBeforeRequest.addListener(
-//     listenerOnBeforeRequest,
-//     {
-//         urls: [ALL_URLS],
-//         // only listen to the top level document getting loaded for now
-//         // TODO needs more work! All connections should get verified
-//         // types: ["main_frame"]
-//     },
-//     ["blocking"]
-// )
 
 async function listenerOnMessageReceived(message, sender) {
     if (sender.id !== browser.runtime.id) {
@@ -272,28 +163,6 @@ async function listenerOnMessageReceived(message, sender) {
                 url : message.url
             })
     }
-
-    // const url = new URL(message.url)
-    // const domain = url.hostname
-    // if (AttestationQueue.hasOwnProperty(domain)) {
-    //     if (message.trust) {
-    //         console.log("trusting")
-    //         await storage.setTrustedObj(domain, AttestationQueue[domain])
-    //         delete AttestationQueue[domain]
-    //     } else {
-    //         console.log("hinzufügen gestartet")
-    //         // TODO pro Zeile console.log für debugging
-    //         await storage.setUntrusted(domain)
-    //         // await storage.setUntrusted(domain)
-    //         // await storage.setUntrusted("test1")
-    //         // await storage.setUntrusted("test2")
-    //         // await storage.setUntrusted("test3")
-    //         // console.log("is " + await storage.isUntrusted("test1"))
-    //         // await storage.removeUntrusted("test1")
-    //         console.log("hinzufügen beendet")
-    //         delete AttestationQueue[domain]
-    //     }
-    // }
 }
 
 browser.runtime.onMessage.addListener(listenerOnMessageReceived)
