@@ -26,10 +26,6 @@ export async function fetchAttestationReport(url, path) {
     return new attestation.AttesationReport(raw)
 }
 
-// cached VCEK and its URL
-let cachedKdsURL
-let cachedVCEK
-
 // TODO cache VCEK in session storage, like this its broken
 export async function getVCEK(chipId, committedTCB) {
     // AMD key server
@@ -48,21 +44,15 @@ export async function getVCEK(chipId, committedTCB) {
     }
 
     const kdsUrl = getKdsURL(chipId, committedTCB)
-    if (cachedVCEK && kdsUrl === cachedKdsURL) {
-        return cachedVCEK
-    }
 
-    // TODO: error handling
     // Query the AMD key server for VCEK certificate using chip_id and TCB from report
-    const rawData = await fetchArrayBuffer(kdsUrl)
+    // let fetch-api cache the response
+    const rawData = await (await fetch(kdsUrl, { cache : "force-cache" })).arrayBuffer()
 
     const asn1 = asn1js.fromBER(rawData);
     if (asn1.offset === -1) {
         throw new Error("Incorrect encoded ASN.1 data");
     }
 
-    cachedVCEK = new pkijs.Certificate({schema: asn1.result});
-    cachedKdsURL = kdsUrl
-
-    return cachedVCEK
+    return new pkijs.Certificate({schema: asn1.result})
 }

@@ -5,6 +5,9 @@ import { types } from '../../lib/messaging';
 import { fetchAttestationReport, getVCEK } from "../../lib/net";
 import { validateWithCertChain, validateAttestationReport } from "../../lib/crypto";
 import * as storage from '../../lib/storage'
+import * as lodash from 'lodash'
+import * as asn1js from "asn1js";
+import * as pkijs from "pkijs";
 
 const titleText = document.getElementById("title")
 const domainText = document.getElementById("domain")
@@ -13,7 +16,8 @@ const ignoreButton = document.getElementById("ignore-button")
 const noTrustButton = document.getElementById("do-not-trust-button")
 const trustButton = document.getElementById("trust-button")
 
-let host, attestationInfo, measurement, url
+let host, attestationInfo, url
+let measurement
 
 async function getHostInfo() {
     return await browser.runtime.sendMessage({
@@ -61,6 +65,7 @@ window.addEventListener("load", async () => {
 
     measurement = ar.measurement
 
+    // TODO caching
     let vcek
     try {
         // TODO cache here in window storage?
@@ -71,14 +76,16 @@ window.addEventListener("load", async () => {
         // TODO
     }
 
-    // Validate that the VCEK ic correctly signed by AMD root cert
+    // Validate that the VCEK is correctly signed by AMD root cert
     if (!await validateWithCertChain(vcek)) {
         // vcek could not be verified -> notify user, attestation not possible
+        console.log("vcek invalid")
     }
 
     if (!await validateAttestationReport(ar, vcek)) {
         // attestation report could not be verified using vcek
         // -> notify user, attestation not possible
+        console.log("attestation report invalid")
     }
 
     // check measurement -> ask user
