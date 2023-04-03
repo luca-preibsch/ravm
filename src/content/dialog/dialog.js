@@ -6,6 +6,7 @@ import { fetchAttestationReport, getVCEK } from "../../lib/net";
 import { validateWithCertChain, validateAttestationReport } from "../../lib/crypto";
 import * as storage from '../../lib/storage'
 import * as util from '../../lib/util'
+import { DialogType } from "../../lib/ui";
 
 const titleText = document.getElementById("title")
 const domainText = document.getElementById("domain")
@@ -23,31 +24,7 @@ async function getHostInfo() {
     })
 }
 
-ignoreButton.addEventListener("click", () => {
-    // TODO what to do on ignore?
-    browser.runtime.sendMessage({
-        type : types.redirect,
-        url : url
-    })
-})
-
-trustButton.addEventListener("click", () => {
-    storage.setTrusted(host, new Date(), new Date(), attestationInfo.technology, measurement)
-    browser.runtime.sendMessage({
-        type : types.redirect,
-        url : url
-    })
-})
-
-noTrustButton.addEventListener("click", () => {
-    storage.setUntrusted(host)
-})
-
-window.addEventListener("load", async () => {
-    const hostInfo = await getHostInfo()
-    host = hostInfo.host
-    attestationInfo = hostInfo.attestationInfo
-    url = hostInfo.url
+async function attestHost(hostInfo) {
     const ssl_sha512 = hostInfo.ssl_sha512
 
     // init UI
@@ -103,5 +80,42 @@ window.addEventListener("load", async () => {
     titleText.innerText = "Remote Attestation"
     domainText.innerText = host
     descriptionText.innerText = "This site offers remote attestation, do you want to trust it?"
+}
+
+ignoreButton.addEventListener("click", () => {
+    // TODO what to do on ignore?
+    browser.runtime.sendMessage({
+        type : types.redirect,
+        url : url
+    })
+})
+
+trustButton.addEventListener("click", () => {
+    storage.setTrusted(host, new Date(), new Date(), attestationInfo.technology, measurement)
+    browser.runtime.sendMessage({
+        type : types.redirect,
+        url : url
+    })
+})
+
+noTrustButton.addEventListener("click", () => {
+    storage.setUntrusted(host)
+})
+
+window.addEventListener("load", async () => {
+    const hostInfo = await getHostInfo()
+    host = hostInfo.host
+    attestationInfo = hostInfo.attestationInfo
+    url = hostInfo.url
+
+    switch (hostInfo.dialog_type) {
+        case DialogType.newHost:
+            // TODO hide buttons in the beginning
+            attestHost(hostInfo)
+            break
+        case DialogType.blockedHost:
+            // TODO insert block ui
+            break
+    }
 
 })

@@ -7,6 +7,7 @@ import * as util from "../lib/util";
 import {fetchArrayBuffer, fetchAttestationInfo, getVCEK} from "../lib/net"
 import * as storage from "../lib/storage"
 import * as messaging from "../lib/messaging"
+import {DialogType} from "../lib/ui";
 
 // Domain to observe
 const ALL_URLS = "https://*/*"
@@ -121,9 +122,22 @@ async function listenerOnHeadersReceived(details) {
             host : host.href,
             url : details.url,
             attestationInfo : attestationInfo,
-            ssl_sha512 : ssl_sha512
+            ssl_sha512 : ssl_sha512,
+            dialog_type : DialogType.newHost
         }))
         return { redirectUrl: DIALOG_PAGE }
+    }
+
+    // host is known
+    if (await storage.isUntrusted(host.href)) {
+        // host is blocked
+        sessionStorage.setItem(details.tabId, JSON.stringify({
+            host : host.href,
+            url : details.url,
+            attestationInfo : attestationInfo,
+            ssl_sha512 : ssl_sha512,
+            dialog_type : DialogType.blockedHost
+        }))
     }
 
     console.log("known host")

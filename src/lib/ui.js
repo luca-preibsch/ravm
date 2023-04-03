@@ -11,7 +11,7 @@ export function showTrustDialogue() {
 // TODO Texte überarbeiten
 export function showDialog(type, domain, tabId) {
     switch (type) {
-        case DialogType.newDomain:
+        case DialogType.newHost:
             injectDialog(
                 "Remote Attestation",
                 "This site offers remote attestation, do you want to trust it?",
@@ -29,7 +29,7 @@ export function showDialog(type, domain, tabId) {
                 tabId
             )
             break
-        case DialogType.siteBlocked:
+        case DialogType.blockedHost:
             injectDialog(
                 "BLOCKED: Remote Attestation",
                 "You blocked this website!",
@@ -42,9 +42,9 @@ export function showDialog(type, domain, tabId) {
 }
 
 export const DialogType = {
-    newDomain: 0,
+    newHost: 0,
     measurementDiffers: 1,
-    siteBlocked: 2
+    blockedHost: 2
 }
 
 function injectDialog(title, description, domain, type, tabId) {
