@@ -14,7 +14,7 @@ const ALL_URLS = "https://*/*"
 const VM_DOMAIN = "transparent-vm.net";
 const MEASURED_LOCATION = "*://" + VM_DOMAIN + "/*";
 const SERVER_URL = "https://" + VM_DOMAIN + ":8080/"
-const ATTESTATION_INFO_PATH = "./remote-attestation.json"
+const ATTESTATION_INFO_PATH = "/remote-attestation.json"
 const DIALOG_PAGE = browser.runtime.getURL("remote-attestation.html")
 
 // For now hardcoded hash of the measurement this information needs
@@ -101,12 +101,25 @@ Thus, in here do:
  */
 async function listenerOnHeadersReceived(details) {
     // origin contains scheme (protocol), domain and port
-    const host = new URL(new URL(details.url).origin)
+    const url = new URL(details.url)
+    const host = new URL(url.origin)
+
+    if (url.pathname === ATTESTATION_INFO_PATH ||
+        await storage.isReportURL(url.href) ||
+        url.href.includes("kdsintf.amd.com/vcek")) {
+
+        console.log(`skipped meta request: ${url.href}`)
+        return {}
+    }
 
     // skip hosts that do not support remote attestation
     const attestationInfo = await getAttestationInfo(host)
-    if (!attestationInfo)
+    if (!attestationInfo) {
+        console.log("skipped host without attestation")
         return {}
+    }
+
+    await storage.setReportURL(host.href, new URL(attestationInfo.path, host.href).href)
 
     const ssl_sha512 = await querySSLFingerprint(details.requestId)
 
@@ -117,7 +130,7 @@ async function listenerOnHeadersReceived(details) {
     if (!await storage.isKnownHost(host.href)) {
         sessionStorage.setItem(details.tabId, JSON.stringify({
             host : host.href,
-            url : details.url,
+            url : url.href,
             attestationInfo : attestationInfo,
             ssl_sha512 : ssl_sha512,
             dialog_type : DialogType.newHost
@@ -130,7 +143,7 @@ async function listenerOnHeadersReceived(details) {
         // host is blocked
         sessionStorage.setItem(details.tabId, JSON.stringify({
             host : host.href,
-            url : details.url,
+            url : url.href,
             attestationInfo : attestationInfo,
             ssl_sha512 : ssl_sha512,
             dialog_type : DialogType.blockedHost
@@ -149,10 +162,7 @@ async function listenerOnHeadersReceived(details) {
 browser.webRequest.onHeadersReceived.addListener(
     listenerOnHeadersReceived,
     {
-        urls: [ALL_URLS],
-        // only listen to the top level document getting loaded for now
-        // TODO needs more work! All connections should get verified
-        types: ["main_frame"]
+        urls: [ALL_URLS]
     },
     ["blocking"]
 )

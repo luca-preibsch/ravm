@@ -8,6 +8,7 @@ export function setTrusted(host, trustedSince, lastTrusted, type, measurement) {
             lastTrusted : lastTrusted,
             type : type,
             measurement : measurement,
+            trusted : true,
         }
     })
 }
@@ -18,9 +19,10 @@ export function setTrustedObj(host, infoObj) {
     })
 }
 
+// TODO broken when using setReportURL
 export async function isTrusted(host) {
     const trusted = await browser.storage.local.get(host)
-    return Object.keys(trusted).length !== 0
+    return Object.keys(trusted).length !== 0 && trusted[host].trusted
 }
 
 export async function getTrusted(host) {
@@ -32,6 +34,7 @@ export async function getTrusted(host) {
     }
 }
 
+// TODO test
 export function removeTrusted(host) {
     return browser.storage.local.remove(host)
 }
@@ -65,6 +68,7 @@ export async function getUntrusted() {
     return untrusted[UNTRUSTED]
 }
 
+// TODO test
 export async function removeUntrusted(host) {
     const untrusted = await browser.storage.local.get(UNTRUSTED)
     if (Object.keys(untrusted).length === 0)
@@ -75,4 +79,17 @@ export async function removeUntrusted(host) {
 
 export async function isKnownHost(host) {
     return await isTrusted(host) || await isUntrusted(host)
+}
+
+export async function setReportURL(host, url) {
+    return browser.storage.local.set({
+        [host] : {
+            reportURL : url,
+        }
+    })
+}
+
+export async function isReportURL(url) {
+    let hosts = await browser.storage.local.get(null);
+    return Object.values(hosts).map(h => h.reportURL).includes(url);
 }
