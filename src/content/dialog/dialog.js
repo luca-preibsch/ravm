@@ -7,16 +7,43 @@ import { validateWithCertChain, validateAttestationReport } from "../../lib/cryp
 import * as storage from '../../lib/storage'
 import * as util from '../../lib/util'
 import { DialogType } from "../../lib/ui";
+import { arrayBufferToHex } from "../../lib/util";
 
 const titleText = document.getElementById("title")
 const domainText = document.getElementById("domain")
 const descriptionText = document.getElementById("description")
+const measurementText = document.getElementById("measurement")
+
 const ignoreButton = document.getElementById("ignore-button")
 const noTrustButton = document.getElementById("do-not-trust-button")
 const trustButton = document.getElementById("trust-button")
 
 let host, attestationInfo, url
 let measurement
+
+ignoreButton.addEventListener("click", () => {
+    // TODO what to do on ignore?
+    browser.runtime.sendMessage({
+        type : types.redirect,
+        url : url
+    })
+})
+
+trustButton.addEventListener("click", () => {
+    storage.setTrusted(host, new Date(), new Date(), attestationInfo.technology, measurement)
+    browser.runtime.sendMessage({
+        type : types.redirect,
+        url : url
+    })
+})
+
+noTrustButton.addEventListener("click", () => {
+    storage.setUntrusted(host)
+    browser.runtime.sendMessage({
+        type : types.redirect,
+        url : url
+    })
+})
 
 async function getHostInfo() {
     return await browser.runtime.sendMessage({
@@ -81,29 +108,10 @@ async function attestHost(hostInfo) {
     titleText.innerText = "Remote Attestation";
     domainText.innerText = host;
     descriptionText.innerText = "This site offers remote attestation, do you want to trust it?";
-    [ignoreButton, noTrustButton, trustButton].forEach((button) =>
+    measurementText.innerText = `0x${arrayBufferToHex(ar.measurement)}`;
+    [ignoreButton, noTrustButton, trustButton, measurementText.parentNode].forEach((button) =>
         button.classList.remove("invisible"));
 }
-
-ignoreButton.addEventListener("click", () => {
-    // TODO what to do on ignore?
-    browser.runtime.sendMessage({
-        type : types.redirect,
-        url : url
-    })
-})
-
-trustButton.addEventListener("click", () => {
-    storage.setTrusted(host, new Date(), new Date(), attestationInfo.technology, measurement)
-    browser.runtime.sendMessage({
-        type : types.redirect,
-        url : url
-    })
-})
-
-noTrustButton.addEventListener("click", () => {
-    storage.setUntrusted(host)
-})
 
 window.addEventListener("load", async () => {
     const hostInfo = await getHostInfo()
