@@ -29,16 +29,17 @@ ignoreButton.addEventListener("click", () => {
     })
 })
 
-trustButton.addEventListener("click", () => {
-    storage.setTrusted(host, new Date(), new Date(), attestationInfo.technology, measurement)
+trustButton.addEventListener("click", async () => {
+    await storage.setTrusted(host, new Date(), new Date(), attestationInfo.technology, measurement)
     browser.runtime.sendMessage({
         type : types.redirect,
         url : url
     })
 })
 
-noTrustButton.addEventListener("click", () => {
-    storage.setUntrusted(host)
+noTrustButton.addEventListener("click", async () => {
+    console.log("from back " + JSON.stringify(await browser.storage.local.get()))
+    await storage.setUntrusted(host)
     browser.runtime.sendMessage({
         type : types.redirect,
         url : url

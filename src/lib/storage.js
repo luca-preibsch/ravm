@@ -1,36 +1,43 @@
 const UNTRUSTED = "untrusted"
 
+async function getContentsOf(request){
+    const item = await browser.storage.local.get(request)
+    if (Object.keys(item).length === 0)
+        return {}
+    else
+        return item[request]
+}
+
 // TODO switch Trusted to use a category like untrusted?
 export function setTrusted(host, trustedSince, lastTrusted, type, measurement) {
-    return browser.storage.local.set({
-        [host] : {
-            trustedSince : trustedSince,
-            lastTrusted : lastTrusted,
-            type : type,
-            measurement : measurement,
-            trusted : true,
-        }
+    return setTrustedObj(host, {
+        trustedSince : trustedSince,
+        lastTrusted : lastTrusted,
+        type : type,
+        measurement : measurement,
+        trusted : true,
     })
 }
 
-export function setTrustedObj(host, infoObj) {
+export async function setTrustedObj(host, infoObj) {
+    const old = await getContentsOf(host)
     return browser.storage.local.set({
-        [host] : infoObj
+        [host] : {...old, ...infoObj} // the latter overwrites the former
     })
 }
 
 // TODO broken when using setReportURL
 export async function isTrusted(host) {
-    const trusted = await browser.storage.local.get(host)
-    return Object.keys(trusted).length !== 0 && trusted[host].trusted
+    const hosts = await browser.storage.local.get(host)
+    return Object.keys(hosts).length !== 0 && hosts[host].trusted
 }
 
-export async function getTrusted(host) {
+// returns all stored information about one host or about all hosts if host is left blank
+export function getHost(host) {
     if (host) {
-        const result = await browser.storage.local.get(host)
-        return result[host]
+        return getContentsOf(host)
     } else {
-        return browser.storage.local.get(null)
+        return browser.storage.local.get()
     }
 }
 
@@ -40,41 +47,22 @@ export function removeTrusted(host) {
 }
 
 export async function setUntrusted(host) {
-    const untrusted = await browser.storage.local.get(UNTRUSTED)
-    if (Object.keys(untrusted).length === 0) {
-        return browser.storage.local.set({
-            [UNTRUSTED] : [host]
-        })
-    } else if (!untrusted[UNTRUSTED].includes(host)) {
-        untrusted[UNTRUSTED].push(host)
-        return browser.storage.local.set({
-            [UNTRUSTED] : untrusted[UNTRUSTED]
-        })
-    }
+    const old = await getContentsOf(host)
+    return browser.storage.local.set({
+        [host] : {...old,
+            blocked : true,
+        } // the latter overwrites the former
+    })
 }
 
 export async function isUntrusted(host) {
-    const untrusted = await browser.storage.local.get(UNTRUSTED)
-    if (Object.keys(untrusted).length === 0)
-        return false
-    return untrusted[UNTRUSTED].includes(host);
-
+    const hosts = await browser.storage.local.get(host)
+    return Object.keys(hosts).length !== 0 && hosts[host].blocked
 }
 
-export async function getUntrusted() {
-    const untrusted = await browser.storage.local.get(UNTRUSTED)
-    if (Object.keys(untrusted).length === 0)
-        return null
-    return untrusted[UNTRUSTED]
-}
-
-// TODO test
 export async function removeUntrusted(host) {
-    const untrusted = await browser.storage.local.get(UNTRUSTED)
-    if (Object.keys(untrusted).length === 0)
-        return false
-    const newUntrusted = untrusted.filter(d => d !== host)
-    return untrusted.length !== newUntrusted.length
+    // TODO
+    throw Error("Not implemented")
 }
 
 export async function isKnownHost(host) {
@@ -82,10 +70,11 @@ export async function isKnownHost(host) {
 }
 
 export async function setReportURL(host, url) {
+    const old = await getContentsOf(host)
     return browser.storage.local.set({
-        [host] : {
+        [host] : {...old,
             reportURL : url,
-        }
+        } // the latter overwrites the former
     })
 }
 

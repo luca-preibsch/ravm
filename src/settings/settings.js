@@ -12,7 +12,7 @@ document.getElementById("testButton").onclick = function () { saveItem(counter++
 
 function loadAllItems() {
     table.innerHTML = ""
-    storage.getTrusted().then((items) => {
+    storage.getHost().then((items) => {
 
         let domains = Object.keys(items)
         for (let domain of domains) {
