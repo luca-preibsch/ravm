@@ -37,18 +37,17 @@ export function removeTrusted(host) {
 }
 
 export async function setUntrusted(host) {
-    let untrusted = await browser.storage.local.get(UNTRUSTED)
-
+    const untrusted = await browser.storage.local.get(UNTRUSTED)
     if (Object.keys(untrusted).length === 0) {
-        untrusted = [host]
-    } else {
-        if (!untrusted[UNTRUSTED].includes(host))
-            untrusted[UNTRUSTED].push(host)
+        return browser.storage.local.set({
+            [UNTRUSTED] : [host]
+        })
+    } else if (!untrusted[UNTRUSTED].includes(host)) {
+        untrusted[UNTRUSTED].push(host)
+        return browser.storage.local.set({
+            [UNTRUSTED] : untrusted[UNTRUSTED]
+        })
     }
-
-    return browser.storage.local.set({
-        [UNTRUSTED] : untrusted
-    })
 }
 
 export async function isUntrusted(host) {
