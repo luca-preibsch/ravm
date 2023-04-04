@@ -1,5 +1,3 @@
-const UNTRUSTED = "untrusted"
-
 async function getContentsOf(request){
     const item = await browser.storage.local.get(request)
     if (Object.keys(item).length === 0)
