@@ -6,12 +6,12 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "watch": "webpack --watch --progress",
-    "browser": "cd ./build && web-ext run --url https://transparent-vm.net:8080 --bc",
+    "browser": "cd ./build && web-ext run --url https://transparent-vm.net:8080 --bc -p ../firefox-profile/ --profile-create-if-missing",
     "http": "cd ./demo-site && http-server -C cert.pem  -K key.pem -S",
     "lint": "npx eslint src",
     "lint:fix": "npx eslint --fix src",
     "build": "webpack build",
-    "debug": "cd ./build && web-ext run --url https://transparent-vm.net:8080 --devtools"
+    "debug": "cd ./build && web-ext run --url https://transparent-vm.net:8080 --devtools -p ../firefox-profile/ --profile-create-if-missing"
   },
   "keywords": [],
   "author": "",
