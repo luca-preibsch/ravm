@@ -141,6 +141,8 @@ async function listenerOnHeadersReceived(details) {
         return { redirectUrl: DIALOG_PAGE }
     }
 
+
+
     console.log("known host")
     return {}
 }

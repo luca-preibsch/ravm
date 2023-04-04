@@ -63,6 +63,7 @@ async function attestHost(hostInfo) {
         console.log("TLS connection invalid")
     }
 
+
     // 2. Validate that the VCEK is correctly signed by AMD root cert
     if (!await validateWithCertChain(vcek)) {
         // vcek could not be verified -> notify user, attestation not possible
@@ -77,9 +78,11 @@ async function attestHost(hostInfo) {
     }
 
     // 4. Trust the measurement? wait for user input
-    titleText.innerText = "Remote Attestation"
-    domainText.innerText = host
-    descriptionText.innerText = "This site offers remote attestation, do you want to trust it?"
+    titleText.innerText = "Remote Attestation";
+    domainText.innerText = host;
+    descriptionText.innerText = "This site offers remote attestation, do you want to trust it?";
+    [ignoreButton, noTrustButton, trustButton].forEach((button) =>
+        button.classList.remove("invisible"));
 }
 
 ignoreButton.addEventListener("click", () => {
