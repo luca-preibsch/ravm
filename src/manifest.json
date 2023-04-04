@@ -1,6 +1,6 @@
 {
 
-  "manifest_version": 2,
+  "manifest_version": 3,
   "name": "check-vm",
   "homepage_url": "https://gitlab.com/ruediger.kapitza/twebload",
   "icons": {
@@ -13,7 +13,10 @@
     "webRequestBlocking",
     "activeTab",
     "scripting",
-    "tabs",
+    "tabs"
+  ],
+
+  "host_permissions": [
     "*://transparent-vm.net/*",
     "<all_urls>"
   ],
@@ -44,7 +47,10 @@
   },
 
   "web_accessible_resources": [
-    "remote-attestation.html"
+    {
+      "resources" : [ "remote-attestation.html" ],
+      "matches" : [ "https://*/*" ]
+    }
   ]
   
 }

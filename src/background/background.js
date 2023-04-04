@@ -21,9 +21,6 @@ const DIALOG_PAGE = browser.runtime.getURL("remote-attestation.html")
 // to be retrieved from the IC
 const VM_MEASUREMENT = "";
 
-// Queue of domains that use RemoteAttestation, but need input by the user to either trust or don't trust
-const AttestationQueue = {}
-
 async function sha512(str) {
     return crypto.subtle.digest("SHA-512", new TextEncoder("utf-8").encode(str)).then(buf => {
         return Array.prototype.map.call(new Uint8Array(buf), x => (('00' + x.toString(16)).slice(-2))).join('');
