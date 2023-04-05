@@ -6,25 +6,24 @@ async function getContentsOf(request){
         return item[request]
 }
 
-// TODO switch Trusted to use a category like untrusted?
-export function setTrusted(host, trustedSince, lastTrusted, type, measurement) {
-    return setTrustedObj(host, {
+export function newTrusted(host, trustedSince, lastTrusted, type, measurement, ssl_sha512) {
+    return setTrusted(host, {
         trustedSince : trustedSince,
         lastTrusted : lastTrusted,
         type : type,
         measurement : measurement,
+        ssl_sha512 : ssl_sha512,
         trusted : true,
     })
 }
 
-export async function setTrustedObj(host, infoObj) {
+export async function setTrusted(host, infoObj) {
     const old = await getContentsOf(host)
     return browser.storage.local.set({
         [host] : {...old, ...infoObj} // the latter overwrites the former
     })
 }
 
-// TODO broken when using setReportURL
 export async function isTrusted(host) {
     const hosts = await browser.storage.local.get(host)
     return Object.keys(hosts).length !== 0 && hosts[host].trusted

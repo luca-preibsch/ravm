@@ -2,8 +2,9 @@ import * as asn1js from "asn1js";
 import * as pkijs from "pkijs";
 import ask from "../certificates/ask.der";
 import ark from "../certificates/ark.der";
-import {fetchArrayBuffer} from "./net";
+import {fetchArrayBuffer, fetchAttestationReport, getVCEK} from "./net";
 import * as util from "./util";
+import {isEqual} from "lodash";
 
 // Validate the VCEK certificate using the AMD provided keys
 // and revocation list.
@@ -83,4 +84,55 @@ export async function validateAttestationReport(ar, vcek) {
     const jsonPubKey = vcek.subjectPublicKeyInfo.subjectPublicKey.toJSON()
     const pubKey = await importPubKey(util.hex_decode(jsonPubKey.valueBlock.valueHex))
     return await verifyMessage(pubKey, ar.signature, ar.getSignedData)
+}
+
+export async function validateMeasurement(hostInfo, measurement) {
+    // Request attestation report from VM
+    let ar;
+    try {
+        ar = await fetchAttestationReport(hostInfo.host, hostInfo.attestationInfo.path);
+    } catch (e) {
+        // no attestation report found
+        console.log(e);
+        return false;
+    }
+
+    let vcek;
+    try {
+        vcek = await getVCEK(ar.chip_id, ar.committedTCB);
+    } catch (e) {
+        // vcek could not be attained
+        console.log(e);
+        return false;
+    }
+
+    // TODO: broken, because we currently fake the VM
+    // if (util.arrayBufferToHex(ar.report_data) !== hostInfo.ssl_sha512) {
+    //     // TLS connection pubkey is not equal to pubkey in attestation report
+    //     console.log("TLS connection invalid");
+    //     return false;
+    // }
+
+    if (!await validateWithCertChain(vcek)) {
+        // vcek could not be verified
+        console.log("vcek invalid");
+        return false;
+    }
+
+    if (!await validateAttestationReport(ar, vcek)) {
+        // attestation report could not be verified using VCEK
+        console.log("attestation report invalid");
+        return false;
+    }
+
+    console.log("vor equals")
+
+    if (!isEqual(measurement, ar.measurement)) {
+        console.log("current measurement differs from stored measurement");
+        return false;
+    }
+
+    console.log("nach equals")
+
+    return true;
 }

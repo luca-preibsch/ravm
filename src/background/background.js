@@ -1,13 +1,14 @@
 import * as pkijs from "pkijs";
 import * as asn1js from "asn1js";
-import _ from "lodash"
+import _ from "lodash";
 
 import * as attestation from "../lib/attestation";
 import * as util from "../lib/util";
-import {fetchArrayBuffer, fetchAttestationInfo, getVCEK} from "../lib/net"
-import * as storage from "../lib/storage"
-import * as messaging from "../lib/messaging"
+import {fetchArrayBuffer, fetchAttestationInfo, fetchAttestationReport, getVCEK} from "../lib/net";
+import * as storage from "../lib/storage";
+import * as messaging from "../lib/messaging";
 import {DialogType} from "../lib/ui";
+import {validateMeasurement} from "../lib/crypto";
 
 // Domain to observe
 const ALL_URLS = "https://*/*"
@@ -104,6 +105,10 @@ async function listenerOnHeadersReceived(details) {
     const url = new URL(details.url)
     const host = new URL(url.origin)
 
+    // skip URLS that are needed for the extension to work
+    // 1. skip ATTESTATION_INFO_PATH else it would create an infinite loop
+    // 2. skip if this is a reportURL else it would create an infinite loop
+    // 3. skip if this is the AMD key server else it would get requested too often and reject future calls
     if (url.pathname === ATTESTATION_INFO_PATH ||
         await storage.isReportURL(url.href) ||
         url.href.includes("kdsintf.amd.com/vcek")) {
@@ -119,9 +124,17 @@ async function listenerOnHeadersReceived(details) {
         return {}
     }
 
+    // This is the place where the hosts attestation report is.
+    // Safe it, so requests to this URL are not attested by the extension.
     await storage.setReportURL(host.href, new URL(attestationInfo.path, host.href).href)
 
     const ssl_sha512 = await querySSLFingerprint(details.requestId)
+    const hostInfo = {
+        host : host.href,
+        url : url.href,
+        attestationInfo : attestationInfo,
+        ssl_sha512 : ssl_sha512,
+    }
 
     // check if the host is already known by the extension
     // if not:
@@ -129,10 +142,7 @@ async function listenerOnHeadersReceived(details) {
     // - redirect to the DIALOG_PAGE where attestation for the domain in session storage takes place
     if (!await storage.isKnownHost(host.href)) {
         sessionStorage.setItem(details.tabId, JSON.stringify({
-            host : host.href,
-            url : url.href,
-            attestationInfo : attestationInfo,
-            ssl_sha512 : ssl_sha512,
+            ...hostInfo,
             dialog_type : DialogType.newHost
         }))
         return { redirectUrl: DIALOG_PAGE }
@@ -142,20 +152,40 @@ async function listenerOnHeadersReceived(details) {
     if (await storage.isUntrusted(host.href)) {
         // host is blocked
         sessionStorage.setItem(details.tabId, JSON.stringify({
-            host : host.href,
-            url : url.href,
-            attestationInfo : attestationInfo,
-            ssl_sha512 : ssl_sha512,
+            ...hostInfo,
             dialog_type : DialogType.blockedHost
         }))
         return { redirectUrl: DIALOG_PAGE }
     }
 
     // can host be trusted?
+    // 1. for connections in the same session: test TLS pub key
+    // 2. else test if stored measurement equals the current => store new measurement + TLS key
+    // 3. else inform user via dialog
 
-
-    console.log("known host")
-    return {}
+    const storedHostInfo = await storage.getHost(host.href);
+    if (ssl_sha512 === storedHostInfo.ssl_sha512) {
+        // TLS pub key did not change, thus the host can be trusted
+        // update lastTrusted
+        console.log("known TLS key");
+        await storage.setTrusted(host.href, { lastTrusted : new Date() });
+    } else if (await validateMeasurement(hostInfo, storedHostInfo.measurement)) {
+        // the measurement is correct and the host can be trusted
+        // -> store new TLS key, update lastTrusted
+        console.log("known measurement");
+        await storage.setTrusted(host.href, {
+            lastTrusted : new Date(),
+            ssl_sha512 : ssl_sha512
+        });
+    } else {
+        console.log("attestation using stored measurement failed");
+        // TODO: change DialogType
+        sessionStorage.setItem(details.tabId, JSON.stringify({
+            ...hostInfo,
+            dialog_type : DialogType.newHost,
+        }));
+        return { redirectUrl: DIALOG_PAGE };
+    }
 }
 
 // We need to register this listener, since we require the SecurityInfo object

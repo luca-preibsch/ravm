@@ -32,7 +32,7 @@ function loadAllItems() {
 }
 
 function saveItem(domain, trustedSince, lastTrusted, type, measurement) {
-    storage.setTrusted(domain, trustedSince, lastTrusted, type, measurement)
+    storage.newTrusted(domain, trustedSince, lastTrusted, type, measurement)
     console.log("save")
     loadAllItems()
 }

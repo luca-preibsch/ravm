@@ -30,7 +30,8 @@ ignoreButton.addEventListener("click", () => {
 })
 
 trustButton.addEventListener("click", async () => {
-    await storage.setTrusted(hostInfo.host, new Date(), new Date(), hostInfo.attestationInfo.technology, measurement)
+    await storage.newTrusted(
+        hostInfo.host, new Date(), new Date(), hostInfo.attestationInfo.technology, measurement, hostInfo.ssl_sha512)
     browser.runtime.sendMessage({
         type : types.redirect,
         url : hostInfo.url
@@ -75,7 +76,6 @@ async function attestHost(hostInfo) {
     // TODO caching
     let vcek
     try {
-        // TODO cache here in window storage?
         vcek = await getVCEK(ar.chip_id, ar.committedTCB)
     } catch (e) {
         // vcek could not be attained -> notify user, attestation not possible
@@ -84,7 +84,7 @@ async function attestHost(hostInfo) {
     }
 
     // 1. verify TLS connection
-    // ! trick ssl connection is correct for now
+    // ! TODO trick ssl connection is correct for now
     if (false && util.arrayBufferToHex(ar.report_data) !== ssl_sha512) {
         // TLS connection pubkey is not equal to pubkey in attestation report
         // -> notify user, attestation not possible
