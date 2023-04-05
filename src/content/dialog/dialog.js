@@ -18,31 +18,31 @@ const ignoreButton = document.getElementById("ignore-button")
 const noTrustButton = document.getElementById("do-not-trust-button")
 const trustButton = document.getElementById("trust-button")
 
-let host, attestationInfo, url
 let measurement
+let hostInfo
 
 ignoreButton.addEventListener("click", () => {
     // TODO what to do on ignore?
     browser.runtime.sendMessage({
         type : types.redirect,
-        url : url
+        url : hostInfo.url
     })
 })
 
 trustButton.addEventListener("click", async () => {
-    await storage.setTrusted(host, new Date(), new Date(), attestationInfo.technology, measurement)
+    await storage.setTrusted(hostInfo.host, new Date(), new Date(), hostInfo.attestationInfo.technology, measurement)
     browser.runtime.sendMessage({
         type : types.redirect,
-        url : url
+        url : hostInfo.url
     })
 })
 
 noTrustButton.addEventListener("click", async () => {
     console.log("from back " + JSON.stringify(await browser.storage.local.get()))
-    await storage.setUntrusted(host)
+    await storage.setUntrusted(hostInfo.host)
     browser.runtime.sendMessage({
         type : types.redirect,
-        url : url
+        url : hostInfo.url
     })
 })
 
@@ -57,13 +57,13 @@ async function attestHost(hostInfo) {
 
     // init UI
     titleText.innerText = "Remote Attestation"
-    domainText.innerText = host
+    domainText.innerText = hostInfo.host
     descriptionText.innerText = "PENDING"
 
     // Request attestation report from VM
     let ar
     try {
-        ar = await fetchAttestationReport(host, attestationInfo.path)
+        ar = await fetchAttestationReport(hostInfo.host, hostInfo.attestationInfo.path)
     } catch (e) {
         // no attestation report found -> notify user, attestation not possible
         console.log(e)
@@ -107,7 +107,7 @@ async function attestHost(hostInfo) {
 
     // 4. Trust the measurement? wait for user input
     titleText.innerText = "Remote Attestation";
-    domainText.innerText = host;
+    domainText.innerText = hostInfo.host;
     descriptionText.innerText = "This site offers remote attestation, do you want to trust it?";
     measurementText.innerText = `0x${arrayBufferToHex(ar.measurement)}`;
     [ignoreButton, noTrustButton, trustButton, measurementText.parentNode].forEach((button) =>
@@ -115,10 +115,10 @@ async function attestHost(hostInfo) {
 }
 
 window.addEventListener("load", async () => {
-    const hostInfo = await getHostInfo()
-    host = hostInfo.host
-    attestationInfo = hostInfo.attestationInfo
-    url = hostInfo.url
+    hostInfo = await getHostInfo()
+    // host = hostInfo.host
+    // attestationInfo = hostInfo.attestationInfo
+    // url = hostInfo.url
 
     switch (hostInfo.dialog_type) {
         case DialogType.newHost:

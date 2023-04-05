@@ -151,6 +151,7 @@ async function listenerOnHeadersReceived(details) {
         return { redirectUrl: DIALOG_PAGE }
     }
 
+    // can host be trusted?
 
 
     console.log("known host")
