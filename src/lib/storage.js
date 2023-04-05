@@ -38,8 +38,8 @@ export function getHost(host) {
     }
 }
 
-// TODO test
 export function removeTrusted(host) {
+    console.log("remove " + host)
     return browser.storage.local.remove(host)
 }
 

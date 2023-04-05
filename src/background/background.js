@@ -186,6 +186,8 @@ async function listenerOnHeadersReceived(details) {
         }));
         return { redirectUrl: DIALOG_PAGE };
     }
+
+    return {}
 }
 
 // We need to register this listener, since we require the SecurityInfo object
@@ -220,4 +222,4 @@ async function listenerOnMessageReceived(message, sender) {
     }
 }
 
-browser.runtime.onMessage.addListener(listenerOnMessageReceived)
+browser.runtime.onMessage.addListener(listenerOnMessageReceived);

@@ -47,7 +47,10 @@ export async function getVCEK(chipId, committedTCB) {
 
     // Query the AMD key server for VCEK certificate using chip_id and TCB from report
     // let fetch-api cache the response
-    const rawData = await (await fetch(kdsUrl, { cache : "force-cache" })).arrayBuffer()
+    const rawData = await (await fetch(kdsUrl, {
+        cache : "force-cache",
+        referrerPolicy: "no-referrer"
+    })).arrayBuffer()
 
     const asn1 = asn1js.fromBER(rawData);
     if (asn1.offset === -1) {

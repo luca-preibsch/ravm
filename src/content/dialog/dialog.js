@@ -18,8 +18,8 @@ const ignoreButton = document.getElementById("ignore-button")
 const noTrustButton = document.getElementById("do-not-trust-button")
 const trustButton = document.getElementById("trust-button")
 
-let measurement
-let hostInfo
+let measurement;
+let hostInfo;
 
 ignoreButton.addEventListener("click", () => {
     // TODO what to do on ignore?
