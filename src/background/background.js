@@ -187,6 +187,7 @@ async function listenerOnHeadersReceived(details) {
         return { redirectUrl: DIALOG_PAGE };
     }
 
+    browser.pageAction.show(details.tabId)
     return {}
 }
 
