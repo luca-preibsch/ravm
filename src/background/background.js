@@ -1,10 +1,8 @@
 import * as pkijs from "pkijs";
 import * as asn1js from "asn1js";
-import _ from "lodash";
 
-import * as attestation from "../lib/attestation";
 import * as util from "../lib/util";
-import {fetchArrayBuffer, fetchAttestationInfo, fetchAttestationReport, getVCEK} from "../lib/net";
+import {fetchAttestationInfo} from "../lib/net";
 import * as storage from "../lib/storage";
 import * as messaging from "../lib/messaging";
 import {DialogType} from "../lib/ui";
@@ -12,15 +10,8 @@ import {validateMeasurement} from "../lib/crypto";
 
 // Domain to observe
 const ALL_URLS = "https://*/*"
-const VM_DOMAIN = "transparent-vm.net";
-const MEASURED_LOCATION = "*://" + VM_DOMAIN + "/*";
-const SERVER_URL = "https://" + VM_DOMAIN + ":8080/"
 const ATTESTATION_INFO_PATH = "/remote-attestation.json"
 const DIALOG_PAGE = browser.runtime.getURL("remote-attestation.html")
-
-// For now hardcoded hash of the measurement this information needs
-// to be retrieved from the IC
-const VM_MEASUREMENT = "";
 
 async function sha512(str) {
     return crypto.subtle.digest("SHA-512", new TextEncoder("utf-8").encode(str)).then(buf => {
@@ -90,7 +81,7 @@ async function getAttestationInfo(url) {
     try {
         return await fetchAttestationInfo(new URL(ATTESTATION_INFO_PATH, url.href).href)
     } catch (e) {
-        console.log(e)
+        // console.log(e)
         return null
     }
 }

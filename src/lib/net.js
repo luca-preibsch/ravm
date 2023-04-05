@@ -18,7 +18,15 @@ export async function fetchArrayBuffer(url) {
 }
 
 export async function fetchAttestationInfo(url) {
-    return await (await fetchFile(url)).json()
+    const response = await fetch(url, {
+        method: "GET",
+        redirect: "error",
+        referrerPolicy: "no-referrer"
+    });
+    if (response.ok)
+        return response.json();
+    else
+        throw new Error("fetch not successful");
 }
 
 export async function fetchAttestationReport(url, path) {
