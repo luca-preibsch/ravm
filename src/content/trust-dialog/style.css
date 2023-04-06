@@ -1,9 +1,0 @@
-.modal {
-    max-width: 50ch;
-    border: 0;
-}
-
-.modal::backdrop {
-    background: rgb(0 0 0 / 0.4);
-}
-

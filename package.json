@@ -7,7 +7,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "watch": "webpack --watch --progress",
     "browser": "cd ./build && web-ext run --url https://transparent-vm.net:8080 --bc -p ../firefox-profile/ --profile-create-if-missing",
-    "http": "cd ./demo-site && http-server -C cert.pem  -K key.pem -S",
+    "http": "cd ./demo-site && http-server -C cert.pem -K key.pem -S",
     "lint": "npx eslint src",
     "lint:fix": "npx eslint --fix src",
     "build": "webpack build",
@@ -24,7 +24,7 @@
     "source-map-loader": "^4.0.1",
     "style-loader": "^3.3.1",
     "transform-json-webpack-plugin": "^0.0.2",
-    "webpack": "^5.75.0",
+    "webpack": "^5.76.0",
     "webpack-cli": "^5.0.1"
   },
   "dependencies": {
