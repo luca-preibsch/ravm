@@ -3,36 +3,60 @@ import '../style/table.css'
 
 import * as storage from '../lib/storage'
 
-const tableWidth = document.getElementById("tableHead").rows[0].cells.length
 const table = document.getElementById("tableBody")
-let counter = 0
+const form = document.getElementById("form")
 
-loadAllItems();
+// TODO: button for showing the measurement
+
+let counter = 0;
 document.getElementById("testButton").onclick = function () { saveItem(counter++ + "example.com", new Date(), new Date(), "AMD-SEV", "xxx") }
+
+function onRemove() {
+    const toRemove = [...form.querySelectorAll(".removeCheckbox")].filter(el => el.checked);
+    toRemove.forEach(el => storage.removeTrusted(el.value));
+}
+
+form.addEventListener("submit", onRemove);
 
 function loadAllItems() {
     table.innerHTML = ""
-    storage.getHost().then((items) => {
-
-        let domains = Object.keys(items)
-        for (let domain of domains) {
-            let row = table.insertRow()
-            let data = items[domain]
-            row.insertCell().innerHTML = domain
-            row.insertCell().innerHTML = data.trustedSince.toString()
-            row.insertCell().innerHTML = data.lastTrusted.toString()
-            row.insertCell().innerHTML = data.type
-        }
-        
-    },
-    (reason) => { 
-        console.log("error while loading options")
-    })
-    console.log("load")
+    storage.getTrusted().then((items) => {
+            let hosts = Object.keys(items)
+            for (let host of hosts) {
+                let row = table.insertRow()
+                let data = items[host]
+                row.insertCell().appendChild(createTitleCell(host));
+                row.insertCell().innerHTML = data.trustedSince.toLocaleString();
+                row.insertCell().innerHTML = data.lastTrusted.toLocaleString();
+                row.insertCell().innerHTML = data.type;
+            }
+        },
+        (reason) => {
+            console.error(reason);
+        })
 }
+
+window.addEventListener("load", loadAllItems);
+browser.storage.onChanged.addListener(loadAllItems)
 
 function saveItem(domain, trustedSince, lastTrusted, type, measurement) {
     storage.newTrusted(domain, trustedSince, lastTrusted, type, measurement)
     console.log("save")
     loadAllItems()
+}
+
+function createTitleCell(title) {
+    const div = document.createElement("div");
+    const checkbox = document.createElement("input");
+    checkbox.setAttribute("type", "checkbox");
+    checkbox.setAttribute("id", title);
+    // checkbox.setAttribute(name, title);
+    checkbox.setAttribute("value", title);
+    checkbox.classList.add("removeCheckbox");
+    const label = document.createElement("lable");
+    label.setAttribute("for", title);
+    label.innerText = title;
+    div.appendChild(checkbox);
+    div.appendChild(label);
+    return div;
 }

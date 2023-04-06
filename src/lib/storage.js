@@ -29,6 +29,11 @@ export async function isTrusted(host) {
     return Object.keys(hosts).length !== 0 && hosts[host].trusted
 }
 
+export async function getTrusted() {
+    const hosts = await getHost();
+    return Object.fromEntries(Object.entries(hosts).filter(([, val]) => val.trusted));
+}
+
 // returns all stored information about one host or about all hosts if host is left blank
 export function getHost(host) {
     if (host) {
@@ -39,7 +44,6 @@ export function getHost(host) {
 }
 
 export function removeTrusted(host) {
-    console.log("remove " + host)
     return browser.storage.local.remove(host)
 }
 

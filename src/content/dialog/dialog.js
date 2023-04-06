@@ -39,7 +39,6 @@ trustButton.addEventListener("click", async () => {
 })
 
 noTrustButton.addEventListener("click", async () => {
-    console.log("from back " + JSON.stringify(await browser.storage.local.get()))
     await storage.setUntrusted(hostInfo.host)
     browser.runtime.sendMessage({
         type : types.redirect,
