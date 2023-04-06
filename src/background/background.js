@@ -108,9 +108,26 @@ async function listenerOnHeadersReceived(details) {
         return {}
     }
 
-    // skip hosts that do not support remote attestation
+    const isKnown = await storage.isKnownHost(host.href);
+    const ssl_sha512 = await querySSLFingerprint(details.requestId);
     const attestationInfo = await getAttestationInfo(host)
+    const hostInfo = {
+        host : host.href,
+        url : url.href,
+        attestationInfo : attestationInfo,
+        ssl_sha512 : ssl_sha512,
+    };
+
+    // skip hosts that do not support remote attestation
     if (!attestationInfo) {
+        if (isKnown) {
+            // known host stopped using remote attestation -> inform user
+            sessionStorage.setItem(details.tabId, JSON.stringify({
+                ...hostInfo,
+                dialog_type : DialogType.attestationMissing,
+            }))
+            return { redirectUrl: DIALOG_PAGE }
+        }
         console.log("skipped host without attestation")
         return {}
     }
@@ -119,19 +136,11 @@ async function listenerOnHeadersReceived(details) {
     // Safe it, so requests to this URL are not attested by the extension.
     await storage.setReportURL(host.href, new URL(attestationInfo.path, host.href).href)
 
-    const ssl_sha512 = await querySSLFingerprint(details.requestId)
-    const hostInfo = {
-        host : host.href,
-        url : url.href,
-        attestationInfo : attestationInfo,
-        ssl_sha512 : ssl_sha512,
-    }
-
     // check if the host is already known by the extension
     // if not:
     // - add current domain to the session storage
     // - redirect to the DIALOG_PAGE where attestation for the domain in session storage takes place
-    if (!await storage.isKnownHost(host.href)) {
+    if (!isKnown) {
         sessionStorage.setItem(details.tabId, JSON.stringify({
             ...hostInfo,
             dialog_type : DialogType.newHost
@@ -170,14 +179,14 @@ async function listenerOnHeadersReceived(details) {
         });
     } else {
         console.log("attestation using stored measurement failed");
-        // TODO: change DialogType
         sessionStorage.setItem(details.tabId, JSON.stringify({
             ...hostInfo,
-            dialog_type : DialogType.newHost,
+            dialog_type : DialogType.measurementDiffers,
         }));
         return { redirectUrl: DIALOG_PAGE };
     }
 
+    // attestation successful -> show checkmark page action
     browser.pageAction.show(details.tabId)
     return {}
 }

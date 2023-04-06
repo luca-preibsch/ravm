@@ -1,3 +1,10 @@
+export const DialogType = {
+    newHost: 0,
+    measurementDiffers: 1,
+    blockedHost: 2,
+    attestationMissing: 3,
+}
+
 export function showTrustDialogue() {
     let createData = {
         type: "detached_panel",
@@ -39,12 +46,6 @@ export function showDialog(type, domain, tabId) {
             )
             break
     }
-}
-
-export const DialogType = {
-    newHost: 0,
-    measurementDiffers: 1,
-    blockedHost: 2
 }
 
 function injectDialog(title, description, domain, type, tabId) {

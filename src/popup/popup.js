@@ -2,7 +2,6 @@ import './style.css';
 import '../style/button.css';
 
 import * as storage from '../lib/storage';
-import {types} from "../lib/messaging";
 
 const icon = document.getElementById("attestation-icon");
 const headerText = document.getElementById("attestation-header");

@@ -125,14 +125,10 @@ export async function validateMeasurement(hostInfo, measurement) {
         return false;
     }
 
-    console.log("vor equals")
-
     if (!isEqual(measurement, ar.measurement)) {
         console.log("current measurement differs from stored measurement");
         return false;
     }
-
-    console.log("nach equals")
 
     return true;
 }

@@ -56,11 +56,6 @@ async function getHostInfo() {
 async function attestHost(hostInfo) {
     const ssl_sha512 = hostInfo.ssl_sha512
 
-    // init UI
-    titleText.innerText = "Remote Attestation"
-    domainText.innerText = hostInfo.host
-    descriptionText.innerText = "PENDING"
-
     // Request attestation report from VM
     let ar
     try {
@@ -69,6 +64,7 @@ async function attestHost(hostInfo) {
         // no attestation report found -> notify user, attestation not possible
         console.log(e)
         // TODO
+        return false;
     }
 
     measurement = ar.measurement
@@ -81,6 +77,7 @@ async function attestHost(hostInfo) {
         // vcek could not be attained -> notify user, attestation not possible
         console.log(e)
         // TODO
+        return false;
     }
 
     // 1. verify TLS connection
@@ -89,6 +86,7 @@ async function attestHost(hostInfo) {
         // TLS connection pubkey is not equal to pubkey in attestation report
         // -> notify user, attestation not possible
         console.log("TLS connection invalid")
+        return false;
     }
 
 
@@ -96,6 +94,7 @@ async function attestHost(hostInfo) {
     if (!await validateWithCertChain(vcek)) {
         // vcek could not be verified -> notify user, attestation not possible
         console.log("vcek invalid")
+        return false;
     }
 
     // 3. Validate that the attestation report is correctly signed using the VCEK
@@ -103,32 +102,46 @@ async function attestHost(hostInfo) {
         // attestation report could not be verified using vcek
         // -> notify user, attestation not possible
         console.log("attestation report invalid")
+        return false;
     }
 
-    // 4. Trust the measurement? wait for user input
-    titleText.innerText = "Remote Attestation";
-    domainText.innerText = hostInfo.host;
-    descriptionText.innerText = "This site offers remote attestation, do you want to trust it?";
-    measurementText.innerText = `0x${arrayBufferToHex(ar.measurement)}`;
-    [ignoreButton, noTrustButton, trustButton, measurementText.parentNode].forEach((button) =>
-        button.classList.remove("invisible"));
+    return true;
 }
 
 window.addEventListener("load", async () => {
-    hostInfo = await getHostInfo()
-    // host = hostInfo.host
-    // attestationInfo = hostInfo.attestationInfo
-    // url = hostInfo.url
+    hostInfo = await getHostInfo();
 
     switch (hostInfo.dialog_type) {
         case DialogType.newHost:
-            // TODO hide buttons in the beginning
-            attestHost(hostInfo)
-            break
+            // init UI
+            titleText.innerText = "Remote Attestation";
+            domainText.innerText = hostInfo.host;
+            descriptionText.innerText = "PENDING";
+
+            if (await attestHost(hostInfo)) {
+                // 4. Trust the measurement? wait for user input
+                titleText.innerText = "Remote Attestation";
+                domainText.innerText = hostInfo.host;
+                descriptionText.innerText = "This site offers remote attestation, do you want to trust it?";
+                measurementText.innerText = `0x${arrayBufferToHex(measurement)}`;
+                [ignoreButton, noTrustButton, trustButton, measurementText.parentNode].forEach((button) =>
+                    button.classList.remove("invisible"));
+            } else {
+                titleText.innerText = "Attestation FAILED";
+                descriptionText.innerText = "ERROR";
+            }
+
+            break;
         case DialogType.blockedHost:
-            // TODO insert block ui
-            titleText.innerText = "BLOCKED"
-            break
+            // TODO: better ui
+            titleText.innerText = "BLOCKED";
+            break;
+        case DialogType.attestationMissing:
+            titleText.innerText = "ATTESTATION MISSING";
+            break;
+        case DialogType.measurementDiffers:
+            titleText.innerText = "MEASUREMENT DIFFERS";
+            break;
     }
 
 })

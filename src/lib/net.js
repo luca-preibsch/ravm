@@ -1,40 +1,53 @@
-
-// TODO: error handling
 import * as asn1js from "asn1js";
 import * as pkijs from "pkijs";
 import * as util from "./util";
 import * as attestation from "./attestation";
 
-async function fetchFile(url) {
-    return await fetch(url, {
+export async function fetchArrayBuffer(url) {
+    const response = await fetch(url, {
         method: "GET",
         cache: "no-cache",
         referrerPolicy: "no-referrer"
-    })
-}
-
-export async function fetchArrayBuffer(url) {
-    return await (await fetchFile(url)).arrayBuffer()
+    });
+    if (response.ok)
+        return await response.arrayBuffer();
+    else
+        throw new Error("failed to fetch arraybuffer");
 }
 
 export async function fetchAttestationInfo(url) {
+    // treat redirect as error (else sites would e.g. forward to their localized version such as
+    // https://example.com/de/remote-attestation.json)
+    // ignore cache in order to register missing remote-attestation.json
     const response = await fetch(url, {
         method: "GET",
         redirect: "error",
-        referrerPolicy: "no-referrer"
+        referrerPolicy: "no-referrer",
+        cache: "no-cache",
     });
+    // treat non-ok responses as errors
     if (response.ok)
         return response.json();
     else
-        throw new Error("fetch not successful");
+        throw new Error("failed to fetch attestation info");
 }
 
 export async function fetchAttestationReport(url, path) {
-    const raw = await fetchArrayBuffer(new URL(path, url).href)
-    return new attestation.AttesationReport(raw)
+    const response = await fetch(new URL(path, url).href, {
+        method: "GET",
+        redirect: "error",
+        referrerPolicy: "no-referrer",
+        cache: "no-cache",
+    });
+    // treat non-ok responses as errors
+    if (response.ok) {
+        const arrayBuffer = await response.arrayBuffer();
+        return new attestation.AttesationReport(arrayBuffer);
+    } else {
+        throw new Error("failed to fetch attestation report");
+    }
 }
 
-// TODO cache VCEK in session storage, like this its broken
 export async function getVCEK(chipId, committedTCB) {
     // AMD key server
     const KDSINF = "https://kdsintf.amd.com/vcek/v1/Milan/";
@@ -55,15 +68,18 @@ export async function getVCEK(chipId, committedTCB) {
 
     // Query the AMD key server for VCEK certificate using chip_id and TCB from report
     // let fetch-api cache the response
-    const rawData = await (await fetch(kdsUrl, {
-        cache : "force-cache",
+    const response = await fetch(kdsUrl, {
+        method: "GET",
+        cache: "force-cache",
         referrerPolicy: "no-referrer"
-    })).arrayBuffer()
-
-    const asn1 = asn1js.fromBER(rawData);
-    if (asn1.offset === -1) {
-        throw new Error("Incorrect encoded ASN.1 data");
+    });
+    if (response.ok) {
+        const arrayBuffer = await response.arrayBuffer();
+        const asn1 = asn1js.fromBER(arrayBuffer);
+        if (asn1.offset === -1)
+            throw new Error("Incorrect encoded ASN.1 data");
+        return new pkijs.Certificate({schema: asn1.result})
+    } else {
+        throw new Error("failed to fetch VCEK")
     }
-
-    return new pkijs.Certificate({schema: asn1.result})
 }
