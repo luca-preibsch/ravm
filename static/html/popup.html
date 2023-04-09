@@ -1,15 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <title>Remote Attestation Popup</title>
     <meta charset="UTF-8">
 </head>
 <body>
 <div class="attestation-grid">
-    <img id="attestation-icon" src="./check-mark.svg" alt="checkmark" >
-    <div id="attestation-header" >loading</div>
-    <div id="attestation-url" >loading</div>
-    <div id="attestation-info" >loading</div>
-    <button id="button-remove-trust" >remove trust</button>
+    <img id="attestation-icon" src="./check-mark.svg" alt="checkmark">
+    <div id="attestation-header">loading</div>
+    <div id="attestation-url">loading</div>
+    <div id="attestation-info">loading</div>
+    <button id="button-remove-trust" class="action button-red">remove trust</button>
+    <button id="button-settings" class="link">&#x2699; extension settings</button>
 </div>
 <script src="./popup.js"></script>
 </body>

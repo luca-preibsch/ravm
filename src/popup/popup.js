@@ -8,6 +8,7 @@ const headerText = document.getElementById("attestation-header");
 const urlText = document.getElementById("attestation-url");
 const infoText = document.getElementById("attestation-info");
 const removeButton = document.getElementById("button-remove-trust");
+const settingsButton = document.getElementById("button-settings");
 
 let tab, host;
 
@@ -15,6 +16,8 @@ removeButton.addEventListener("click", async () => {
     await storage.removeTrusted(host.href);
     browser.tabs.reload(tab.id);
 });
+
+settingsButton.addEventListener("click", () => browser.runtime.openOptionsPage());
 
 async function getTab() {
     try {

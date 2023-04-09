@@ -1,6 +1,7 @@
 .attestation-grid {
     display: grid;
     grid-template-columns: [start] auto auto auto [end];
+    grid-template-rows: [start] auto auto 10px auto auto [end];
     margin: 20px;
 }
 
@@ -35,15 +36,25 @@
 }
 
 #attestation-info {
-    grid-row: auto;
+    grid-row: 4;
     grid-column-start: start;
     grid-column-end: span 2;
     display: flex;
     align-items: center;
 }
 
-.button {
-    grid-row: auto;
-    margin-left: auto;
+#button-remove-trust {
+    grid-row: 4;
+    grid-column: 3;
     margin-right: 0;
+    margin-left: auto;
+}
+
+#button-settings {
+    grid-column: 3;
+    grid-row: 5;
+    margin-top: 10px;
+    margin-right: 0;
+    margin-left: auto;
+    font-size: smaller;
 }
