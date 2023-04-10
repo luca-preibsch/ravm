@@ -76,7 +76,10 @@ module.exports = [
       'background' : path.resolve(__dirname, 'src', 'background', 'background.js'),
       'popup' : path.resolve(__dirname, 'src', 'popup', 'popup.js'),
       'settings' : path.resolve(__dirname, 'src', 'settings', 'settings.js'),
-      'dialog' : path.resolve(__dirname, 'src', 'content', 'dialog', 'dialog.js'),
+      'new-attestation' : path.resolve(__dirname, 'src', 'content', 'dialog', 'new-attestation.js'),
+      'blocked-attestation' : path.resolve(__dirname, 'src', 'content', 'dialog', 'blocked-attestation.js'),
+      'differs-attestation' : path.resolve(__dirname, 'src', 'content', 'dialog', 'differs-attestation.js'),
+      'missing-attestation' : path.resolve(__dirname, 'src', 'content', 'dialog', 'missing-attestation.js'),
     },
     output: {
       path: path.resolve(__dirname, 'build'),

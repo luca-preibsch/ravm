@@ -9,9 +9,12 @@ import {DialogType} from "../lib/ui";
 import {validateMeasurement} from "../lib/crypto";
 
 // Domain to observe
-const ALL_URLS = "https://*/*"
-const ATTESTATION_INFO_PATH = "/remote-attestation.json"
-const DIALOG_PAGE = browser.runtime.getURL("remote-attestation.html")
+const ALL_URLS = "https://*/*";
+const ATTESTATION_INFO_PATH = "/remote-attestation.json";
+const NEW_ATTESTATION_PAGE = browser.runtime.getURL("new-remote-attestation.html");
+const BLOCKED_ATTESTATION_PAGE = browser.runtime.getURL("blocked-remote-attestation.html");
+const MISSING_ATTESTATION_PAGE = browser.runtime.getURL("missing-remote-attestation.html");
+const DIFFERS_ATTESTATION_PAGE = browser.runtime.getURL("differs-remote-attestation.html");
 
 async function sha512(str) {
     return crypto.subtle.digest("SHA-512", new TextEncoder("utf-8").encode(str)).then(buf => {
@@ -126,7 +129,7 @@ async function listenerOnHeadersReceived(details) {
                 ...hostInfo,
                 dialog_type : DialogType.attestationMissing,
             }))
-            return { redirectUrl: DIALOG_PAGE }
+            return { redirectUrl: MISSING_ATTESTATION_PAGE }
         }
         console.log("skipped host without attestation")
         return {}
@@ -145,7 +148,7 @@ async function listenerOnHeadersReceived(details) {
             ...hostInfo,
             dialog_type : DialogType.newHost
         }))
-        return { redirectUrl: DIALOG_PAGE }
+        return { redirectUrl: NEW_ATTESTATION_PAGE }
     }
 
     // host is known
@@ -155,7 +158,7 @@ async function listenerOnHeadersReceived(details) {
             ...hostInfo,
             dialog_type : DialogType.blockedHost
         }))
-        return { redirectUrl: DIALOG_PAGE }
+        return { redirectUrl: BLOCKED_ATTESTATION_PAGE }
     }
 
     // can host be trusted?
@@ -183,7 +186,7 @@ async function listenerOnHeadersReceived(details) {
             ...hostInfo,
             dialog_type : DialogType.measurementDiffers,
         }));
-        return { redirectUrl: DIALOG_PAGE };
+        return { redirectUrl: DIFFERS_ATTESTATION_PAGE };
     }
 
     // attestation successful -> show checkmark page action

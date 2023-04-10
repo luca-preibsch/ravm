@@ -47,7 +47,12 @@
 
   "web_accessible_resources": [
     {
-      "resources" : [ "remote-attestation.html" ],
+      "resources" : [
+        "new-remote-attestation.html",
+        "blocked-remote-attestation.html",
+        "missing-remote-attestation.html",
+        "differs-remote-attestation.html"
+      ],
       "matches" : [ "https://*/*" ]
     }
   ]

@@ -9,14 +9,14 @@ import * as util from '../../lib/util'
 import { DialogType } from "../../lib/ui";
 import { arrayBufferToHex } from "../../lib/util";
 
-const titleText = document.getElementById("title")
-const domainText = document.getElementById("domain")
-const descriptionText = document.getElementById("description")
-const measurementText = document.getElementById("measurement")
+const titleText = document.getElementById("title");
+const domainText = document.getElementById("domain");
+const descriptionText = document.getElementById("description");
+const measurementText = document.getElementById("measurement");
 
-const ignoreButton = document.getElementById("ignore-button")
-const noTrustButton = document.getElementById("do-not-trust-button")
-const trustButton = document.getElementById("trust-button")
+const ignoreButton = document.getElementById("ignore-button");
+const noTrustButton = document.getElementById("do-not-trust-button");
+const trustButton = document.getElementById("trust-button");
 
 let measurement;
 let hostInfo;
@@ -110,37 +110,21 @@ async function attestHost(hostInfo) {
 window.addEventListener("load", async () => {
     hostInfo = await getHostInfo();
 
-    switch (hostInfo.dialog_type) {
-        case DialogType.newHost:
-            // init UI
-            titleText.innerText = "Remote Attestation";
-            domainText.innerText = hostInfo.host;
-            descriptionText.innerText = "PENDING";
+    // init UI
+    titleText.innerText = "Remote Attestation";
+    domainText.innerText = hostInfo.host;
+    descriptionText.innerText = "PENDING";
 
-            if (await attestHost(hostInfo)) {
-                // 4. Trust the measurement? wait for user input
-                titleText.innerText = "Remote Attestation";
-                domainText.innerText = hostInfo.host;
-                descriptionText.innerText = "This site offers remote attestation, do you want to trust it?";
-                measurementText.innerText = `0x${arrayBufferToHex(measurement)}`;
-                [ignoreButton, noTrustButton, trustButton, measurementText.parentNode].forEach((button) =>
-                    button.classList.remove("invisible"));
-            } else {
-                titleText.innerText = "Attestation FAILED";
-                descriptionText.innerText = "ERROR";
-            }
-
-            break;
-        case DialogType.blockedHost:
-            // TODO: better ui
-            titleText.innerText = "BLOCKED";
-            break;
-        case DialogType.attestationMissing:
-            titleText.innerText = "ATTESTATION MISSING";
-            break;
-        case DialogType.measurementDiffers:
-            titleText.innerText = "MEASUREMENT DIFFERS";
-            break;
+    if (await attestHost(hostInfo)) {
+        // 4. Trust the measurement? wait for user input
+        titleText.innerText = "Remote Attestation";
+        domainText.innerText = hostInfo.host;
+        descriptionText.innerText = "This site offers remote attestation, do you want to trust it?";
+        measurementText.innerText = `0x${arrayBufferToHex(measurement)}`;
+        [ignoreButton, noTrustButton, trustButton, measurementText.parentNode].forEach((button) =>
+            button.classList.remove("invisible"));
+    } else {
+        titleText.innerText = "Attestation FAILED";
+        descriptionText.innerText = "ERROR";
     }
-
-})
+});
