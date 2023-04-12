@@ -105,15 +105,13 @@ window.addEventListener("load", async () => {
     hostInfo = await getHostInfo();
 
     // init UI
-    titleText.innerText = "Remote Attestation";
     domainText.innerText = hostInfo.host;
     descriptionText.innerText = "PENDING";
 
     if (await attestHost(hostInfo)) {
         // 4. Trust the measurement? wait for user input
-        titleText.innerText = "Remote Attestation";
         domainText.innerText = hostInfo.host;
-        descriptionText.innerText = "This site offers remote attestation, do you want to trust it?";
+        descriptionText.innerText = "This host offers remote attestation, do you want to trust it?";
         measurementText.innerText = arrayBufferToHex(measurement);
         [ignoreButton, noTrustButton, trustButton, measurementText.parentNode].forEach((button) =>
             button.classList.remove("invisible"));

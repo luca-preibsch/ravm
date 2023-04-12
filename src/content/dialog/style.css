@@ -10,6 +10,12 @@
     grid-template-rows: [start] auto auto auto auto auto [end];
 }
 
+.container * {
+    max-width: 500px;
+    display: block;
+    word-wrap: break-word;
+}
+
 #title {
     margin: 0;
     grid-row: 1;
@@ -31,20 +37,22 @@
 }
 
 .measurement-container {
-    grid-row: 4;
+    grid-row: auto;
     grid-column: 1;
     margin-bottom: 20px;
+    border-radius: 25px;
+    border: 2px solid grey;
+    padding: 15px;
+    background-color: #e6e6e6;
 }
 
 .measurement {
-    max-width: 500px;
-    display: block;
-    word-wrap: break-word;
     font-style: italic;
+    text-decoration: underline;
 }
 
 #button-container {
-    grid-row: 5;
+    grid-row: auto;
     grid-column: 1;
     justify-self: end;
     align-self: end;

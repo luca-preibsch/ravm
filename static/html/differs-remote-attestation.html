@@ -5,14 +5,17 @@
     <title>Remote Attestation</title>
 </head>
 <body>
-<div class="grid">
+<div class="container">
     <h1 id="title">Remote Attestation Measurement Differs</h1>
     <div id="domain"></div>
-    <div id="description"></div>
-    <div class="invisible">Old Measurement: <div id="old-measurement"></div></div>
-    <div class="invisible">New Measurement: <div id="new-measurement"></div></div>
-    <button id="do-not-trust-button" class="action button-red invisible">block</button>
-    <button id="trust-button" class="action button-red invisible">trust</button>
+    <div id="description">This host has previously been trusted, but the measurement has since changed.
+    Do you want to trust the new measurement?</div>
+    <div class="invisible measurement-container">Old Measurement: <div id="old-measurement">PENDING</div></div>
+    <div class="invisible measurement-container">New Measurement: <div id="new-measurement">PENDING</div></div>
+    <div id="button-container">
+        <button id="do-not-trust-button" class="action button-red invisible">block</button>
+        <button id="trust-button" class="action button-red invisible">trust</button>
+    </div>
 </div>
 </body>
 <script src="./differs-attestation.js"></script>

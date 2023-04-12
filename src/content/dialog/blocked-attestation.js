@@ -23,5 +23,4 @@ unblockButton.addEventListener("click", async () => {
 window.addEventListener("load", async () => {
     hostInfo = await getHostInfo();
     domainText.innerText = hostInfo.host;
-    descriptionText.innerText = "PENDING";
 });
