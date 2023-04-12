@@ -62,8 +62,7 @@ export async function isUntrusted(host) {
 }
 
 export async function removeUntrusted(host) {
-    // TODO
-    throw Error("Not implemented")
+    return browser.storage.local.remove(host);
 }
 
 export async function isKnownHost(host) {

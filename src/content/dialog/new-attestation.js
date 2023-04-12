@@ -1,13 +1,13 @@
 import './style.css';
 import '../../style/button.css';
 
-import { types } from '../../lib/messaging';
-import { fetchAttestationReport, getVCEK } from "../../lib/net";
-import { validateWithCertChain, validateAttestationReport } from "../../lib/crypto";
-import * as storage from '../../lib/storage'
-import * as util from '../../lib/util'
-import { DialogType } from "../../lib/ui";
-import { arrayBufferToHex } from "../../lib/util";
+import {types} from '../../lib/messaging';
+import {fetchAttestationReport, getVCEK} from "../../lib/net";
+import {validateWithCertChain, validateAttestationReport} from "../../lib/crypto";
+import * as storage from '../../lib/storage';
+import * as util from '../../lib/util';
+import {arrayBufferToHex} from "../../lib/util";
+import {getHostInfo} from "../../lib/messaging";
 
 const titleText = document.getElementById("title");
 const domainText = document.getElementById("domain");
@@ -45,12 +45,6 @@ noTrustButton.addEventListener("click", async () => {
         url : hostInfo.url
     })
 })
-
-async function getHostInfo() {
-    return await browser.runtime.sendMessage({
-        type : types.getHostInfo
-    })
-}
 
 async function attestHost(hostInfo) {
     const ssl_sha512 = hostInfo.ssl_sha512
