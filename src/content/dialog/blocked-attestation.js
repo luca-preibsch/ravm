@@ -1,3 +1,4 @@
+import './style.css';
 import '../../style/button.css'
 
 import {getHostInfo, types} from "../../lib/messaging";
@@ -9,11 +10,18 @@ const descriptionText = document.getElementById("description");
 
 const unblockButton = document.getElementById("unblock-button");
 
+let hostInfo;
+
 unblockButton.addEventListener("click", async () => {
-    const hostInfo = await getHostInfo();
     await storage.removeUntrusted(hostInfo.host);
     browser.runtime.sendMessage({
         type : types.redirect,
         url : hostInfo.url
     });
+});
+
+window.addEventListener("load", async () => {
+    hostInfo = await getHostInfo();
+    domainText.innerText = hostInfo.host;
+    descriptionText.innerText = "PENDING";
 });

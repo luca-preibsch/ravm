@@ -5,14 +5,16 @@
     <title>Remote Attestation</title>
 </head>
 <body>
-<div class="grid">
+<div class="container">
     <h1 id="title"></h1>
     <div id="domain"></div>
     <div id="description"></div>
-    <div class="invisible">Measurement: <div id="measurement"></div></div>
-    <button id="ignore-button" class="action button-red invisible">ignore</button>
-    <button id="do-not-trust-button" class="action button-red invisible">block</button>
-    <button id="trust-button" class="action button-red invisible">trust</button>
+    <div class="invisible measurement-container">Measurement: <span class="measurement" id="measurement"></span></div>
+    <div id="button-container">
+        <button id="ignore-button" class="action button-red invisible">ignore</button>
+        <button id="do-not-trust-button" class="action button-red invisible">block</button>
+        <button id="trust-button" class="action button-red invisible">trust</button>
+    </div>
 </div>
 </body>
 <script src="./new-attestation.js"></script>

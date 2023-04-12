@@ -114,7 +114,7 @@ window.addEventListener("load", async () => {
         titleText.innerText = "Remote Attestation";
         domainText.innerText = hostInfo.host;
         descriptionText.innerText = "This site offers remote attestation, do you want to trust it?";
-        measurementText.innerText = `0x${arrayBufferToHex(measurement)}`;
+        measurementText.innerText = arrayBufferToHex(measurement);
         [ignoreButton, noTrustButton, trustButton, measurementText.parentNode].forEach((button) =>
             button.classList.remove("invisible"));
     } else {
