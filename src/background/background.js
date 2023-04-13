@@ -189,6 +189,13 @@ async function listenerOnHeadersReceived(details) {
         return { redirectUrl: DIFFERS_ATTESTATION_PAGE };
     }
 
+    // TEST
+    // sessionStorage.setItem(details.tabId, JSON.stringify({
+    //     ...hostInfo,
+    //     dialog_type : DialogType.measurementDiffers,
+    // }));
+    // return { redirectUrl: DIFFERS_ATTESTATION_PAGE };
+
     // attestation successful -> show checkmark page action
     browser.pageAction.show(details.tabId)
     return {}
@@ -213,7 +220,7 @@ async function listenerOnMessageReceived(message, sender) {
 
     switch (message.type) {
         case messaging.types.getHostInfo:
-            const hostInfo = JSON.parse(sessionStorage.getItem(sender.tab.id))
+            const hostInfo = JSON.parse(sessionStorage.getItem(sender.tab.id));
             // TODO: if removed, dialog script cant get the item on reload
             // sessionStorage.removeItem(sender.tab.id)
             // sendResponse does not work

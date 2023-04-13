@@ -46,6 +46,7 @@ noTrustButton.addEventListener("click", async () => {
     })
 })
 
+// TODO auslagern
 async function attestHost(hostInfo) {
     const ssl_sha512 = hostInfo.ssl_sha512
 
@@ -110,7 +111,6 @@ window.addEventListener("load", async () => {
 
     if (await attestHost(hostInfo)) {
         // 4. Trust the measurement? wait for user input
-        domainText.innerText = hostInfo.host;
         descriptionText.innerText = "This host offers remote attestation, do you want to trust it?";
         measurementText.innerText = arrayBufferToHex(measurement);
         [ignoreButton, noTrustButton, trustButton, measurementText.parentNode].forEach((button) =>
