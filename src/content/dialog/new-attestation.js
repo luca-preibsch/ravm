@@ -2,12 +2,10 @@ import './style.css';
 import '../../style/button.css';
 
 import {types} from '../../lib/messaging';
-import {fetchAttestationReport, getVCEK} from "../../lib/net";
-import {validateWithCertChain, validateAttestationReport} from "../../lib/crypto";
 import * as storage from '../../lib/storage';
-import * as util from '../../lib/util';
 import {arrayBufferToHex} from "../../lib/util";
 import {getHostInfo} from "../../lib/messaging";
+import {checkHost, getReport} from "./dialog";
 
 const titleText = document.getElementById("title");
 const domainText = document.getElementById("domain");
@@ -46,70 +44,17 @@ noTrustButton.addEventListener("click", async () => {
     })
 })
 
-// TODO auslagern
-async function attestHost(hostInfo) {
-    const ssl_sha512 = hostInfo.ssl_sha512
-
-    // Request attestation report from VM
-    let ar
-    try {
-        ar = await fetchAttestationReport(hostInfo.host, hostInfo.attestationInfo.path)
-    } catch (e) {
-        // no attestation report found -> notify user, attestation not possible
-        console.log(e)
-        // TODO
-        return false;
-    }
-
-    measurement = ar.measurement
-
-    // TODO caching
-    let vcek
-    try {
-        vcek = await getVCEK(ar.chip_id, ar.committedTCB)
-    } catch (e) {
-        // vcek could not be attained -> notify user, attestation not possible
-        console.log(e)
-        // TODO
-        return false;
-    }
-
-    // 1. verify TLS connection
-    // ! TODO trick ssl connection is correct for now
-    if (false && util.arrayBufferToHex(ar.report_data) !== ssl_sha512) {
-        // TLS connection pubkey is not equal to pubkey in attestation report
-        // -> notify user, attestation not possible
-        console.log("TLS connection invalid")
-        return false;
-    }
-
-
-    // 2. Validate that the VCEK is correctly signed by AMD root cert
-    if (!await validateWithCertChain(vcek)) {
-        // vcek could not be verified -> notify user, attestation not possible
-        console.log("vcek invalid")
-        return false;
-    }
-
-    // 3. Validate that the attestation report is correctly signed using the VCEK
-    if (!await validateAttestationReport(ar, vcek)) {
-        // attestation report could not be verified using vcek
-        // -> notify user, attestation not possible
-        console.log("attestation report invalid")
-        return false;
-    }
-
-    return true;
-}
-
 window.addEventListener("load", async () => {
     hostInfo = await getHostInfo();
 
     // init UI
     domainText.innerText = hostInfo.host;
-    descriptionText.innerText = "PENDING";
 
-    if (await attestHost(hostInfo)) {
+    const ar = await getReport(hostInfo);
+
+    if (ar && await checkHost(hostInfo, ar)) {
+        measurement = ar.measurement;
+
         // 4. Trust the measurement? wait for user input
         descriptionText.innerText = "This host offers remote attestation, do you want to trust it?";
         measurementText.innerText = arrayBufferToHex(measurement);
