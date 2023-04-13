@@ -36,10 +36,17 @@ window.addEventListener("load", async () => {
     const hostInfo = await storage.getHost(host.href);
 
     urlText.innerText = host.href
-    infoText.innerText = `Trusted since ${hostInfo.trustedSince.toLocaleString()}`
 
     if (hostInfo.trusted) {
+        icon.setAttribute("src", "./check-mark.svg");
         headerText.innerText = "Attestation Successful";
+        infoText.innerText = `Trusted since ${hostInfo.trustedSince.toLocaleString()}`;
+        removeButton.innerText = "remove trust";
+    } else if (hostInfo.ignore) {
+        icon.setAttribute("src", "./hazard-sign.svg");
+        headerText.innerText = "Attestation Ignored";
+        infoText.innerText = "";
+        removeButton.innerText = "remove ignore";
     } else {
         headerText.innerText = "Attestation Failed";
     }

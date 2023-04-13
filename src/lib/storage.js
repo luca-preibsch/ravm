@@ -66,7 +66,7 @@ export async function removeUntrusted(host) {
 }
 
 export async function isKnownHost(host) {
-    return await isTrusted(host) || await isUntrusted(host)
+    return await isTrusted(host) || await isUntrusted(host) || await isIgnored(host);
 }
 
 export async function setReportURL(host, url) {
@@ -81,4 +81,18 @@ export async function setReportURL(host, url) {
 export async function isReportURL(url) {
     let hosts = await browser.storage.local.get(null);
     return Object.values(hosts).map(h => h.reportURL).includes(url);
+}
+
+export async function setIgnore(host) {
+    const old = await getContentsOf(host);
+    return browser.storage.local.set({
+        [host] : {...old,
+            ignore : true,
+        } // the latter overwrites the former
+    });
+}
+
+export async function isIgnored(host) {
+    const hosts = await browser.storage.local.get(host);
+    return Object.keys(hosts).length !== 0 && hosts[host].ignore;
 }

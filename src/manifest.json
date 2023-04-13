@@ -35,7 +35,7 @@
 
   "page_action": {
     "browser_style" : true,
-    "default_icon": "check-mark.svg",
+    "default_icon": "hazard-sign.svg",
     "default_title": "Attestation Popup",
     "default_popup": "popup.html"
   },

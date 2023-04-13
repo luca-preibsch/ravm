@@ -152,6 +152,17 @@ async function listenerOnHeadersReceived(details) {
     }
 
     // host is known
+    if (await storage.isIgnored(host.href)) {
+        // TODO dont show anymore when something changes
+        // attestation ignored -> show page action
+        await browser.pageAction.setIcon({
+            tabId: details.tabId,
+            path: "./hazard-sign.svg",
+        });
+        browser.pageAction.show(details.tabId)
+        return {};
+    }
+
     if (await storage.isUntrusted(host.href)) {
         // host is blocked
         sessionStorage.setItem(details.tabId, JSON.stringify({
@@ -196,9 +207,14 @@ async function listenerOnHeadersReceived(details) {
     // }));
     // return { redirectUrl: DIFFERS_ATTESTATION_PAGE };
 
+    // TODO dont show anymore when something changes
     // attestation successful -> show checkmark page action
-    browser.pageAction.show(details.tabId)
-    return {}
+    await browser.pageAction.setIcon({
+        tabId: details.tabId,
+        path: "./check-mark.svg",
+    });
+    browser.pageAction.show(details.tabId);
+    return {};
 }
 
 // We need to register this listener, since we require the SecurityInfo object

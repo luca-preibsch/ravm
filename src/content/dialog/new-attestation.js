@@ -19,8 +19,8 @@ const trustButton = document.getElementById("trust-button");
 let measurement;
 let hostInfo;
 
-ignoreButton.addEventListener("click", () => {
-    // TODO what to do on ignore?
+ignoreButton.addEventListener("click", async () => {
+    await storage.setIgnore(hostInfo.host);
     browser.runtime.sendMessage({
         type : types.redirect,
         url : hostInfo.url
