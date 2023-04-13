@@ -1,5 +1,5 @@
 import './style.css';
-import '../../style/button.css'
+import '../../style/button.css';
 
 import {getHostInfo, types} from "../../lib/messaging";
 import * as storage from "../../lib/storage";
@@ -37,7 +37,7 @@ noTrustButton.addEventListener("click", async () => {
 })
 
 noTrustButton.addEventListener("click", async () => {
-   await storage.setUntrusted(hostInfo.host);
+    await storage.setUntrusted(hostInfo.host);
     browser.runtime.sendMessage({
         type : types.redirect,
         url : hostInfo.url
@@ -53,6 +53,10 @@ window.addEventListener("load", async () => {
     if (ar && await checkHost(hostInfo, ar)) {
         measurement = ar.measurement;
 
+        descriptionText.innerText =
+            "This host has previously been trusted, but the measurement has since changed." +
+            "Do you want to trust the new measurement?" +
+            "This could be a malicious attack.";
         newMeasurementText.innerText = arrayBufferToHex(measurement);
         oldMeasurementText.innerText = arrayBufferToHex((await storage.getHost(hostInfo.host)).measurement);
         [noTrustButton, trustButton].forEach((button) =>
