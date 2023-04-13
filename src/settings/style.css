@@ -1,3 +1,7 @@
-.removeCheckbox {
+table {
+    width: 100%;
+}
 
+.invisible {
+    display: none;
 }
