@@ -13,7 +13,7 @@ const settingsButton = document.getElementById("button-settings");
 let tab, host;
 
 removeButton.addEventListener("click", async () => {
-    await storage.removeTrusted(host.href);
+    await storage.removeHost(host.href);
     browser.tabs.reload(tab.id);
 });
 

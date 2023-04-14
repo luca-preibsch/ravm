@@ -28,7 +28,7 @@ trustButton.addEventListener("click", async () => {
 })
 
 noTrustButton.addEventListener("click", async () => {
-    await storage.removeTrusted(hostInfo.host);
+    await storage.removeHost(hostInfo.host);
     await storage.setUntrusted(hostInfo.host)
     browser.runtime.sendMessage({
         type : types.redirect,

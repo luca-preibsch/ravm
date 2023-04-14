@@ -13,7 +13,7 @@ document.getElementById("testButton").onclick = function () { saveItem(counter++
 
 function onRemove() {
     const toRemove = [...form.querySelectorAll(".removeCheckbox")].filter(el => el.checked);
-    toRemove.forEach(el => storage.removeTrusted(el.value));
+    toRemove.forEach(el => storage.removeHost(el.value));
 }
 
 form.addEventListener("submit", onRemove);

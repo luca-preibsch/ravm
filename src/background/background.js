@@ -100,15 +100,19 @@ async function listenerOnHeadersReceived(details) {
     const host = new URL(url.origin)
 
     // skip URLS that are needed for the extension to work
-    // 1. skip ATTESTATION_INFO_PATH else it would create an infinite loop
-    // 2. skip if this is a reportURL else it would create an infinite loop
-    // 3. skip if this is the AMD key server else it would get requested too often and reject future calls
-    if (url.pathname === ATTESTATION_INFO_PATH ||
+    // 1. skip if this host did not support attestation before -> performance benefit for non-ra hosts
+    // 2. skip ATTESTATION_INFO_PATH else it would create an infinite loop
+    // 3. skip if this is a reportURL else it would create an infinite loop
+    // 4. skip if this is the AMD key server else it would get requested too often and reject future calls
+    if (await storage.isUnsupported(host.href)) {
+        console.log(`skipped unsupported host: ${url.href}`);
+        return {};
+    } else if (url.pathname === ATTESTATION_INFO_PATH ||
         await storage.isReportURL(url.href) ||
         url.href.includes("kdsintf.amd.com/vcek")) {
 
-        console.log(`skipped meta request: ${url.href}`)
-        return {}
+        console.log(`skipped meta request: ${url.href}`);
+        return {};
     }
 
     const isKnown = await storage.isKnownHost(host.href);
@@ -130,6 +134,11 @@ async function listenerOnHeadersReceived(details) {
                 dialog_type : DialogType.attestationMissing,
             }))
             return { redirectUrl: MISSING_ATTESTATION_PAGE }
+        } else {
+            // let the plugin ignore this host, since it does not support remote attestation
+            // this brings performance benefits.
+            // TODO timeout für Dauer?
+            await storage.setUnsupported(host.href);
         }
         console.log("skipped host without attestation")
         return {}

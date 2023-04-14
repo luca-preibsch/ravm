@@ -13,7 +13,7 @@ const unblockButton = document.getElementById("unblock-button");
 let hostInfo;
 
 unblockButton.addEventListener("click", async () => {
-    await storage.removeUntrusted(hostInfo.host);
+    await storage.removeHost(hostInfo.host);
     browser.runtime.sendMessage({
         type : types.redirect,
         url : hostInfo.url

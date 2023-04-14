@@ -16,10 +16,7 @@
     "tabs"
   ],
 
-  "host_permissions": [
-    "*://transparent-vm.net/*",
-    "<all_urls>"
-  ],
+  "host_permissions": ["<all_urls>"],
 
   "background": {
     "scripts": [

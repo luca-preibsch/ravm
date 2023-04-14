@@ -43,7 +43,7 @@ export function getHost(host) {
     }
 }
 
-export function removeTrusted(host) {
+export function removeHost(host) {
     return browser.storage.local.remove(host)
 }
 
@@ -59,10 +59,6 @@ export async function setUntrusted(host) {
 export async function isUntrusted(host) {
     const hosts = await browser.storage.local.get(host)
     return Object.keys(hosts).length !== 0 && hosts[host].blocked
-}
-
-export async function removeUntrusted(host) {
-    return browser.storage.local.remove(host);
 }
 
 export async function isKnownHost(host) {
@@ -95,4 +91,18 @@ export async function setIgnore(host) {
 export async function isIgnored(host) {
     const hosts = await browser.storage.local.get(host);
     return Object.keys(hosts).length !== 0 && hosts[host].ignore;
+}
+
+export async function setUnsupported(host) {
+    const old = await getContentsOf(host);
+    return browser.storage.local.set({
+        [host] : {...old,
+            unsupported : true,
+        } // the latter overwrites the former
+    });
+}
+
+export async function isUnsupported(host) {
+    const hosts = await browser.storage.local.get(host);
+    return Object.keys(hosts).length !== 0 && hosts[host].unsupported;
 }

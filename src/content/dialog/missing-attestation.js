@@ -10,7 +10,7 @@ const removeButton = document.getElementById("remove-record-button");
 let hostInfo;
 
 removeButton.addEventListener("click", async () => {
-    await storage.removeTrusted(hostInfo.host);
+    await storage.removeHost(hostInfo.host);
     browser.runtime.sendMessage({
         type : types.redirect,
         url : hostInfo.url
