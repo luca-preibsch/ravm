@@ -107,8 +107,16 @@ async function listenerOnHeadersReceived(details) {
     // 3. skip if this is a reportURL else it would create an infinite loop
     // 4. skip if this is the AMD key server else it would get requested too often and reject future calls
     if (await storage.isUnsupported(host.href)) {
-        console.log(`skipped unsupported host: ${url.href}`);
-        return {};
+        if (ssl_sha512 === await storage.getSSLKey(host.href)) {
+            console.log(`skipped unsupported host: ${url.href}`);
+            return {};
+        } else {
+            // the ssl key has changed, thus check the host for remote attestation support again
+            console.log(`ssl key for unsupported host ${url.href} has changed`);
+            console.log(ssl_sha512);
+            console.log(await storage.getSSLKey(host.href));
+            await storage.setUnsupported(host.href, false);
+        }
     }
     if (url.pathname === ATTESTATION_INFO_PATH ||
         await storage.isReportURL(url.href) ||
@@ -138,11 +146,11 @@ async function listenerOnHeadersReceived(details) {
             return { redirectUrl: MISSING_ATTESTATION_PAGE }
         } else {
             // let the plugin ignore this host, since it does not support remote attestation
-            // this brings performance benefits.
-            // TODO timeout für Dauer?
+            // this brings performance benefits
             await storage.setUnsupported(host.href, true);
+            await storage.setSSLKey(host.href, ssl_sha512);
         }
-        console.log("skipped host without attestation")
+        console.log(`skipped host without attestation: ${host.href}`);
         return {}
     }
 
