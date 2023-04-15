@@ -29,15 +29,15 @@ trustButton.addEventListener("click", async () => {
 
 noTrustButton.addEventListener("click", async () => {
     await storage.removeHost(hostInfo.host);
-    await storage.setUntrusted(hostInfo.host)
+    await storage.setUntrusted(hostInfo.host, true);
     browser.runtime.sendMessage({
         type : types.redirect,
         url : hostInfo.url
-    })
+    });
 })
 
 noTrustButton.addEventListener("click", async () => {
-    await storage.setUntrusted(hostInfo.host);
+    await storage.setUntrusted(hostInfo.host, true);
     browser.runtime.sendMessage({
         type : types.redirect,
         url : hostInfo.url

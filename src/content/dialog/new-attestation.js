@@ -20,7 +20,7 @@ let measurement;
 let hostInfo;
 
 ignoreButton.addEventListener("click", async () => {
-    await storage.setIgnore(hostInfo.host);
+    await storage.setIgnore(hostInfo.host, true);
     browser.runtime.sendMessage({
         type : types.redirect,
         url : hostInfo.url
@@ -37,11 +37,11 @@ trustButton.addEventListener("click", async () => {
 })
 
 noTrustButton.addEventListener("click", async () => {
-    await storage.setUntrusted(hostInfo.host)
+    await storage.setUntrusted(hostInfo.host, true);
     browser.runtime.sendMessage({
         type : types.redirect,
         url : hostInfo.url
-    })
+    });
 })
 
 window.addEventListener("load", async () => {

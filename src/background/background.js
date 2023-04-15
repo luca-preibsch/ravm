@@ -96,8 +96,10 @@ Thus, in here do:
  */
 async function listenerOnHeadersReceived(details) {
     // origin contains scheme (protocol), domain and port
-    const url = new URL(details.url)
-    const host = new URL(url.origin)
+    const url = new URL(details.url);
+    const host = new URL(url.origin);
+
+    const ssl_sha512 = await querySSLFingerprint(details.requestId);
 
     // skip URLS that are needed for the extension to work
     // 1. skip if this host did not support attestation before -> performance benefit for non-ra hosts
@@ -107,7 +109,8 @@ async function listenerOnHeadersReceived(details) {
     if (await storage.isUnsupported(host.href)) {
         console.log(`skipped unsupported host: ${url.href}`);
         return {};
-    } else if (url.pathname === ATTESTATION_INFO_PATH ||
+    }
+    if (url.pathname === ATTESTATION_INFO_PATH ||
         await storage.isReportURL(url.href) ||
         url.href.includes("kdsintf.amd.com/vcek")) {
 
@@ -116,7 +119,6 @@ async function listenerOnHeadersReceived(details) {
     }
 
     const isKnown = await storage.isKnownHost(host.href);
-    const ssl_sha512 = await querySSLFingerprint(details.requestId);
     const attestationInfo = await getAttestationInfo(host)
     const hostInfo = {
         host : host.href,
@@ -138,7 +140,7 @@ async function listenerOnHeadersReceived(details) {
             // let the plugin ignore this host, since it does not support remote attestation
             // this brings performance benefits.
             // TODO timeout für Dauer?
-            await storage.setUnsupported(host.href);
+            await storage.setUnsupported(host.href, true);
         }
         console.log("skipped host without attestation")
         return {}
