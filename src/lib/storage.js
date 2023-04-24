@@ -13,12 +13,12 @@ async function setProperties(host, obj) {
     });
 }
 
-export function newTrusted(host, trustedSince, lastTrusted, type, measurement, ssl_sha512) {
+export function newTrusted(host, trustedSince, lastTrusted, type, ar_arrayBuffer, ssl_sha512) {
     return setTrusted(host, {
         trustedSince : trustedSince,
         lastTrusted : lastTrusted,
         type : type,
-        measurement : measurement,
+        ar_arrayBuffer : ar_arrayBuffer,
         ssl_sha512 : ssl_sha512,
         trusted : true,
     })

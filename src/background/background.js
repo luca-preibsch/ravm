@@ -7,6 +7,8 @@ import * as storage from "../lib/storage";
 import * as messaging from "../lib/messaging";
 import {DialogType} from "../lib/ui";
 import {validateMeasurement} from "../lib/crypto";
+import {arrayBufferToHex} from "../lib/util";
+import {AttesationReport} from "../lib/attestation";
 
 // Domain to observe
 const ALL_URLS = "https://*/*";
@@ -202,7 +204,7 @@ async function listenerOnHeadersReceived(details) {
         // update lastTrusted
         console.log("known TLS key");
         await storage.setTrusted(host.href, { lastTrusted : new Date() });
-    } else if (await validateMeasurement(hostInfo, storedHostInfo.measurement)) {
+    } else if (await validateMeasurement(hostInfo, new AttesationReport(storedHostInfo.ar_arrayBuffer).measurement)) {
         // the measurement is correct and the host can be trusted
         // -> store new TLS key, update lastTrusted
         console.log("known measurement");

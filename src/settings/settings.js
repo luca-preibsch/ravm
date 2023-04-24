@@ -9,7 +9,7 @@ const form = document.getElementById("form")
 // TODO: button for showing the measurement
 
 let counter = 0;
-document.getElementById("testButton").onclick = function () { saveItem(counter++ + "example.com", new Date(), new Date(), "AMD-SEV", "xxx") }
+document.getElementById("testButton").onclick = async function () { await saveItem(counter++ + "example.com", new Date(), new Date(), "AMD-SEV", "xxx") }
 
 function onRemove() {
     const toRemove = [...form.querySelectorAll(".removeCheckbox")].filter(el => el.checked);
@@ -39,8 +39,8 @@ function loadAllItems() {
 window.addEventListener("load", loadAllItems);
 browser.storage.onChanged.addListener(loadAllItems)
 
-function saveItem(domain, trustedSince, lastTrusted, type, measurement) {
-    storage.newTrusted(domain, trustedSince, lastTrusted, type, measurement)
+async function saveItem(domain, trustedSince, lastTrusted, type, ar_arrayBuffer) {
+    await storage.newTrusted(domain, trustedSince, lastTrusted, type, ar_arrayBuffer)
     console.log("save")
     loadAllItems()
 }

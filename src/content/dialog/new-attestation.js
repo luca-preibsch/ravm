@@ -16,7 +16,7 @@ const ignoreButton = document.getElementById("ignore-button");
 const noTrustButton = document.getElementById("do-not-trust-button");
 const trustButton = document.getElementById("trust-button");
 
-let measurement;
+let ar;
 let hostInfo;
 
 ignoreButton.addEventListener("click", async () => {
@@ -29,7 +29,7 @@ ignoreButton.addEventListener("click", async () => {
 
 trustButton.addEventListener("click", async () => {
     await storage.newTrusted(
-        hostInfo.host, new Date(), new Date(), hostInfo.attestationInfo.technology, measurement, hostInfo.ssl_sha512)
+        hostInfo.host, new Date(), new Date(), hostInfo.attestationInfo.technology, ar.arrayBuffer, hostInfo.ssl_sha512)
     browser.runtime.sendMessage({
         type : types.redirect,
         url : hostInfo.url
@@ -50,14 +50,12 @@ window.addEventListener("load", async () => {
     // init UI
     domainText.innerText = hostInfo.host;
 
-    const ar = await getReport(hostInfo);
+    ar = await getReport(hostInfo);
 
     if (ar && await checkHost(hostInfo, ar)) {
-        measurement = ar.measurement;
-
         // 4. Trust the measurement? wait for user input
         descriptionText.innerText = "This host offers remote attestation, do you want to trust it?";
-        measurementText.innerText = arrayBufferToHex(measurement);
+        measurementText.innerText = arrayBufferToHex(ar.measurement);
         [ignoreButton, noTrustButton, trustButton, measurementText.parentNode].forEach((button) =>
             button.classList.remove("invisible"));
     } else {
