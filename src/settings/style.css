@@ -2,6 +2,22 @@ table {
     width: 100%;
 }
 
+html, body {
+    margin: 0;
+    height: 100%;
+}
+
 .invisible {
     display: none;
+}
+
+.modal {
+    max-width: 50ch;
+    border: 2px solid grey;
+    border-radius: 10px;
+    background: #e6e6e6;
+}
+
+.modal::backdrop {
+    background: transparent;
 }

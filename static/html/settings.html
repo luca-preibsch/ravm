@@ -5,23 +5,23 @@
     <title>Settings</title>
 </head>
 <body>
-<form id="form">
 <table>
     <thead>
     <tr>
         <th>Domain</th>
         <th>Trusted Since</th>
         <th>Last Trusted</th>
-        <th>Type</th>
+        <th></th>
     </tr>
     <tr><th>
-        <input type="submit" value="&#x1F5D1; remove">
+        <input id="submitButton" type="submit" value="&#x1F5D1; remove">
     </th></tr>
     </thead>
     <tbody id="tableBody"></tbody>
 </table>
-</form>
-<button id="testButton" >TEST</button>
+<dialog class="modal">
+    <div id="modalContent"></div>
+</dialog>
 <script src="./settings.js"></script>
 </body>
 </html>
