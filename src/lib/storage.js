@@ -13,6 +13,11 @@ async function setProperties(host, obj) {
     });
 }
 
+async function getProperty(host, prop) {
+    const hosts = await browser.storage.local.get(host);
+    return Object.keys(hosts).length !== 0 && hosts[host][prop];
+}
+
 export function newTrusted(host, trustedSince, lastTrusted, type, ar_arrayBuffer, ssl_sha512) {
     return setTrusted(host, {
         trustedSince : trustedSince,
@@ -29,8 +34,7 @@ export async function setTrusted(host, infoObj) {
 }
 
 export async function isTrusted(host) {
-    const hosts = await browser.storage.local.get(host)
-    return Object.keys(hosts).length !== 0 && hosts[host].trusted
+    return getProperty(host, "trusted");
 }
 
 export async function getTrusted() {
@@ -56,8 +60,7 @@ export async function setUntrusted(host, untrusted) {
 }
 
 export async function isUntrusted(host) {
-    const hosts = await browser.storage.local.get(host)
-    return Object.keys(hosts).length !== 0 && hosts[host].blocked
+    return getProperty(host, "blocked");
 }
 
 export async function isKnownHost(host) {
@@ -68,6 +71,7 @@ export async function setReportURL(host, url) {
     return setProperties(host, {reportURL: url});
 }
 
+// TODO rewrite with better performance?
 export async function isReportURL(url) {
     let hosts = await browser.storage.local.get(null);
     return Object.values(hosts).map(h => h.reportURL).includes(url);
@@ -78,8 +82,7 @@ export async function setIgnore(host, ignore) {
 }
 
 export async function isIgnored(host) {
-    const hosts = await browser.storage.local.get(host);
-    return Object.keys(hosts).length !== 0 && hosts[host].ignore;
+    return getProperty(host, "ignore");
 }
 
 export async function setUnsupported(host, unsupported) {
@@ -87,8 +90,7 @@ export async function setUnsupported(host, unsupported) {
 }
 
 export async function isUnsupported(host) {
-    const hosts = await browser.storage.local.get(host);
-    return Object.keys(hosts).length !== 0 && hosts[host].unsupported;
+    return getProperty(host, "unsupported");
 }
 
 export async function setSSLKey(host, ssl_sha512) {
@@ -96,6 +98,13 @@ export async function setSSLKey(host, ssl_sha512) {
 }
 
 export async function getSSLKey(host) {
-    const hosts = await browser.storage.local.get(host);
-    return Object.keys(hosts).length !== 0 && hosts[host].ssl_sha512;
+    return getProperty(host, "ssl_sha512");
+}
+
+export async function setTrustedMeasurementRepo(host, url) {
+    return setProperties(host, {trusted_measurement_repo: url});
+}
+
+export async function getTrustedMeasurementRepo(host) {
+    return getProperty(host, "trusted_measurement_repo");
 }
