@@ -30,6 +30,8 @@ function loadAllItems() {
                 row.insertCell().appendChild(createTitleCell(host));
                 row.insertCell().innerHTML = data.trustedSince.toLocaleString();
                 row.insertCell().innerHTML = data.lastTrusted.toLocaleString();
+                // TODO: move to "more info"
+                row.insertCell().innerHTML = (data.trusted_measurement_repo) ? "repository" : "measurement" ;
                 row.insertCell().appendChild(createButton(data));
             }
         },

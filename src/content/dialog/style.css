@@ -11,34 +11,26 @@
 }
 
 .container * {
-    max-width: 500px;
-    display: block;
+    max-width: 600px;
     word-wrap: break-word;
 }
 
 #title {
     margin: 0;
-    grid-row: 1;
-    grid-column: 1;
 }
 
 #domain {
     margin-bottom: 20px;
     color: grey;
     margin-top: 0;
-    grid-row: 2;
-    grid-column: 1;
 }
 
 #description {
     margin-bottom: 20px;
-    grid-row: 3;
-    grid-column: 1;
 }
 
-.measurement-container {
+.info-container {
     grid-row: auto;
-    grid-column: 1;
     margin-bottom: 20px;
     border-radius: 25px;
     border: 2px solid grey;
@@ -53,7 +45,6 @@
 
 #button-container {
     grid-row: auto;
-    grid-column: 1;
     justify-self: end;
     align-self: end;
 }

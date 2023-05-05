@@ -48,7 +48,7 @@ export async function fetchAttestationReport(url, path) {
     }
 }
 
-export async function getVCEK(chipId, committedTCB) {
+export async function fetchVCEK(chipId, committedTCB) {
     // AMD key server
     const KDSINF = "https://kdsintf.amd.com/vcek/v1/Milan/";
 
@@ -81,5 +81,30 @@ export async function getVCEK(chipId, committedTCB) {
         return new pkijs.Certificate({schema: asn1.result})
     } else {
         throw new Error("failed to fetch VCEK")
+    }
+}
+
+export async function fetchMeasurementRepo(url) {
+    const response = await fetch(url, {
+        method: "GET",
+        referrerPolicy: "no-referrer"
+    });
+    if (response.ok)
+        return response.json();
+    else
+        throw new Error("failed to fetch measurement repo");
+}
+
+export async function getMeasurementFromRepo(url, version) {
+    try {
+        const measurements = await fetchMeasurementRepo(url);
+        if (measurements.hasOwnProperty(version)) {
+            return measurements[version];
+        } else {
+            return null;
+        }
+    } catch (e) {
+        console.log(e);
+        return null;
     }
 }

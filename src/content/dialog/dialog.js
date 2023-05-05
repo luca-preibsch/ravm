@@ -1,4 +1,4 @@
-import {fetchAttestationReport, getVCEK} from "../../lib/net";
+import {fetchAttestationReport, fetchVCEK} from "../../lib/net";
 import {validateAttestationReport, validateWithCertChain} from "../../lib/crypto";
 import * as util from "../../lib/util";
 
@@ -17,7 +17,7 @@ export async function checkHost(hostInfo, ar) {
 
     let vcek;
     try {
-        vcek = await getVCEK(ar.chip_id, ar.committedTCB);
+        vcek = await fetchVCEK(ar.chip_id, ar.committedTCB);
     } catch (e) {
         // vcek could not be attained -> notify user, attestation not possible
         console.log(e)

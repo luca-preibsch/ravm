@@ -9,11 +9,13 @@
     <h1 id="title">Remote Attestation</h1>
     <div id="domain"></div>
     <div id="description">PENDING</div>
-    <div class="invisible measurement-container">Measurement: <span class="measurement" id="measurement">PENDING</span></div>
+    <div class="invisible info-container">Measurement Repository:<br><a id="measurement-repo" target="_blank"></a></div>
+    <div class="invisible info-container">Measurement: <span class="measurement" id="measurement">PENDING</span></div>
     <div id="button-container">
         <button id="ignore-button" class="action button-red invisible">ignore</button>
         <button id="do-not-trust-button" class="action button-red invisible">block</button>
-        <button id="trust-button" class="action button-red invisible">trust</button>
+        <button id="trust-measurement-button" class="action button-red invisible">trust measurement</button>
+        <button id="trust-repo-button" class="action button-red invisible">trust repository</button>
     </div>
 </div>
 </body>

@@ -1,3 +1,5 @@
+import {AttesationReport} from "./attestation";
+
 async function getContentsOf(request){
     const item = await browser.storage.local.get(request);
     if (Object.keys(item).length === 0)
@@ -107,4 +109,9 @@ export async function setTrustedMeasurementRepo(host, url) {
 
 export async function getTrustedMeasurementRepo(host) {
     return getProperty(host, "trusted_measurement_repo");
+}
+
+export async function getAttestationReport(host) {
+    const ar_arrayBuffer = getProperty(host, "ar_arrayBuffer");
+    return new AttesationReport(ar_arrayBuffer);
 }

@@ -2,13 +2,13 @@ import * as pkijs from "pkijs";
 import * as asn1js from "asn1js";
 
 import * as util from "../lib/util";
-import {fetchAttestationInfo} from "../lib/net";
+import {fetchAttestationInfo, fetchAttestationReport, getMeasurementFromRepo} from "../lib/net";
 import * as storage from "../lib/storage";
 import * as messaging from "../lib/messaging";
 import {DialogType} from "../lib/ui";
 import {validateMeasurement} from "../lib/crypto";
-import {arrayBufferToHex} from "../lib/util";
 import {AttesationReport} from "../lib/attestation";
+import {arrayBufferToHex} from "../lib/util";
 
 // Domain to observe
 const ALL_URLS = "https://*/*";
@@ -196,21 +196,40 @@ async function listenerOnHeadersReceived(details) {
     // can host be trusted?
     // 1. for connections in the same session: test TLS pub key
     // 2. else test if stored measurement equals the current => store new measurement + TLS key
-    // 3. else inform user via dialog
-
+    // 3. check measurement repo for fitting measurement
+    // 4. else inform user via dialog
     const storedHostInfo = await storage.getHost(host.href);
     if (ssl_sha512 === storedHostInfo.ssl_sha512) {
         // TLS pub key did not change, thus the host can be trusted
         // update lastTrusted
         console.log("known TLS key");
         await storage.setTrusted(host.href, { lastTrusted : new Date() });
-    } else if (await validateMeasurement(hostInfo, new AttesationReport(storedHostInfo.ar_arrayBuffer).measurement)) {
+    } else if (await validateMeasurement(hostInfo, arrayBufferToHex(new AttesationReport(storedHostInfo.ar_arrayBuffer).measurement))) {
         // the measurement is correct and the host can be trusted
         // -> store new TLS key, update lastTrusted
         console.log("known measurement");
         await storage.setTrusted(host.href, {
-            lastTrusted : new Date(),
-            ssl_sha512 : ssl_sha512
+            lastTrusted: new Date(),
+            ssl_sha512: ssl_sha512
+        });
+    } else if (await storage.getTrustedMeasurementRepo(host.href) &&
+        await validateMeasurement(hostInfo, await getMeasurementFromRepo(
+            await storage.getTrustedMeasurementRepo(host.href), hostInfo.attestationInfo.version))) {
+        console.log("fitting measurement found in repo");
+        // known measurement repo contains fitting measurement -> store new measurement
+        let ar;
+        try {
+            ar = await fetchAttestationReport(hostInfo.host, hostInfo.attestationInfo.path);
+        } catch (e) {
+            // no attestation report found, but was found before during validation
+            // thus something went terribly wrong -> remove trust completely
+            console.log(e);
+            await storage.removeHost(host.href);
+        }
+        await storage.setTrusted(host.href, {
+            lastTrusted: new Date(),
+            ssl_sha512: ssl_sha512,
+            ar_arrayBuffer: ar.arrayBuffer
         });
     } else {
         console.log("attestation using stored measurement failed");

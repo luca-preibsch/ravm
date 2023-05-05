@@ -2,9 +2,9 @@ import * as asn1js from "asn1js";
 import * as pkijs from "pkijs";
 import ask from "../certificates/ask.der";
 import ark from "../certificates/ark.der";
-import {fetchArrayBuffer, fetchAttestationReport, getVCEK} from "./net";
+import {fetchArrayBuffer, fetchAttestationReport, fetchVCEK} from "./net";
 import * as util from "./util";
-import {isEqual} from "lodash";
+import {arrayBufferToHex} from "./util";
 
 // Validate the VCEK certificate using the AMD provided keys
 // and revocation list.
@@ -86,7 +86,8 @@ export async function validateAttestationReport(ar, vcek) {
     return await verifyMessage(pubKey, ar.signature, ar.getSignedData)
 }
 
-export async function validateMeasurement(hostInfo, measurement) {
+export async function validateMeasurement(hostInfo, measurementHex) {
+    console.log("hello")
     // Request attestation report from VM
     let ar;
     try {
@@ -99,14 +100,14 @@ export async function validateMeasurement(hostInfo, measurement) {
 
     let vcek;
     try {
-        vcek = await getVCEK(ar.chip_id, ar.committedTCB);
+        vcek = await fetchVCEK(ar.chip_id, ar.committedTCB);
     } catch (e) {
         // vcek could not be attained
         console.log(e);
         return false;
     }
 
-    // TODO: broken, because we currently fake the VM
+    // ! TODO: broken, because we currently fake the VM
     // if (util.arrayBufferToHex(ar.report_data) !== hostInfo.ssl_sha512) {
     //     // TLS connection pubkey is not equal to pubkey in attestation report
     //     console.log("TLS connection invalid");
@@ -125,7 +126,7 @@ export async function validateMeasurement(hostInfo, measurement) {
         return false;
     }
 
-    if (!isEqual(measurement, ar.measurement)) {
+    if (measurementHex !== arrayBufferToHex(ar.measurement)) {
         console.log("current measurement differs from stored measurement");
         return false;
     }
