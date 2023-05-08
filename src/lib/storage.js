@@ -1,4 +1,5 @@
 import {AttesationReport} from "./attestation";
+import {isEmpty} from "lodash";
 
 /**
  * structure of the storage:
@@ -9,24 +10,44 @@ import {AttesationReport} from "./attestation";
  *                      | measurement repos                   |
  */
 
-async function getContentsOf(request){
+const AUTHOR_KEYS = "author_keys";
+const MEASUREMENT_REPOS = "measurement_repos";
+
+async function getContentsOfObj(request){
     const item = await browser.storage.local.get(request);
-    if (Object.keys(item).length === 0)
+    if (isEmpty(item))
         return {};
     else
         return item[request];
 }
 
-async function setProperties(host, obj) {
-    const old = await getContentsOf(host);
+async function getContentsOfArr(request){
+    const item = await browser.storage.local.get(request);
+    if (isEmpty(item))
+        return [];
+    else
+        return item[request];
+}
+
+async function setProperties(key, value) {
+    const old = await getContentsOfObj(key);
     return browser.storage.local.set({
-        [host] : {...old, ...obj} // the latter overwrites the former
+        [key] : {...old, ...value} // the latter overwrites the former
     });
 }
 
-async function getProperty(host, prop) {
-    const hosts = await browser.storage.local.get(host);
-    return Object.keys(hosts).length !== 0 && hosts[host][prop];
+async function addToArray(key, value) {
+    const old = await getContentsOfArr(key);
+    if (!old.includes(value)) {
+        return browser.storage.local.set({
+            [key] : [...old, value] // the latter overwrites the former
+        });
+    }
+}
+
+async function getProperty(key, prop) {
+    const hosts = await browser.storage.local.get(key);
+    return Object.keys(hosts).length !== 0 && hosts[key][prop];
 }
 
 export function newTrusted(host, trustedSince, lastTrusted, type, ar_arrayBuffer, ssl_sha512) {
@@ -56,7 +77,7 @@ export async function getTrusted() {
 // returns all stored information about one host or about all hosts if host is left blank
 export function getHost(host) {
     if (host) {
-        return getContentsOf(host)
+        return getContentsOfObj(host)
     } else {
         return browser.storage.local.get()
     }
@@ -123,4 +144,21 @@ export async function getTrustedMeasurementRepo(host) {
 export async function getAttestationReport(host) {
     const ar_arrayBuffer = getProperty(host, "ar_arrayBuffer");
     return new AttesationReport(ar_arrayBuffer);
+}
+
+export async function containsAuthorKey(authorKey) {
+    const old = await getContentsOfArr(AUTHOR_KEYS);
+    return old.includes(authorKey);
+}
+
+export async function addAuthorKey(authorKey) {
+    return addToArray(AUTHOR_KEYS, authorKey);
+}
+
+export async function removeAuthorKey(authorKey) {
+    const old = await getContentsOfArr(AUTHOR_KEYS);
+    const index = old.indexOf(authorKey);
+    if (index > -1)
+        old.splice(index, 1);
+    return browser.storage.local.set({[AUTHOR_KEYS] : old});
 }
