@@ -1,5 +1,14 @@
 import {AttesationReport} from "./attestation";
 
+/**
+ * structure of the storage:
+ * key------------------|-value-------------------------------|-comment-----------------------------
+ * <url>                | data about the host behind the url  | the url has to be a qualified url like https://example.com
+ * author_keys          | an array of author keys             | -
+ * measurement_repos    | an array of url pointing to         | -
+ *                      | measurement repos                   |
+ */
+
 async function getContentsOf(request){
     const item = await browser.storage.local.get(request);
     if (Object.keys(item).length === 0)

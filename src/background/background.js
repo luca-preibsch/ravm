@@ -174,7 +174,7 @@ async function listenerOnHeadersReceived(details) {
 
     // host is known
     if (await storage.isIgnored(host.href)) {
-        // TODO dont show anymore when something changes
+        // TODO don't show anymore when something changes
         // attestation ignored -> show page action
         await browser.pageAction.setIcon({
             tabId: details.tabId,
@@ -247,7 +247,7 @@ async function listenerOnHeadersReceived(details) {
     // }));
     // return { redirectUrl: DIFFERS_ATTESTATION_PAGE };
 
-    // TODO dont show anymore when something changes
+    // TODO don't show anymore when something changes
     // attestation successful -> show checkmark page action
     await browser.pageAction.setIcon({
         tabId: details.tabId,
@@ -277,12 +277,9 @@ async function listenerOnMessageReceived(message, sender) {
     switch (message.type) {
         case messaging.types.getHostInfo:
             const hostInfo = JSON.parse(sessionStorage.getItem(sender.tab.id));
-            // TODO: if removed, dialog script cant get the item on reload
-            // sessionStorage.removeItem(sender.tab.id)
-            // sendResponse does not work
+            // sendResponse() does not work
             return Promise.resolve(hostInfo)
         case messaging.types.redirect:
-            // TODO works for demo site, but does this work for typical pages with scripts and resources?
             browser.tabs.update(sender.tab.id, {
                 url : message.url
             })
