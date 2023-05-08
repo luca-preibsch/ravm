@@ -7,6 +7,9 @@ import {AttesationReport} from "../lib/attestation";
 const table = document.getElementById("tableBody");
 const submitButton = document.getElementById("submitButton");
 const modal = document.querySelector(".modal");
+const infoTitleText = document.getElementById("infoTitle");
+const infoDescriptionText = document.getElementById("infoDescription");
+const infoMethodText = document.getElementById("infoTrustMethod");
 
 function onRemove() {
     const toRemove = [...table.querySelectorAll(".removeCheckbox")].filter(el => el.checked);
@@ -16,7 +19,7 @@ function onRemove() {
 submitButton.addEventListener("click", onRemove);
 
 modal.addEventListener("click", (e) => {
-    if (e.target.id !== "modalContent")
+    if (!modal.querySelector("#modalContent").contains(e.target))
         modal.close();
 });
 
@@ -26,13 +29,11 @@ function loadAllItems() {
             let hosts = Object.keys(items)
             for (let host of hosts) {
                 let row = table.insertRow()
-                let data = items[host]
+                let hostData = items[host]
                 row.insertCell().appendChild(createTitleCell(host));
-                row.insertCell().innerHTML = data.trustedSince.toLocaleString();
-                row.insertCell().innerHTML = data.lastTrusted.toLocaleString();
-                // TODO: move to "more info"
-                row.insertCell().innerHTML = (data.trusted_measurement_repo) ? "repository" : "measurement" ;
-                row.insertCell().appendChild(createButton(data));
+                row.insertCell().innerHTML = hostData.trustedSince.toLocaleString();
+                row.insertCell().innerHTML = hostData.lastTrusted.toLocaleString();
+                row.insertCell().appendChild(createButton(host, hostData));
             }
         },
         (reason) => {
@@ -48,9 +49,14 @@ async function saveItem(domain, trustedSince, lastTrusted, type, ar_arrayBuffer)
     console.log("save")
 }
 
-function showModal(hostInfo) {
-    const ar = new AttesationReport(hostInfo.ar_arrayBuffer);
-    modal.querySelector("#modalContent").innerText = ar.parse_report;
+function showModal(host, hostData) {
+    const ar = new AttesationReport(hostData.ar_arrayBuffer);
+    infoTitleText.innerText = host;
+    infoMethodText.innerHTML = (hostData.trusted_measurement_repo) ?
+        "This host is trusted through the trusted measurement repository at: " +
+        `<a href='${hostData.trusted_measurement_repo}' target='_blank'>${hostData.trusted_measurement_repo}</a>` :
+        "This host is trusted through it's measurement";
+    infoDescriptionText.innerText = ar.parse_report;
     modal.showModal();
 }
 
@@ -70,10 +76,10 @@ function createTitleCell(title) {
     return div;
 }
 
-function createButton(hostInfo) {
+function createButton(host, hostData) {
     const button = document.createElement("button");
     button.classList.add("link");
     button.innerText = "more info";
-    button.onclick = function () {showModal(hostInfo)};
+    button.onclick = function () {showModal(host, hostData)};
     return button;
 }

@@ -21,3 +21,13 @@ html, body {
 .modal::backdrop {
     background: transparent;
 }
+
+.infoMethodContainer {
+    font-size: smaller;
+}
+
+#infoDescription {
+    overflow-x: auto;
+    overflow-y: hidden;
+    white-space: nowrap;
+}

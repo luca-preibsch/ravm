@@ -11,7 +11,6 @@
         <th>Domain</th>
         <th>Trusted Since</th>
         <th>Last Trusted</th>
-        <th>Trust Method</th>
         <th></th>
     </tr>
     <tr><th>
@@ -21,7 +20,11 @@
     <tbody id="tableBody"></tbody>
 </table>
 <dialog class="modal">
-    <div id="modalContent"></div>
+    <div id="modalContent">
+        <h3 id="infoTitle"></h3>
+        <div class="infoMethodContainer">Trust Method:<br><div id="infoTrustMethod"></div></div>
+        <div id="infoDescription"></div>
+    </div>
 </dialog>
 <script src="./settings.js"></script>
 </body>
