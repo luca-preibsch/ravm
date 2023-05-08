@@ -13,7 +13,7 @@ import {isEmpty} from "lodash";
 const AUTHOR_KEYS = "author_keys";
 const MEASUREMENT_REPOS = "measurement_repos";
 
-async function getContentsOfObj(request){
+async function getObject(request){
     const item = await browser.storage.local.get(request);
     if (isEmpty(item))
         return {};
@@ -21,7 +21,7 @@ async function getContentsOfObj(request){
         return item[request];
 }
 
-async function getContentsOfArr(request){
+async function getArray(request){
     const item = await browser.storage.local.get(request);
     if (isEmpty(item))
         return [];
@@ -29,15 +29,20 @@ async function getContentsOfArr(request){
         return item[request];
 }
 
-async function setProperties(key, value) {
-    const old = await getContentsOfObj(key);
+async function setObjectProperties(key, object) {
+    const old = await getObject(key);
     return browser.storage.local.set({
-        [key] : {...old, ...value} // the latter overwrites the former
+        [key] : {...old, ...object} // the latter overwrites the former
     });
 }
 
-async function addToArray(key, value) {
-    const old = await getContentsOfArr(key);
+async function getObjectProperty(key, propertyName) {
+    const hosts = await browser.storage.local.get(key);
+    return Object.keys(hosts).length !== 0 && hosts[key][propertyName];
+}
+
+async function arrayAdd(key, value) {
+    const old = await getArray(key);
     if (!old.includes(value)) {
         return browser.storage.local.set({
             [key] : [...old, value] // the latter overwrites the former
@@ -45,9 +50,17 @@ async function addToArray(key, value) {
     }
 }
 
-async function getProperty(key, prop) {
-    const hosts = await browser.storage.local.get(key);
-    return Object.keys(hosts).length !== 0 && hosts[key][prop];
+async function arrayRemove(key, value) {
+    const old = await getArray(key);
+    const index = old.indexOf(value);
+    if (index > -1)
+        old.splice(index, 1);
+    return browser.storage.local.set({[key] : old});
+}
+
+async function arrayContains(key, value) {
+    const old = await getArray(key);
+    return old.includes(value);
 }
 
 export function newTrusted(host, trustedSince, lastTrusted, type, ar_arrayBuffer, ssl_sha512) {
@@ -62,11 +75,11 @@ export function newTrusted(host, trustedSince, lastTrusted, type, ar_arrayBuffer
 }
 
 export async function setTrusted(host, infoObj) {
-    return setProperties(host, infoObj);
+    return setObjectProperties(host, infoObj);
 }
 
 export async function isTrusted(host) {
-    return getProperty(host, "trusted");
+    return getObjectProperty(host, "trusted");
 }
 
 export async function getTrusted() {
@@ -77,7 +90,7 @@ export async function getTrusted() {
 // returns all stored information about one host or about all hosts if host is left blank
 export function getHost(host) {
     if (host) {
-        return getContentsOfObj(host)
+        return getObject(host)
     } else {
         return browser.storage.local.get()
     }
@@ -88,11 +101,11 @@ export function removeHost(host) {
 }
 
 export async function setUntrusted(host, untrusted) {
-    return setProperties(host, {blocked: untrusted});
+    return setObjectProperties(host, {blocked: untrusted});
 }
 
 export async function isUntrusted(host) {
-    return getProperty(host, "blocked");
+    return getObjectProperty(host, "blocked");
 }
 
 export async function isKnownHost(host) {
@@ -100,7 +113,7 @@ export async function isKnownHost(host) {
 }
 
 export async function setReportURL(host, url) {
-    return setProperties(host, {reportURL: url});
+    return setObjectProperties(host, {reportURL: url});
 }
 
 // TODO rewrite with better performance?
@@ -110,55 +123,62 @@ export async function isReportURL(url) {
 }
 
 export async function setIgnore(host, ignore) {
-    return setProperties(host, {ignore: ignore});
+    return setObjectProperties(host, {ignore: ignore});
 }
 
 export async function isIgnored(host) {
-    return getProperty(host, "ignore");
+    return getObjectProperty(host, "ignore");
 }
 
 export async function setUnsupported(host, unsupported) {
-    return setProperties(host, {unsupported: unsupported});
+    return setObjectProperties(host, {unsupported: unsupported});
 }
 
 export async function isUnsupported(host) {
-    return getProperty(host, "unsupported");
+    return getObjectProperty(host, "unsupported");
 }
 
 export async function setSSLKey(host, ssl_sha512) {
-    return setProperties(host, {ssl_sha512: ssl_sha512});
+    return setObjectProperties(host, {ssl_sha512: ssl_sha512});
 }
 
 export async function getSSLKey(host) {
-    return getProperty(host, "ssl_sha512");
+    return getObjectProperty(host, "ssl_sha512");
 }
 
 export async function setTrustedMeasurementRepo(host, url) {
-    return setProperties(host, {trusted_measurement_repo: url});
+    return setObjectProperties(host, {trusted_measurement_repo: url});
 }
 
 export async function getTrustedMeasurementRepo(host) {
-    return getProperty(host, "trusted_measurement_repo");
+    return getObjectProperty(host, "trusted_measurement_repo");
 }
 
 export async function getAttestationReport(host) {
-    const ar_arrayBuffer = getProperty(host, "ar_arrayBuffer");
+    const ar_arrayBuffer = getObjectProperty(host, "ar_arrayBuffer");
     return new AttesationReport(ar_arrayBuffer);
 }
 
 export async function containsAuthorKey(authorKey) {
-    const old = await getContentsOfArr(AUTHOR_KEYS);
-    return old.includes(authorKey);
+    return arrayContains(AUTHOR_KEYS, authorKey);
 }
 
 export async function addAuthorKey(authorKey) {
-    return addToArray(AUTHOR_KEYS, authorKey);
+    return arrayAdd(AUTHOR_KEYS, authorKey);
 }
 
 export async function removeAuthorKey(authorKey) {
-    const old = await getContentsOfArr(AUTHOR_KEYS);
-    const index = old.indexOf(authorKey);
-    if (index > -1)
-        old.splice(index, 1);
-    return browser.storage.local.set({[AUTHOR_KEYS] : old});
+    return arrayRemove(AUTHOR_KEYS, authorKey);
+}
+
+export async function containsMeasurementRepo(measurementRepo) {
+    return arrayContains(MEASUREMENT_REPOS, measurementRepo);
+}
+
+export async function addMeasurementRepo(measurementRepo) {
+    return arrayAdd(MEASUREMENT_REPOS, measurementRepo);
+}
+
+export async function removeMeasurementRepo(measurementRepo) {
+    return arrayRemove(MEASUREMENT_REPOS, measurementRepo);
 }
