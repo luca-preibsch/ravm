@@ -4,7 +4,8 @@ import {isEmpty} from "lodash";
 /**
  * structure of the storage:
  * key------------------|-value-------------------------------|-comment-----------------------------
- * <url>                | data about the host behind the url  | the url has to be a qualified url like https://example.com
+ * <url>                | data about the host behind the url  | the url has to be a qualified url
+ *                      |                                     | like https://example.com
  * author_keys          | an array of author keys             | -
  * measurement_repos    | an array of url pointing to         | -
  *                      | measurement repos                   |
@@ -147,6 +148,7 @@ export async function getSSLKey(host) {
 }
 
 export async function setTrustedMeasurementRepo(host, url) {
+    await addMeasurementRepo(url);
     return setObjectProperties(host, {trusted_measurement_repo: url});
 }
 

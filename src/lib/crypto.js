@@ -87,7 +87,6 @@ export async function validateAttestationReport(ar, vcek) {
 }
 
 export async function validateMeasurement(hostInfo, measurementHex) {
-    console.log("hello")
     // Request attestation report from VM
     let ar;
     try {

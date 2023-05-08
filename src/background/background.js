@@ -161,15 +161,47 @@ async function listenerOnHeadersReceived(details) {
     await storage.setReportURL(host.href, new URL(attestationInfo.path, host.href).href)
 
     // check if the host is already known by the extension
-    // if not:
-    // - add current domain to the session storage
-    // - redirect to the DIALOG_PAGE where attestation for the domain in session storage takes place
+    // if not either:
+    // - check for a measurement repo
+    // - TODO check of an author key
+    // - let the user manually trust the measurement
+    //     - add current domain to the session storage
+    //     - redirect to the DIALOG_PAGE where attestation for the domain in session storage takes place
     if (!isKnown) {
+        if (hostInfo.attestationInfo.measurement_repo &&
+            await storage.containsMeasurementRepo(hostInfo.attestationInfo.measurement_repo) &&
+            await validateMeasurement(hostInfo, await getMeasurementFromRepo(hostInfo.attestationInfo.measurement_repo,
+                hostInfo.attestationInfo.version))) {
+            // a measurement repo has been found and validation was successful, thus store the given measurement
+            let ar;
+            try {
+                ar = await fetchAttestationReport(hostInfo.host, hostInfo.attestationInfo.path);
+            } catch (e) {
+                // no attestation report found, but was found before during validation
+                // thus something went terribly wrong -> remove trust completely and reload the page
+                console.log(e);
+                await storage.removeHost(host.href);
+                sessionStorage.setItem(details.tabId, JSON.stringify({
+                    ...hostInfo,
+                    dialog_type: DialogType.attestationMissing,
+                }));
+                return {redirectUrl: MISSING_ATTESTATION_PAGE};
+            }
+            await storage.newTrusted(hostInfo.host, new Date(), new Date(), hostInfo.technology, ar.arrayBuffer, hostInfo.ssl_sha512);
+            await storage.setTrustedMeasurementRepo(hostInfo.host, hostInfo.attestationInfo.measurement_repo);
+            await browser.pageAction.setIcon({
+                tabId: details.tabId,
+                path: "./check-mark.svg",
+            });
+            browser.pageAction.show(details.tabId);
+            return {};
+        }
+        // if no measurement repo is found or validation fails, use default validation technique
         sessionStorage.setItem(details.tabId, JSON.stringify({
             ...hostInfo,
             dialog_type : DialogType.newHost
-        }))
-        return { redirectUrl: NEW_ATTESTATION_PAGE }
+        }));
+        return { redirectUrl: NEW_ATTESTATION_PAGE };
     }
 
     // host is known
@@ -212,9 +244,9 @@ async function listenerOnHeadersReceived(details) {
             lastTrusted: new Date(),
             ssl_sha512: ssl_sha512
         });
-    } else if (await storage.getTrustedMeasurementRepo(host.href) &&
+    } else if (await storage.getTrustedMeasurementRepo(hostInfo.host) &&
         await validateMeasurement(hostInfo, await getMeasurementFromRepo(
-            await storage.getTrustedMeasurementRepo(host.href), hostInfo.attestationInfo.version))) {
+            await storage.getTrustedMeasurementRepo(hostInfo.host), hostInfo.attestationInfo.version))) {
         console.log("fitting measurement found in repo");
         // known measurement repo contains fitting measurement -> store new measurement
         let ar;
@@ -222,9 +254,14 @@ async function listenerOnHeadersReceived(details) {
             ar = await fetchAttestationReport(hostInfo.host, hostInfo.attestationInfo.path);
         } catch (e) {
             // no attestation report found, but was found before during validation
-            // thus something went terribly wrong -> remove trust completely
+            // thus something went terribly wrong -> remove trust completely and reload the page
             console.log(e);
             await storage.removeHost(host.href);
+            sessionStorage.setItem(details.tabId, JSON.stringify({
+                ...hostInfo,
+                dialog_type : DialogType.attestationMissing,
+            }));
+            return { redirectUrl: MISSING_ATTESTATION_PAGE };
         }
         await storage.setTrusted(host.href, {
             lastTrusted: new Date(),
