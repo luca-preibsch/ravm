@@ -81,7 +81,7 @@ window.addEventListener("load", async () => {
                 "Do you want to trust this measurement repository and thus all the measurements it contains?<br><br>" +
                 "This means, the owner can update the measurement repository in case of a host update, and you "+
                 "won't have to trust the updated host's measurement again.<br><br>"+
-                "You can also just trust the measurement";
+                "You can also just trust the measurement.";
             measurementRepoText.setAttribute("href", hostInfo.attestationInfo.measurement_repo);
             measurementRepoText.innerText = hostInfo.attestationInfo.measurement_repo;
             measurementText.innerText = arrayBufferToHex(ar.measurement);

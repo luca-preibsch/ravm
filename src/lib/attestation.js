@@ -39,40 +39,40 @@ export class TCBVersion {
 // of https://www.amd.com/system/files/TechDocs/56860.pdf
 export class AttesationReport {
 
-  // uint32_t version;               /* 0h */
-  // uint32_t guest_svn;             /* 4h */
-  // uint64_t policy;                /* 8h */
-  // uint8_t family_id[16];          /* 10h */
-  // uint8_t image_id[16];           /* 20h */
-  // uint32_t vmpl;                  /* 30h */
-  // uint32_t signature_algo;        /* 34h */
-  // snp_tcb_version_t tcb_version;  /* 38h */
+  // uint32_t version;                  /* 0h */
+  // uint32_t guest_svn;                /* 4h */
+  // uint64_t policy;                   /* 8h */
+  // uint8_t family_id[16];             /* 10h */
+  // uint8_t image_id[16];              /* 20h */
+  // uint32_t vmpl;                     /* 30h */
+  // uint32_t signature_algo;           /* 34h */
+  // snp_tcb_version_t tcb_version;     /* 38h */
   // snp_platform_info_t platform_info; /* 40h */
-  // uint32_t author_key_en : 1;     /* 48h */
+  // uint32_t author_key_en : 1;        /* 48h */
   // uint32_t reserved      : 31; 
-  // uint32_t reserved2;             /* 4C */
-  // uint8_t report_data[64];        /* 50h */
-  // uint8_t measurement[48];        /* 90h */
-  // uint8_t host_data[32];          /* C0h */
-  // uint8_t id_key_digest[48];      /* E0h */
-  // uint8_t author_key_digest[48];  /* 110h */
-  // uint8_t report_id[32];          /* 140h */
-  // uint8_t report_id_ma[32];       /* 160h */
-  // snp_tcb_version_t reported_tcb; /* 180h */
-  // uint8_t reserved3[0x1A0-0x188]; /* 188h-19Fh */
-  // uint8_t chip_id[64];            /* 1A0h */
-  // uint64_t committed_tcb;         /* 1E0h */
-  // uint8_t current_build;          /* 1E8h */
-  // uint8_t current_minor;          /* 1E9h */
-  // uint8_t current_major;          /* 1EAh */
-  // uint8_t reserved4;              /* 1EBh */
-  // uint8_t committed_build;         /* 1ECh */
-  // uint8_t committed_minor;         /* 1EDh */
-  // uint8_t committed_major;         /* 1EEh */
-  // uint8_t reserved5;              /* 1EFh */
-  // uint64_t launch_tcb;            /* 1F0h */
-  // uint8_t reserved6[0x2A0-0x1F8];  /* 1F8h-29Fh */
-  // uint8_t signature[0x4A0-0x2A0]; /* 2A0h-49Fh */
+  // uint32_t reserved2;                /* 4C */
+  // uint8_t report_data[64];           /* 50h */
+  // uint8_t measurement[48];           /* 90h */
+  // uint8_t host_data[32];             /* C0h */
+  // uint8_t id_key_digest[48];         /* E0h */
+  // uint8_t author_key_digest[48];     /* 110h */
+  // uint8_t report_id[32];             /* 140h */
+  // uint8_t report_id_ma[32];          /* 160h */
+  // snp_tcb_version_t reported_tcb;    /* 180h */
+  // uint8_t reserved3[0x1A0-0x188];    /* 188h-19Fh */
+  // uint8_t chip_id[64];               /* 1A0h */
+  // uint64_t committed_tcb;            /* 1E0h */
+  // uint8_t current_build;             /* 1E8h */
+  // uint8_t current_minor;             /* 1E9h */
+  // uint8_t current_major;             /* 1EAh */
+  // uint8_t reserved4;                 /* 1EBh */
+  // uint8_t committed_build;           /* 1ECh */
+  // uint8_t committed_minor;           /* 1EDh */
+  // uint8_t committed_major;           /* 1EEh */
+  // uint8_t reserved5;                 /* 1EFh */
+  // uint64_t launch_tcb;               /* 1F0h */
+  // uint8_t reserved6[0x2A0-0x1F8];    /* 1F8h-29Fh */
+  // uint8_t signature[0x4A0-0x2A0];    /* 2A0h-49Fh */
 
   constructor(arrayBuffer) {
     this.arrayBuffer = arrayBuffer;
