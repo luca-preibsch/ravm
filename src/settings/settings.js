@@ -1,10 +1,11 @@
 import './style.css'
 import '../style/table.css'
+import '../style/button.css'
 
 import * as storage from '../lib/storage'
 import {AttesationReport} from "../lib/attestation";
 
-const table = document.getElementById("tableBody");
+const table = document.getElementById("measurement-table");
 const submitButton = document.getElementById("submitButton");
 const modal = document.querySelector(".modal");
 const infoTitleText = document.getElementById("infoTitle");
@@ -22,6 +23,19 @@ modal.addEventListener("click", (e) => {
     if (!modal.querySelector("#modalContent").contains(e.target))
         modal.close();
 });
+
+function initCollapsibles() {
+    document.querySelectorAll(".collapsible").forEach(collapsible => {
+        collapsible.addEventListener("click", () => {
+            collapsible.classList.toggle("active");
+            const content = collapsible.nextElementSibling;
+            if (content.style.display === "block")
+                content.style.display = "none";
+            else
+                content.style.display = "block";
+        });
+    });
+}
 
 function loadAllItems() {
     table.innerHTML = ""
@@ -41,8 +55,12 @@ function loadAllItems() {
         })
 }
 
-window.addEventListener("load", loadAllItems);
 browser.storage.onChanged.addListener(loadAllItems);
+
+window.addEventListener("load", () => {
+    loadAllItems();
+    initCollapsibles();
+});
 
 async function saveItem(domain, trustedSince, lastTrusted, type, ar_arrayBuffer) {
     await storage.newTrusted(domain, trustedSince, lastTrusted, type, ar_arrayBuffer)
@@ -78,8 +96,8 @@ function createTitleCell(title) {
 
 function createButton(host, hostData) {
     const button = document.createElement("button");
-    button.classList.add("link");
     button.innerText = "more info";
+    button.classList.add("moreInfoButton");
     button.onclick = function () {showModal(host, hostData)};
     return button;
 }

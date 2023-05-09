@@ -5,20 +5,44 @@
     <title>Settings</title>
 </head>
 <body>
-<table>
-    <thead>
-    <tr>
-        <th>Domain</th>
-        <th>Trusted Since</th>
-        <th>Last Trusted</th>
-        <th></th>
-    </tr>
-    <tr><th>
-        <input id="submitButton" type="submit" value="&#x1F5D1; remove">
-    </th></tr>
-    </thead>
-    <tbody id="tableBody"></tbody>
-</table>
+<button type="button" class="collapsible">Hosts trusted by Measurement</button>
+<div class="collapsible-content">
+    <table>
+        <thead>
+        <tr>
+            <th>Domain</th>
+            <th>Trusted Since</th>
+            <th>Last Trusted</th>
+        </tr>
+        </thead>
+        <tbody id="measurement-table"></tbody>
+    </table>
+</div>
+
+<button type="button" class="collapsible">Measurement Repositories trusted</button>
+    <table class="collapsible-content">
+        <thead>
+        <tr>
+            <th>Repository Domain</th>
+            <th>Trusted Since</th>
+        </tr>
+        </thead>
+        <tbody id="repo-table"></tbody>
+    </table>
+
+<button type="button" class="collapsible">Author Keys trusted</button>
+    <table class="collapsible-content">
+        <thead>
+        <tr>
+            <th>Domain</th>
+            <th>Trusted Since</th>
+            <th>Last Trusted</th>
+        </tr>
+        </thead>
+        <tbody id="author-key-table"></tbody>
+    </table>
+
+<input id="submitButton" class="action button-grey" type="submit" value="&#x1F5D1;">
 <dialog class="modal">
     <div id="modalContent">
         <h3 id="infoTitle"></h3>
