@@ -18,21 +18,20 @@ const BLOCKED_ATTESTATION_PAGE = browser.runtime.getURL("blocked-remote-attestat
 const MISSING_ATTESTATION_PAGE = browser.runtime.getURL("missing-remote-attestation.html");
 const DIFFERS_ATTESTATION_PAGE = browser.runtime.getURL("differs-remote-attestation.html");
 
-async function sha512(str) {
-    return crypto.subtle.digest("SHA-512", new TextEncoder("utf-8").encode(str)).then(buf => {
-        return Array.prototype.map.call(new Uint8Array(buf), x => (('00' + x.toString(16)).slice(-2))).join('');
-    });
-}
+// Function requests the SecurityInfo of the established https connection
+// and extracts the public key.
+// return: sha521 of the public key
+// TODO: refactor / rewrite to return a Promise?
+async function querySSLFingerprint(requestId) {
+    async function exportAndFormatCryptoKey(key) {
+        const exported = await window.crypto.subtle.exportKey(
+            "spki",
+            key
+        );
+        const exportedAsString = util.ab2str(exported);
+        const exportedAsBase64 = window.btoa(exportedAsString);
 
-async function exportAndFormatCryptoKey(key) {
-    const exported = await window.crypto.subtle.exportKey(
-        "spki",
-        key
-    );
-    const exportedAsString = util.ab2str(exported);
-    const exportedAsBase64 = window.btoa(exportedAsString);
-
-    return `-----BEGIN PUBLIC KEY-----
+        return `-----BEGIN PUBLIC KEY-----
 ${exportedAsBase64.substring(0, 64)}
 ${exportedAsBase64.substring(64, 64 * 2)}
 ${exportedAsBase64.substring(64 * 2, 64 * 3)}
@@ -41,13 +40,13 @@ ${exportedAsBase64.substring(64 * 4, 64 * 5)}
 ${exportedAsBase64.substring(64 * 5, 64 * 6)}
 ${exportedAsBase64.substring(64 * 6, 64 * 6 + 8)}
 -----END PUBLIC KEY-----\n`;
-}
+    }
 
-// Function requests the SecurityInfo of the established https connection
-// and extracts the public key.
-// return: sha521 of the public key
-// TODO: refactor / rewrite to return a Promise?
-async function querySSLFingerprint(requestId) {
+    async function sha512(str) {
+        return crypto.subtle.digest("SHA-512", new TextEncoder("utf-8").encode(str)).then(buf => {
+            return Array.prototype.map.call(new Uint8Array(buf), x => (('00' + x.toString(16)).slice(-2))).join('');
+        });
+    }
 
     const securityInfo = await browser.webRequest.getSecurityInfo(requestId, {
         "rawDER": true,
@@ -89,6 +88,37 @@ async function getAttestationInfo(url) {
         // console.log(e)
         return null
     }
+}
+
+/**
+ * This can be called if it is to be expected that an attestation report will be available.
+ * If no ar is returned, the caller should redirect to the MISSING_ATTESTATION_PAGE. Session storage is prepared for that.
+ * @param hostInfo
+ * @param tabId
+ * @returns {Promise<AttesationReport|undefined>}
+ */
+async function getAttestationReport(hostInfo, tabId) {
+    try {
+        return await fetchAttestationReport(hostInfo.host, hostInfo.attestationInfo.path);
+    } catch (e) {
+        // no attestation report found, but was found before during validation
+        // thus something went terribly wrong -> remove trust completely and reload the page
+        console.log(e);
+        await storage.removeHost(hostInfo.host);
+        sessionStorage.setItem(tabId, JSON.stringify({
+            ...hostInfo,
+            dialog_type: DialogType.attestationMissing,
+        }));
+        return null;
+    }
+}
+
+async function showPageAction(tabId) {
+    await browser.pageAction.setIcon({
+        tabId: tabId,
+        path: "./check-mark.svg",
+    });
+    return browser.pageAction.show(tabId);
 }
 
 /*
@@ -173,27 +203,13 @@ async function listenerOnHeadersReceived(details) {
             await validateMeasurement(hostInfo, await getMeasurementFromRepo(hostInfo.attestationInfo.measurement_repo,
                 hostInfo.attestationInfo.version))) {
             // a measurement repo has been found and validation was successful, thus store the given measurement
-            let ar;
-            try {
-                ar = await fetchAttestationReport(hostInfo.host, hostInfo.attestationInfo.path);
-            } catch (e) {
-                // no attestation report found, but was found before during validation
-                // thus something went terribly wrong -> remove trust completely and reload the page
-                console.log(e);
-                await storage.removeHost(host.href);
-                sessionStorage.setItem(details.tabId, JSON.stringify({
-                    ...hostInfo,
-                    dialog_type: DialogType.attestationMissing,
-                }));
-                return {redirectUrl: MISSING_ATTESTATION_PAGE};
-            }
+            // get the ar in order to store the trust in its measurement
+            const ar = getAttestationReport(hostInfo, details.tabId);
+            // the ar could not be found, thus inform the user about its absence
+            if (!ar) return {redirectUrl: MISSING_ATTESTATION_PAGE};
             await storage.newTrusted(hostInfo.host, new Date(), new Date(), hostInfo.technology, ar.arrayBuffer, hostInfo.ssl_sha512);
             await storage.setTrustedMeasurementRepo(hostInfo.host, hostInfo.attestationInfo.measurement_repo);
-            await browser.pageAction.setIcon({
-                tabId: details.tabId,
-                path: "./check-mark.svg",
-            });
-            browser.pageAction.show(details.tabId);
+            await showPageAction(details.tabId);
             return {};
         }
         // if no measurement repo is found or validation fails, use default validation technique
@@ -208,11 +224,7 @@ async function listenerOnHeadersReceived(details) {
     if (await storage.isIgnored(host.href)) {
         // TODO don't show anymore when something changes
         // attestation ignored -> show page action
-        await browser.pageAction.setIcon({
-            tabId: details.tabId,
-            path: "./hazard-sign.svg",
-        });
-        browser.pageAction.show(details.tabId)
+        await showPageAction(details.tabId);
         return {};
     }
 
@@ -249,20 +261,8 @@ async function listenerOnHeadersReceived(details) {
             await storage.getTrustedMeasurementRepo(hostInfo.host), hostInfo.attestationInfo.version))) {
         console.log("fitting measurement found in repo");
         // known measurement repo contains fitting measurement -> store new measurement
-        let ar;
-        try {
-            ar = await fetchAttestationReport(hostInfo.host, hostInfo.attestationInfo.path);
-        } catch (e) {
-            // no attestation report found, but was found before during validation
-            // thus something went terribly wrong -> remove trust completely and reload the page
-            console.log(e);
-            await storage.removeHost(host.href);
-            sessionStorage.setItem(details.tabId, JSON.stringify({
-                ...hostInfo,
-                dialog_type : DialogType.attestationMissing,
-            }));
-            return { redirectUrl: MISSING_ATTESTATION_PAGE };
-        }
+        const ar = getAttestationReport(hostInfo, details.tabId);
+        if (!ar) return {redirectUrl: MISSING_ATTESTATION_PAGE};
         await storage.setTrusted(host.href, {
             lastTrusted: new Date(),
             ssl_sha512: ssl_sha512,
@@ -286,23 +286,13 @@ async function listenerOnHeadersReceived(details) {
 
     // TODO don't show anymore when something changes
     // attestation successful -> show checkmark page action
-    await browser.pageAction.setIcon({
-        tabId: details.tabId,
-        path: "./check-mark.svg",
-    });
-    browser.pageAction.show(details.tabId);
+    await showPageAction(details.tabId);
     return {};
 }
 
 // We need to register this listener, since we require the SecurityInfo object
 // to validate the public key of the SSL connection
-browser.webRequest.onHeadersReceived.addListener(
-    listenerOnHeadersReceived,
-    {
-        urls: [ALL_URLS]
-    },
-    ["blocking"]
-)
+browser.webRequest.onHeadersReceived.addListener(listenerOnHeadersReceived, {urls: [ALL_URLS]}, ["blocking"]);
 
 async function listenerOnMessageReceived(message, sender) {
     if (sender.id !== browser.runtime.id) {
