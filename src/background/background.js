@@ -113,11 +113,17 @@ async function getAttestationReport(hostInfo, tabId) {
     }
 }
 
-async function showPageAction(tabId) {
-    await browser.pageAction.setIcon({
-        tabId: tabId,
-        path: "./check-mark.svg",
-    });
+async function showPageAction(tabId, success) {
+    if (success)
+        await browser.pageAction.setIcon({
+            tabId: tabId,
+            path: "./check-mark.svg",
+        });
+    else
+        await browser.pageAction.setIcon({
+            tabId: tabId,
+            path: "./hazard-sign.svg",
+        });
     return browser.pageAction.show(tabId);
 }
 
@@ -209,7 +215,7 @@ async function listenerOnHeadersReceived(details) {
             if (!ar) return {redirectUrl: MISSING_ATTESTATION_PAGE};
             await storage.newTrusted(hostInfo.host, new Date(), new Date(), hostInfo.technology, ar.arrayBuffer, hostInfo.ssl_sha512);
             await storage.setMeasurementRepo(hostInfo.host, hostInfo.attestationInfo.measurement_repo);
-            await showPageAction(details.tabId);
+            await showPageAction(details.tabId, true);
             return {};
         }
         // if no measurement repo is found or validation fails, use default validation technique
@@ -224,7 +230,7 @@ async function listenerOnHeadersReceived(details) {
     if (await storage.isIgnored(host.href)) {
         // TODO don't show anymore when something changes
         // attestation ignored -> show page action
-        await showPageAction(details.tabId);
+        await showPageAction(details.tabId, false);
         return {};
     }
 
@@ -284,9 +290,8 @@ async function listenerOnHeadersReceived(details) {
     // }));
     // return { redirectUrl: DIFFERS_ATTESTATION_PAGE };
 
-    // TODO don't show anymore when something changes
     // attestation successful -> show checkmark page action
-    await showPageAction(details.tabId);
+    await showPageAction(details.tabId, true);
     return {};
 }
 

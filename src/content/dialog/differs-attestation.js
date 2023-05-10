@@ -61,7 +61,9 @@ window.addEventListener("load", async () => {
         [noTrustButton, trustButton].forEach((button) =>
             button.classList.remove("invisible"));
     } else {
-        titleText.innerText = "Attestation FAILED";
-        descriptionText.innerText = "ERROR";
+        titleText.innerText = "Warning: Attestation Failed";
+        descriptionText.innerText = "This host offers remote attestation, but the hosts implementation is broken! " +
+            "You may ignore this host, but this could very well be a malicious attack.";
+        ignoreButton.classList.remove("invisible");
     }
 });
