@@ -10,10 +10,6 @@ html, body {
     position: fixed;
     bottom: 10px;
     right: 10px;
-    font-size: xx-large;
-    width: 65px;
-    height: 65px;
-    border-radius: 50%;
 }
 
 /* table */
