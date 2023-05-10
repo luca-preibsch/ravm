@@ -49,7 +49,7 @@ function loadAllItems() {
             for (const host of hosts) {
                 const row = measurementTable.insertRow();
                 const hostData = items[host];
-                row.insertCell().appendChild(createTitleCell(host));
+                row.insertCell().appendChild(createTitleCell(host, true));
                 row.insertCell().innerHTML = hostData.trustedSince.toLocaleString();
                 row.insertCell().innerHTML = hostData.lastTrusted.toLocaleString();
                 row.insertCell().appendChild(createButton(host, hostData));
@@ -60,7 +60,7 @@ function loadAllItems() {
     storage.getMeasurementRepo().then(repos => {
         repos.forEach(repo => {
             const row = repoTable.insertRow();
-            row.insertCell().appendChild(createTitleCell(repo));
+            row.insertCell().appendChild(createTitleCell(repo, true));
         });
     }, console.error);
 }
@@ -88,7 +88,7 @@ function showModal(host, hostData) {
     modal.showModal();
 }
 
-function createTitleCell(title) {
+function createTitleCell(title, isLink) {
     const div = document.createElement("div");
     const checkbox = document.createElement("input");
     checkbox.setAttribute("type", "checkbox");
@@ -96,9 +96,17 @@ function createTitleCell(title) {
     // checkbox.setAttribute(name, title);
     checkbox.setAttribute("value", title);
     checkbox.classList.add("removeCheckbox");
-    const label = document.createElement("lable");
+    const label = document.createElement("label");
     label.setAttribute("for", title);
-    label.innerText = title;
+    if (isLink) {
+        const link = document.createElement("a");
+        link.setAttribute("href", title);
+        link.setAttribute("target", "_blank");
+        link.innerText = title;
+        label.appendChild(link);
+    } else {
+        label.innerText = title;
+    }
     div.appendChild(checkbox);
     div.appendChild(label);
     return div;
