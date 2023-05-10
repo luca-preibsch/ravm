@@ -33,13 +33,19 @@ async function getArray(request){
 async function setObjectProperties(key, object) {
     const old = await getObject(key);
     return browser.storage.local.set({
-        [key] : {...old, ...object} // the latter overwrites the former
+        [key]: {...old, ...object} // the latter overwrites the former
     });
 }
 
 async function getObjectProperty(key, propertyName) {
     const hosts = await browser.storage.local.get(key);
     return Object.keys(hosts).length !== 0 && hosts[key][propertyName];
+}
+
+async function removeObjectProperty(key, propertyName) {
+    let host = await getObject(key);
+    delete host[propertyName];
+    return browser.storage.local.set({[key]: host});
 }
 
 async function arrayAdd(key, value) {
@@ -194,5 +200,10 @@ export async function addMeasurementRepo(measurementRepo) {
 }
 
 export async function removeMeasurementRepo(measurementRepo) {
+    const hosts = await getHost();
+    Object.entries(hosts)
+        .filter(([, val]) => val.trusted_measurement_repo === measurementRepo)
+        .forEach(([host,]) => removeObjectProperty(host, "trusted_measurement_repo"));
+    // await removeObjectProperty("https://transparent-vm.net:8080/", "trusted_measurement_repo");
     return arrayRemove(MEASUREMENT_REPOS, measurementRepo);
 }
