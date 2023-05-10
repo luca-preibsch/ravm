@@ -42,7 +42,7 @@ trustMeasurementButton.addEventListener("click", async () => {
 trustRepoButton.addEventListener("click", async () => {
     await storage.newTrusted(
         hostInfo.host, new Date(), new Date(), hostInfo.attestationInfo.technology, ar.arrayBuffer, hostInfo.ssl_sha512);
-    await storage.setTrustedMeasurementRepo(hostInfo.host, hostInfo.attestationInfo.measurement_repo);
+    await storage.setMeasurementRepo(hostInfo.host, hostInfo.attestationInfo.measurement_repo);
     browser.runtime.sendMessage({
         type : types.redirect,
         url : hostInfo.url

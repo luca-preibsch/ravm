@@ -88,7 +88,11 @@ export async function getTrusted() {
     return Object.fromEntries(Object.entries(hosts).filter(([, val]) => val.trusted));
 }
 
-// returns all stored information about one host or about all hosts if host is left blank
+/**
+ * returns all stored information about one host or about all hosts if host is left blank
+ * @param host
+ * @returns {*|Promise<{}|*>}
+ */
 export function getHost(host) {
     if (host) {
         return getObject(host)
@@ -147,13 +151,21 @@ export async function getSSLKey(host) {
     return getObjectProperty(host, "ssl_sha512");
 }
 
-export async function setTrustedMeasurementRepo(host, url) {
+export async function setMeasurementRepo(host, url) {
     await addMeasurementRepo(url);
     return setObjectProperties(host, {trusted_measurement_repo: url});
 }
 
-export async function getTrustedMeasurementRepo(host) {
-    return getObjectProperty(host, "trusted_measurement_repo");
+/**
+ * returns the measurement repo belonging to the host or all repos if no host is supplied
+ * @param host
+ * @returns {Promise<[]|*>}
+ */
+export async function getMeasurementRepo(host) {
+    if (host)
+        return getObjectProperty(host, "trusted_measurement_repo");
+    else
+        return getArray(MEASUREMENT_REPOS);
 }
 
 export async function getAttestationReport(host) {

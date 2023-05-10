@@ -5,7 +5,9 @@ import '../style/button.css'
 import * as storage from '../lib/storage'
 import {AttesationReport} from "../lib/attestation";
 
-const table = document.getElementById("measurement-table");
+const measurementTable = document.getElementById("measurement-table");
+const repoTable = document.getElementById("repo-table");
+const authorTable = document.getElementById("author-key-table");
 const submitButton = document.getElementById("submitButton");
 const modal = document.querySelector(".modal");
 const infoTitleText = document.getElementById("infoTitle");
@@ -13,8 +15,11 @@ const infoDescriptionText = document.getElementById("infoDescription");
 const infoMethodText = document.getElementById("infoTrustMethod");
 
 function onRemove() {
-    const toRemove = [...table.querySelectorAll(".removeCheckbox")].filter(el => el.checked);
+    const toRemove = [...measurementTable.querySelectorAll(".removeCheckbox")].filter(el => el.checked);
     toRemove.forEach(el => storage.removeHost(el.value));
+
+    [...repoTable.querySelectorAll(".removeCheckbox")].filter(el => el.checked)
+        .forEach(el => storage.removeMeasurementRepo(el.value));
 }
 
 submitButton.addEventListener("click", onRemove);
@@ -38,21 +43,26 @@ function initCollapsibles() {
 }
 
 function loadAllItems() {
-    table.innerHTML = ""
-    storage.getTrusted().then((items) => {
-            let hosts = Object.keys(items)
-            for (let host of hosts) {
-                let row = table.insertRow()
-                let hostData = items[host]
+    measurementTable.innerHTML = "";
+    storage.getTrusted().then(items => {
+            const hosts = Object.keys(items)
+            for (const host of hosts) {
+                const row = measurementTable.insertRow();
+                const hostData = items[host];
                 row.insertCell().appendChild(createTitleCell(host));
                 row.insertCell().innerHTML = hostData.trustedSince.toLocaleString();
                 row.insertCell().innerHTML = hostData.lastTrusted.toLocaleString();
                 row.insertCell().appendChild(createButton(host, hostData));
             }
-        },
-        (reason) => {
-            console.error(reason);
-        })
+        }, console.error);
+
+    repoTable.innerHTML = "";
+    storage.getMeasurementRepo().then(repos => {
+        repos.forEach(repo => {
+            const row = repoTable.insertRow();
+            row.insertCell().appendChild(createTitleCell(repo));
+        });
+    }, console.error);
 }
 
 browser.storage.onChanged.addListener(loadAllItems);

@@ -208,7 +208,7 @@ async function listenerOnHeadersReceived(details) {
             // the ar could not be found, thus inform the user about its absence
             if (!ar) return {redirectUrl: MISSING_ATTESTATION_PAGE};
             await storage.newTrusted(hostInfo.host, new Date(), new Date(), hostInfo.technology, ar.arrayBuffer, hostInfo.ssl_sha512);
-            await storage.setTrustedMeasurementRepo(hostInfo.host, hostInfo.attestationInfo.measurement_repo);
+            await storage.setMeasurementRepo(hostInfo.host, hostInfo.attestationInfo.measurement_repo);
             await showPageAction(details.tabId);
             return {};
         }
@@ -256,9 +256,9 @@ async function listenerOnHeadersReceived(details) {
             lastTrusted: new Date(),
             ssl_sha512: ssl_sha512
         });
-    } else if (await storage.getTrustedMeasurementRepo(hostInfo.host) &&
+    } else if (await storage.getMeasurementRepo(hostInfo.host) &&
         await validateMeasurement(hostInfo, await getMeasurementFromRepo(
-            await storage.getTrustedMeasurementRepo(hostInfo.host), hostInfo.attestationInfo.version))) {
+            await storage.getMeasurementRepo(hostInfo.host), hostInfo.attestationInfo.version))) {
         console.log("fitting measurement found in repo");
         // known measurement repo contains fitting measurement -> store new measurement
         const ar = getAttestationReport(hostInfo, details.tabId);
