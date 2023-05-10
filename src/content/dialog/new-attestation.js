@@ -19,8 +19,8 @@ const noTrustButton = document.getElementById("do-not-trust-button");
 const trustMeasurementButton = document.getElementById("trust-measurement-button");
 const trustRepoButton = document.getElementById("trust-repo-button");
 
-let ar;
 let hostInfo;
+let ar;
 
 ignoreButton.addEventListener("click", async () => {
     await storage.setIgnore(hostInfo.host, true);
@@ -63,8 +63,6 @@ window.addEventListener("load", async () => {
 
     // init UI
     domainText.innerText = hostInfo.host;
-
-    console.log("repo: " + hostInfo.attestationInfo.measurement_repo);
 
     // check if the host supplies a measurement repo
     if (hostInfo.attestationInfo.measurement_repo) {
