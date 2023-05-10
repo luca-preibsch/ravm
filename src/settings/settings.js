@@ -42,21 +42,29 @@ function initCollapsibles() {
     });
 }
 
-function loadAllItems() {
-    measurementTable.innerHTML = "";
-    storage.getTrusted().then(items => {
-            const hosts = Object.keys(items)
-            for (const host of hosts) {
-                const row = measurementTable.insertRow();
-                const hostData = items[host];
-                row.insertCell().appendChild(createTitleCell(host, true));
-                row.insertCell().innerHTML = hostData.trustedSince.toLocaleString();
-                row.insertCell().innerHTML = hostData.lastTrusted.toLocaleString();
-                row.insertCell().appendChild(createButton(host, hostData));
-            }
-        }, console.error);
+/**
+ * @param {HTMLElement} table
+ */
+function clearTable(table) {
+    while (table.hasChildNodes())
+        table.removeChild(table.firstChild);
+}
 
-    repoTable.innerHTML = "";
+function loadAllItems() {
+    clearTable(measurementTable);
+    storage.getTrusted().then(items => {
+        const hosts = Object.keys(items)
+        for (const host of hosts) {
+            const row = measurementTable.insertRow();
+            const hostData = items[host];
+            row.insertCell().appendChild(createTitleCell(host, true));
+            row.insertCell().innerHTML = hostData.trustedSince.toLocaleString();
+            row.insertCell().innerHTML = hostData.lastTrusted.toLocaleString();
+            row.insertCell().appendChild(createButton(host, hostData));
+        }
+    }, console.error);
+
+    clearTable(repoTable);
     storage.getMeasurementRepo().then(repos => {
         repos.forEach(repo => {
             const row = repoTable.insertRow();
