@@ -66,6 +66,7 @@ function loadAllItems() {
 }
 
 browser.storage.onChanged.addListener(loadAllItems);
+window.addEventListener("focus", loadAllItems);
 
 window.addEventListener("load", () => {
     loadAllItems();

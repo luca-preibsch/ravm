@@ -29,25 +29,35 @@ async function getTab() {
     }
 }
 
-window.addEventListener("load", async () => {
+async function init() {
     tab = await getTab();
     const url = new URL(tab.url)
     host = new URL(url.origin);
     const hostInfo = await storage.getHost(host.href);
 
-    urlText.innerText = host.href
+    urlText.innerText = host.href;
 
-    if (hostInfo.trusted) {
+    if (hostInfo.trusted_measurement_repo) {
         icon.setAttribute("src", "./check-mark.svg");
         headerText.innerText = "Attestation Successful";
-        infoText.innerText = `Trusted since ${hostInfo.trustedSince.toLocaleString()}`;
-        removeButton.innerText = "remove trust";
+        infoText.innerHTML = `Trusted since ${hostInfo.trustedSince.toLocaleString()}&nbsp—&nbsp<b>trust inherited from repository</b>`;
     } else if (hostInfo.ignore) {
         icon.setAttribute("src", "./hazard-sign.svg");
         headerText.innerText = "Attestation Ignored";
         infoText.innerText = "";
         removeButton.innerText = "remove ignore";
+        removeButton.classList.remove("invisible");
+    } else if (hostInfo.trusted) {
+        icon.setAttribute("src", "./check-mark.svg");
+        headerText.innerText = "Attestation Successful";
+        infoText.innerText = `Trusted since ${hostInfo.trustedSince.toLocaleString()}`;
+        removeButton.innerText = "remove trust";
+        removeButton.classList.remove("invisible");
     } else {
+        icon.setAttribute("src", "./hazard-sign.svg");
         headerText.innerText = "Attestation Failed";
     }
-})
+}
+
+window.addEventListener("load", init);
+browser.storage.onChanged.addListener(init);

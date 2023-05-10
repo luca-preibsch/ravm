@@ -18,7 +18,7 @@
 #attestation-header {
     grid-row: 1;
     grid-column-start: 2;
-    grid-column-end: span end;
+    grid-column-end: span 3;
     text-align: left;
     font-size: 30px;
     margin-top: auto;
@@ -28,7 +28,7 @@
 #attestation-url {
     grid-row: 2;
     grid-column-start: 2;
-    grid-column-end: span end;
+    grid-column-end: span 3;
     text-align: left;
     color: grey;
     margin-top: 0;
@@ -37,24 +37,24 @@
 
 #attestation-info {
     grid-row: 4;
-    grid-column-start: start;
+    grid-column-start: 1;
     grid-column-end: span 2;
+    white-space: nowrap;
     display: flex;
     align-items: center;
 }
 
 #button-remove-trust {
     grid-row: 4;
-    grid-column: 3;
-    margin-right: 0;
-    margin-left: auto;
+    grid-column: 4;
+    justify-self: end;
 }
 
 #button-settings {
-    grid-column: 3;
+    grid-column-start: 1;
+    grid-column-end: span 4;
     grid-row: 5;
     margin-top: 10px;
-    margin-right: 0;
-    margin-left: auto;
+    justify-self: end;
     font-size: smaller;
 }
