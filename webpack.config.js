@@ -58,13 +58,6 @@ const _module = {
       test: /\.(png|svg|jpg|jpeg|gif)$/i,
       type: 'asset/resource',
     },
-    {
-      test: /\.json$/,
-      type: 'asset/resource',
-        generator: {
-        filename: '[name][ext]'
-      },
-    },
   ]
 }
 

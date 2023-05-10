@@ -1,3 +1,4 @@
+import format from "./attestation-info.json";
 
 export function arrayBufferToHex (arrayBuffer,fmt = false) {
     if (typeof arrayBuffer !== 'object' || arrayBuffer === null || typeof arrayBuffer.byteLength !== 'number') {
@@ -38,4 +39,14 @@ export function ab2str(buf) {
   
 export function zeroPad(num, places){
     return String(num).padStart(places, '0');
+}
+
+export function checkAttestationInfoFormat(attestationInfo) {
+    if (!attestationInfo) return false;
+    try {
+        return [...Object.keys(format)].every(key => attestationInfo.hasOwnProperty(key));
+    } catch (e) {
+        console.log(e);
+        return false;
+    }
 }

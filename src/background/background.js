@@ -165,7 +165,12 @@ async function listenerOnHeadersReceived(details) {
     }
 
     const isKnown = await storage.isKnownHost(host.href);
-    const attestationInfo = await getAttestationInfo(host)
+    let attestationInfo = await getAttestationInfo(host);
+
+    // ? handle the host as if it would not support remote attestation, if the info file has the wrong format
+    // => use the following statement
+    // if (!checkAttestationInfoFormat(attestationInfo)) attestationInfo = null;
+
     const hostInfo = {
         host : host.href,
         url : url.href,
