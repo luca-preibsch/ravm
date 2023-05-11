@@ -73,6 +73,7 @@ window.addEventListener("load", async () => {
 
     ar = await getReport(hostInfo);
     if (ar && await checkHost(hostInfo, ar)) {
+        // TODO: rewrite this to auto generate the page depending on the combination of author key + repo + measurement
 
         // attestation of the new measurement was successful
         let description = "This host has previously been trusted, but the measurement has since changed. " +

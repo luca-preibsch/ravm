@@ -123,7 +123,7 @@ export class AttesationReport {
     get author_key_en() {
         // TODO: endian correct?
         const reserved_author_key_en = this.view.getUint32(0x48, true);
-        return (reserved_author_key_en & 0b1) ? 1 : 0;
+        return reserved_author_key_en & 0b1;
     }
 
     // uint8_t report_data[64];        /* 50h */

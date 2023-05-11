@@ -13,11 +13,13 @@ const domainText = document.getElementById("domain");
 const descriptionText = document.getElementById("description");
 const measurementText = document.getElementById("measurement");
 const measurementRepoText = document.getElementById("measurement-repo");
+const authorKeyText = document.getElementById("author-key");
 
 const ignoreButton = document.getElementById("ignore-button");
 const noTrustButton = document.getElementById("do-not-trust-button");
 const trustMeasurementButton = document.getElementById("trust-measurement-button");
 const trustRepoButton = document.getElementById("trust-repo-button");
+const trustAuthorKeyButton = document.getElementById("trust-author-key-button");
 
 let hostInfo;
 let ar;
@@ -72,26 +74,37 @@ window.addEventListener("load", async () => {
 
     ar = await getReport(hostInfo);
     if (ar && (await checkHost(hostInfo, ar))) {
-        if (measurement && arrayBufferToHex(ar.measurement) === measurement) {
+        let makeVisible = [];
+
+        // 4. Trust the measurement? wait for user input
+        measurementText.innerText = arrayBufferToHex(ar.measurement);
+        descriptionText.innerHTML =
+            "This host offers remote attestation, do you want to trust it?<br>" +
+            "<i>You may trust its measurement.</i>";
+        makeVisible.push(ignoreButton, noTrustButton, trustMeasurementButton, measurementText.parentNode);
+
+        if (ar.author_key_en) {
+            // this host supplies an author key
+            // 4. Trust the author key?
+            // TODO
+            descriptionText.innerText +=
+                "<br><br>This host also offers an author key.<br>" +
+                "<i>You may trust the author key.</i><br>" +
+                "Consequences: You trust all hosts signed by the same author key.";
+            // authorKeyText.innerText = "";
+            makeVisible.push(trustAuthorKeyButton, authorKeyText.parentNode);
+        } else if (measurement && arrayBufferToHex(ar.measurement) === measurement) {
             // this host supplies a measurement using a measurement repo
-            // 4. Trust the measurement-repo?
-            descriptionText.innerHTML = "This host offers remote attestation using a measurement repository. " +
-                "Do you want to trust this measurement repository and thus all the measurements it contains?<br><br>" +
-                "This means, the owner can update the measurement repository in case of a host update, and you "+
-                "won't have to trust the updated host's measurement again.<br><br>"+
-                "You can also just trust the measurement.";
+            descriptionText.innerHTML +=
+                "<br><br>This host also offers a measurement repository.<br>" +
+                "<i>You may trust the repository.</i><br>" +
+                "Consequences: You trust all measurement the repository contains.";
             measurementRepoText.setAttribute("href", hostInfo.attestationInfo.measurement_repo);
             measurementRepoText.innerText = hostInfo.attestationInfo.measurement_repo;
-            measurementText.innerText = arrayBufferToHex(ar.measurement);
-            [ignoreButton, noTrustButton, trustMeasurementButton, trustRepoButton, measurementRepoText.parentNode, measurementText.parentNode]
-                .forEach((button) => button.classList.remove("invisible"));
-        } else {
-            // 4. Trust the measurement? wait for user input
-            descriptionText.innerText = "This host offers remote attestation, do you want to trust it?";
-            measurementText.innerText = arrayBufferToHex(ar.measurement);
-            [ignoreButton, noTrustButton, trustMeasurementButton, measurementText.parentNode].forEach((button) =>
-                button.classList.remove("invisible"));
+            makeVisible.push(trustRepoButton, measurementRepoText.parentNode);
         }
+
+        makeVisible.forEach(el => el.classList.remove("invisible"));
     } else {
         titleText.innerText = "Warning: Attestation Failed";
         descriptionText.innerText = "This host offers remote attestation, but the hosts implementation is broken! " +
