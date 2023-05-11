@@ -157,6 +157,11 @@ export async function getSSLKey(host) {
     return getObjectProperty(host, "ssl_sha512");
 }
 
+export async function getAttestationReport(host) {
+    const ar_arrayBuffer = getObjectProperty(host, "ar_arrayBuffer");
+    return new AttesationReport(ar_arrayBuffer);
+}
+
 export async function setMeasurementRepo(host, url) {
     await addMeasurementRepo(url);
     return setObjectProperties(host, {trusted_measurement_repo: url});
@@ -174,23 +179,6 @@ export async function getMeasurementRepo(host) {
         return getArray(MEASUREMENT_REPOS);
 }
 
-export async function getAttestationReport(host) {
-    const ar_arrayBuffer = getObjectProperty(host, "ar_arrayBuffer");
-    return new AttesationReport(ar_arrayBuffer);
-}
-
-export async function containsAuthorKey(authorKey) {
-    return arrayContains(AUTHOR_KEYS, authorKey);
-}
-
-export async function addAuthorKey(authorKey) {
-    return arrayAdd(AUTHOR_KEYS, authorKey);
-}
-
-export async function removeAuthorKey(authorKey) {
-    return arrayRemove(AUTHOR_KEYS, authorKey);
-}
-
 export async function containsMeasurementRepo(measurementRepo) {
     return arrayContains(MEASUREMENT_REPOS, measurementRepo);
 }
@@ -205,4 +193,37 @@ export async function removeMeasurementRepo(measurementRepo) {
         .filter(([, val]) => val.trusted_measurement_repo === measurementRepo)
         .forEach(([host,]) => removeObjectProperty(host, "trusted_measurement_repo"));
     return arrayRemove(MEASUREMENT_REPOS, measurementRepo);
+}
+
+export async function setAuthorKey(host, authorkey) {
+    await addAuthorKey(authorkey);
+    return setObjectProperties(host, {author_key: authorkey});
+}
+
+/**
+ * returns the author key belonging to the host or all author keys if no host is supplied
+ * @param host
+ * @returns {Promise<[]|*>}
+ */
+export async function getAuthorKey(host) {
+    if (host)
+        return getObjectProperty(host, "author_key");
+    else
+        return getArray(AUTHOR_KEYS);
+}
+
+export async function containsAuthorKey(authorKey) {
+    return arrayContains(AUTHOR_KEYS, authorKey);
+}
+
+export async function addAuthorKey(authorKey) {
+    return arrayAdd(AUTHOR_KEYS, authorKey);
+}
+
+export async function removeAuthorKey(authorKey) {
+    const hosts = await getHost();
+    Object.entries(hosts)
+        .filter(([, val]) => val.author_key === authorKey)
+        .forEach(([host,]) => removeObjectProperty(host, "author_key"));
+    return arrayRemove(AUTHOR_KEYS, authorKey);
 }
