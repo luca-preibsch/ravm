@@ -1,6 +1,8 @@
 import {fetchAttestationReport, fetchVCEK} from "../../lib/net";
 import {validateAttestationReport, validateWithCertChain} from "../../lib/crypto";
 import * as util from "../../lib/util";
+import * as storage from "../../lib/storage";
+import {types} from "../../lib/messaging";
 
 export async function getReport(hostInfo) {
     try {
@@ -50,4 +52,27 @@ export async function checkHost(hostInfo, ar) {
     }
 
     return true;
+}
+
+export async function listenerTrustMeasurement(hostInfo, ar) {
+    await storage.newTrusted(
+        hostInfo.host, new Date(), new Date(), hostInfo.attestationInfo.technology, ar.arrayBuffer, hostInfo.ssl_sha512);
+    return browser.runtime.sendMessage({
+        type : types.redirect,
+        url : hostInfo.url
+    });
+}
+
+export async function listenerTrustRepo(hostInfo, ar) {
+    await storage.newTrusted(
+        hostInfo.host, new Date(), new Date(), hostInfo.attestationInfo.technology, ar.arrayBuffer, hostInfo.ssl_sha512);
+    await storage.setMeasurementRepo(hostInfo.host, hostInfo.attestationInfo.measurement_repo);
+    return browser.runtime.sendMessage({
+        type : types.redirect,
+        url : hostInfo.url
+    });
+}
+
+export async function listenerTrustAuthor() {
+
 }

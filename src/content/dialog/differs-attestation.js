@@ -4,7 +4,7 @@ import '../../style/button.css';
 import {getHostInfo, types} from "../../lib/messaging";
 import * as storage from "../../lib/storage";
 import {arrayBufferToHex} from "../../lib/util";
-import {checkHost, getReport} from "./dialog";
+import {checkHost, getReport, listenerTrustMeasurement, listenerTrustRepo} from "./dialog";
 import {AttesationReport} from "../../lib/attestation";
 import {getMeasurementFromRepo} from "../../lib/net";
 
@@ -23,22 +23,11 @@ let hostInfo;
 let ar;
 
 trustMeasurementButton.addEventListener("click", async () => {
-    await storage.newTrusted(
-        hostInfo.host, new Date(), new Date(), hostInfo.attestationInfo.technology, ar.arrayBuffer, hostInfo.ssl_sha512);
-    browser.runtime.sendMessage({
-        type : types.redirect,
-        url : hostInfo.url
-    });
+    await listenerTrustMeasurement(hostInfo, ar);
 });
 
 trustRepoButton.addEventListener("click", async () => {
-    await storage.newTrusted(
-        hostInfo.host, new Date(), new Date(), hostInfo.attestationInfo.technology, ar.arrayBuffer, hostInfo.ssl_sha512);
-    await storage.setMeasurementRepo(hostInfo.host, hostInfo.attestationInfo.measurement_repo);
-    browser.runtime.sendMessage({
-        type : types.redirect,
-        url : hostInfo.url
-    });
+    await listenerTrustRepo(hostInfo, ar);
 });
 
 noTrustButton.addEventListener("click", async () => {

@@ -204,6 +204,5 @@ export async function removeMeasurementRepo(measurementRepo) {
     Object.entries(hosts)
         .filter(([, val]) => val.trusted_measurement_repo === measurementRepo)
         .forEach(([host,]) => removeObjectProperty(host, "trusted_measurement_repo"));
-    // await removeObjectProperty("https://transparent-vm.net:8080/", "trusted_measurement_repo");
     return arrayRemove(MEASUREMENT_REPOS, measurementRepo);
 }

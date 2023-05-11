@@ -43,10 +43,11 @@
     text-decoration: underline;
 }
 
-#button-container {
+.button-container {
     grid-row: auto;
     justify-self: end;
     align-self: end;
+    margin-bottom: 5px;
 }
 
 body {
