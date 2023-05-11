@@ -14,12 +14,22 @@ const infoTitleText = document.getElementById("infoTitle");
 const infoDescriptionText = document.getElementById("infoDescription");
 const infoMethodText = document.getElementById("infoTrustMethod");
 
-function onRemove() {
-    const toRemove = [...measurementTable.querySelectorAll(".removeCheckbox")].filter(el => el.checked);
-    toRemove.forEach(el => storage.removeHost(el.value));
+async function onRemove() {
+    let promises = [];
+    promises.push([...measurementTable.querySelectorAll(".removeCheckbox")]
+        .filter(el => el.checked)
+        .map(async el => await storage.removeHost(el.value)));
 
-    [...repoTable.querySelectorAll(".removeCheckbox")].filter(el => el.checked)
-        .forEach(el => storage.removeMeasurementRepo(el.value));
+    promises.push([...repoTable.querySelectorAll(".removeCheckbox")]
+        .filter(el => el.checked)
+        .map(async el => await storage.removeMeasurementRepo(el.value)));
+
+    promises.push([...authorTable.querySelectorAll(".removeCheckbox")]
+        .filter(el => el.checked)
+        .map(async el => await storage.removeAuthorKey(el.value)));
+
+    await Promise.all(promises);
+    await loadAllItems();
 }
 
 submitButton.addEventListener("click", onRemove);
@@ -50,27 +60,31 @@ function clearTable(table) {
         table.removeChild(table.firstChild);
 }
 
-function loadAllItems() {
-    clearTable(measurementTable);
-    storage.getTrusted().then(items => {
-        const hosts = Object.keys(items)
-        for (const host of hosts) {
+async function loadAllItems() {
+    try {
+        clearTable(measurementTable);
+        Object.entries(await storage.getTrusted()).forEach(([host, hostData]) => {
             const row = measurementTable.insertRow();
-            const hostData = items[host];
             row.insertCell().appendChild(createTitleCell(host, true));
             row.insertCell().innerHTML = hostData.trustedSince.toLocaleString();
             row.insertCell().innerHTML = hostData.lastTrusted.toLocaleString();
             row.insertCell().appendChild(createButton(host, hostData));
-        }
-    }, console.error);
+        });
 
-    clearTable(repoTable);
-    storage.getMeasurementRepo().then(repos => {
-        repos.forEach(repo => {
+        clearTable(repoTable);
+        Object.entries(await storage.getMeasurementRepo()).forEach(([, repo]) => {
             const row = repoTable.insertRow();
             row.insertCell().appendChild(createTitleCell(repo, true));
         });
-    }, console.error);
+
+        clearTable(authorTable);
+        Object.entries(await storage.getAuthorKey()).forEach(([, authorKey]) => {
+            const row = authorTable.insertRow();
+            row.insertCell().appendChild(createTitleCell(authorKey, false));
+        });
+    } catch (e) {
+        console.error(e);
+    }
 }
 
 browser.storage.onChanged.addListener(loadAllItems);
