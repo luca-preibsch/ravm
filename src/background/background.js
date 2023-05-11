@@ -8,7 +8,7 @@ import * as messaging from "../lib/messaging";
 import {DialogType} from "../lib/ui";
 import {validateMeasurement} from "../lib/crypto";
 import {AttesationReport} from "../lib/attestation";
-import {arrayBufferToHex} from "../lib/util";
+import {arrayBufferToHex, checkAttestationInfoFormat} from "../lib/util";
 
 // Domain to observe
 const ALL_URLS = "https://*/*";
@@ -169,7 +169,7 @@ async function listenerOnHeadersReceived(details) {
 
     // ? handle the host as if it would not support remote attestation, if the info file has the wrong format
     // => use the following statement
-    // if (!checkAttestationInfoFormat(attestationInfo)) attestationInfo = null;
+    if (!checkAttestationInfoFormat(attestationInfo)) attestationInfo = null;
 
     const hostInfo = {
         host : host.href,
