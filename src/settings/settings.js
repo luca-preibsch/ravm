@@ -103,6 +103,7 @@ async function saveItem(domain, trustedSince, lastTrusted, type, ar_arrayBuffer)
 function showModal(host, hostData) {
     const ar = new AttesationReport(hostData.ar_arrayBuffer);
     infoTitleText.innerText = host;
+    // TODO display author key
     infoMethodText.innerHTML = (hostData.trusted_measurement_repo) ?
         "This host is trusted through the trusted measurement repository at: " +
         `<a href='${hostData.trusted_measurement_repo}' target='_blank'>${hostData.trusted_measurement_repo}</a>` :

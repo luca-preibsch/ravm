@@ -3,6 +3,7 @@ import {validateAttestationReport, validateWithCertChain} from "../../lib/crypto
 import * as util from "../../lib/util";
 import * as storage from "../../lib/storage";
 import {types} from "../../lib/messaging";
+import {arrayBufferToHex} from "../../lib/util";
 
 export async function getReport(hostInfo) {
     try {
@@ -73,6 +74,12 @@ export async function listenerTrustRepo(hostInfo, ar) {
     });
 }
 
-export async function listenerTrustAuthor() {
-
+export async function listenerTrustAuthor(hostInfo, ar) {
+    await storage.newTrusted(
+        hostInfo.host, new Date(), new Date(), hostInfo.attestationInfo.technology, ar.arrayBuffer, hostInfo.ssl_sha512);
+    await storage.setAuthorKey(hostInfo.host, arrayBufferToHex(ar.author_key_digest));
+    return browser.runtime.sendMessage({
+        type : types.redirect,
+        url : hostInfo.url
+    });
 }

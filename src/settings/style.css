@@ -26,6 +26,12 @@ td, th {
     float: right;
 }
 
+#author-key-table {
+    font-size: xx-small;
+    user-select: text;
+    word-wrap: anywhere;
+}
+
 /* collapsible */
 .collapsible {
     background-color: #eee;

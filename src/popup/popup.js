@@ -37,7 +37,11 @@ async function init() {
 
     urlText.innerText = host.href;
 
-    if (hostInfo.trusted_measurement_repo) {
+    if (hostInfo.author_key) {
+        icon.setAttribute("src", "./check-mark.svg");
+        headerText.innerText = "Attestation Successful";
+        infoText.innerHTML = `Trusted since ${hostInfo.trustedSince.toLocaleString()}&nbsp—&nbsp<b>trust inherited from author key</b>`;
+    } else if (hostInfo.trusted_measurement_repo) {
         icon.setAttribute("src", "./check-mark.svg");
         headerText.innerText = "Attestation Successful";
         infoText.innerHTML = `Trusted since ${hostInfo.trustedSince.toLocaleString()}&nbsp—&nbsp<b>trust inherited from repository</b>`;

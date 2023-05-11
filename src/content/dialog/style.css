@@ -7,7 +7,7 @@
     margin-top: 5%;
     display: grid;
     grid-template-columns: [start] auto [end];
-    grid-template-rows: [start] auto auto auto auto auto [end];
+    grid-template-rows: [start] auto auto auto auto auto auto [end];
 }
 
 .container * {

@@ -5,7 +5,7 @@ import {types} from '../../lib/messaging';
 import * as storage from '../../lib/storage';
 import {arrayBufferToHex} from "../../lib/util";
 import {getHostInfo} from "../../lib/messaging";
-import {checkHost, getReport, listenerTrustMeasurement, listenerTrustRepo} from "./dialog";
+import {checkHost, getReport, listenerTrustAuthor, listenerTrustMeasurement, listenerTrustRepo} from "./dialog";
 import {getMeasurementFromRepo} from "../../lib/net";
 
 const titleText = document.getElementById("title");
@@ -38,6 +38,10 @@ trustMeasurementButton.addEventListener("click", async () => {
 
 trustRepoButton.addEventListener("click", async () => {
     await listenerTrustRepo(hostInfo, ar);
+});
+
+trustAuthorKeyButton.addEventListener("click", async () => {
+    await listenerTrustAuthor(hostInfo, ar);
 });
 
 noTrustButton.addEventListener("click", async () => {
