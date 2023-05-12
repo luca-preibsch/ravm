@@ -103,11 +103,14 @@ async function saveItem(domain, trustedSince, lastTrusted, type, ar_arrayBuffer)
 function showModal(host, hostData) {
     const ar = new AttesationReport(hostData.ar_arrayBuffer);
     infoTitleText.innerText = host;
-    // TODO display author key
-    infoMethodText.innerHTML = (hostData.trusted_measurement_repo) ?
-        "This host is trusted through the trusted measurement repository at: " +
-        `<a href='${hostData.trusted_measurement_repo}' target='_blank'>${hostData.trusted_measurement_repo}</a>` :
-        "This host is trusted through it's measurement";
+    if (hostData.author_key)
+        infoMethodText.innerHTML = "This host is trusted through an author key:<br>" +
+            `<i>${hostData.author_key}</i>`;
+    else if (hostData.trusted_measurement_repo)
+        infoMethodText.innerHTML = "This host is trusted through the trusted measurement repository at:<br>" +
+            `<a href='${hostData.trusted_measurement_repo}' target='_blank'>${hostData.trusted_measurement_repo}</a>`;
+    else
+        infoMethodText.innerText = "This host is trusted through it's measurement";
     infoDescriptionText.innerText = ar.parse_report;
     modal.showModal();
 }

@@ -189,9 +189,9 @@ export async function addMeasurementRepo(measurementRepo) {
 
 export async function removeMeasurementRepo(measurementRepo) {
     const hosts = await getHost();
-    Object.entries(hosts)
+    await Promise.all(Object.entries(hosts)
         .filter(([, val]) => val.trusted_measurement_repo === measurementRepo)
-        .forEach(([host,]) => removeObjectProperty(host, "trusted_measurement_repo"));
+        .map(([host,]) => removeObjectProperty(host, "trusted_measurement_repo")));
     return arrayRemove(MEASUREMENT_REPOS, measurementRepo);
 }
 
@@ -222,8 +222,8 @@ export async function addAuthorKey(authorKey) {
 
 export async function removeAuthorKey(authorKey) {
     const hosts = await getHost();
-    Object.entries(hosts)
+    await Promise.all(Object.entries(hosts)
         .filter(([, val]) => val.author_key === authorKey)
-        .forEach(([host,]) => removeObjectProperty(host, "author_key"));
+        .map(([host,]) => removeObjectProperty(host, "author_key")));
     return arrayRemove(AUTHOR_KEYS, authorKey);
 }
