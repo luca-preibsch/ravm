@@ -77,8 +77,7 @@ window.addEventListener("load", async () => {
             "<i>You may trust its measurement.</i>";
         makeVisible.push(ignoreButton, noTrustButton, trustMeasurementButton, measurementText.parentNode);
 
-        // TODO true for testing purposes -> remove
-        if (true || ar.author_key_en) {
+        if (ar.author_key_en) {
             // this host supplies an author key
             // 4. Trust the author key?
             descriptionText.innerHTML +=

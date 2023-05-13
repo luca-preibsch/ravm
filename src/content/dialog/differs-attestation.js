@@ -4,7 +4,7 @@ import '../../style/button.css';
 import {getHostInfo, types} from "../../lib/messaging";
 import * as storage from "../../lib/storage";
 import {arrayBufferToHex} from "../../lib/util";
-import {getReport, listenerTrustMeasurement, listenerTrustRepo} from "./dialog";
+import {getReport, listenerTrustAuthor, listenerTrustMeasurement, listenerTrustRepo} from "./dialog";
 import {AttesationReport} from "../../lib/attestation";
 import {getMeasurementFromRepo} from "../../lib/net";
 import {checkHost} from "../../lib/crypto";
@@ -15,10 +15,12 @@ const descriptionText = document.getElementById("description");
 const oldMeasurementText = document.getElementById("old-measurement");
 const newMeasurementText = document.getElementById("new-measurement");
 const measurementRepoText = document.getElementById("measurement-repo");
+const authorKeyText = document.getElementById("author-key");
 
 const noTrustButton = document.getElementById("do-not-trust-button");
 const trustMeasurementButton = document.getElementById("trust-measurement-button");
 const trustRepoButton = document.getElementById("trust-repo-button");
+const trustAuthorKeyButton = document.getElementById("trust-author-key-button");
 
 let hostInfo;
 let ar;
@@ -31,13 +33,8 @@ trustRepoButton.addEventListener("click", async () => {
     await listenerTrustRepo(hostInfo, ar);
 });
 
-noTrustButton.addEventListener("click", async () => {
-    await storage.removeHost(hostInfo.host);
-    await storage.setUntrusted(hostInfo.host, true);
-    browser.runtime.sendMessage({
-        type : types.redirect,
-        url : hostInfo.url
-    });
+trustAuthorKeyButton.addEventListener("click", async () => {
+    await listenerTrustAuthor(hostInfo, ar);
 });
 
 noTrustButton.addEventListener("click", async () => {
@@ -63,33 +60,41 @@ window.addEventListener("load", async () => {
 
     ar = await getReport(hostInfo);
     if (ar && await checkHost(hostInfo, ar)) {
-        // TODO: rewrite this to auto generate the page depending on the combination of author key + repo + measurement
+        let makeVisible = [];
 
         // attestation of the new measurement was successful
-        let description = "This host has previously been trusted, but the measurement has since changed. " +
-            "Do you want to trust the new measurement? " +
-            "This could be a malicious attack. ";
+        descriptionText.innerHTML =
+            "This host has previously been trusted, but the measurement has since changed. " +
+            "Do you want to trust the new measurement? This could be a malicious attack.<br>" +
+            "<i>You may trust the new measurement.</i>";
         newMeasurementText.innerText = arrayBufferToHex(ar.measurement);
         oldMeasurementText.innerText = arrayBufferToHex(new AttesationReport((await storage.getHost(hostInfo.host)).ar_arrayBuffer).measurement);
-        [noTrustButton, trustMeasurementButton, newMeasurementText.parentNode, oldMeasurementText.parentNode]
-            .forEach((button) => button.classList.remove("invisible"));
+        makeVisible.push(noTrustButton, trustMeasurementButton, newMeasurementText.parentNode, oldMeasurementText.parentNode);
 
-        // additionally to the changed measurement, the host now may supply a repo or the user did not trust the given
-        // repo, yet.
+        // additionally to the changed measurement, the host now may supply a repo / author key or the user
+        // did not trust the given repo / author key, yet.
+        if (ar.author_key_en) {
+            // this host supplies an author key
+            // 4. Trust the author key?
+            descriptionText.innerHTML +=
+                "<br><br>This host also offers an <b>author key</b>.<br>" +
+                "<i>You may trust the author key.</i><br>" +
+                "Consequences: You trust all hosts signed by the same author key.";
+            authorKeyText.innerText = arrayBufferToHex(ar.author_key_digest);
+            makeVisible.push(trustAuthorKeyButton, authorKeyText.parentNode);
+        }
         if (measurement && arrayBufferToHex(ar.measurement) === measurement) {
-            description = "This host has previously been trusted, but the measurement has since changed. " +
-                "Additionaly, this host offers remote attestation using a measurement repository. " +
-                "Do you want to trust this measurement repository and thus all the measurements it contains?<br><br>" +
-                "This means, the owner can update the measurement repository in case of a host update, and you "+
-                "won't have to trust the updated host's measurement again.<br><br>"+
-                "You can also just trust the measurement.";
+            // this host supplies a measurement using a measurement repo
+            descriptionText.innerHTML +=
+                "<br><br>This host also offers a <b>measurement repository</b>.<br>" +
+                "<i>You may trust the repository.</i><br>" +
+                "Consequences: You trust all measurement the repository contains.";
             measurementRepoText.setAttribute("href", hostInfo.attestationInfo.measurement_repo);
             measurementRepoText.innerText = hostInfo.attestationInfo.measurement_repo;
-            [measurementRepoText.parentNode, trustRepoButton]
-                .forEach((button) => button.classList.remove("invisible"));
+            makeVisible.push(trustRepoButton, measurementRepoText.parentNode);
         }
 
-        descriptionText.innerHTML = description;
+        makeVisible.forEach(el => el.classList.remove("invisible"));
     } else {
         titleText.innerText = "Warning: Attestation Failed";
         descriptionText.innerText = "This host offers remote attestation, but the hosts implementation is broken! " +
