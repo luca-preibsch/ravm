@@ -6,7 +6,7 @@ import {fetchAttestationInfo, fetchAttestationReport, getMeasurementFromRepo} fr
 import * as storage from "../lib/storage";
 import * as messaging from "../lib/messaging";
 import {DialogType} from "../lib/ui";
-import {validateMeasurement} from "../lib/crypto";
+import {checkHost, validateMeasurement} from "../lib/crypto";
 import {AttesationReport} from "../lib/attestation";
 import {arrayBufferToHex, checkAttestationInfoFormat} from "../lib/util";
 
@@ -97,7 +97,7 @@ async function getAttestationInfo(url) {
  * @param tabId
  * @returns {Promise<AttesationReport|undefined>}
  */
-async function getAttestationReport(hostInfo, tabId) {
+async function getAssertedAttestationReport(hostInfo, tabId) {
     try {
         return await fetchAttestationReport(hostInfo.host, hostInfo.attestationInfo.path);
     } catch (e) {
@@ -204,24 +204,41 @@ async function listenerOnHeadersReceived(details) {
     // check if the host is already known by the extension
     // if not either:
     // - check for a measurement repo
-    // - TODO check of an author key
+    // - check for an author key
     // - let the user manually trust the measurement
     //     - add current domain to the session storage
     //     - redirect to the DIALOG_PAGE where attestation for the domain in session storage takes place
     if (!isKnown) {
+        // check for measurement repo
         if (hostInfo.attestationInfo.measurement_repo &&
             await storage.containsMeasurementRepo(hostInfo.attestationInfo.measurement_repo) &&
             await validateMeasurement(hostInfo, await getMeasurementFromRepo(hostInfo.attestationInfo.measurement_repo,
                 hostInfo.attestationInfo.version))) {
             // a measurement repo has been found and validation was successful, thus store the given measurement
             // get the ar in order to store the trust in its measurement
-            const ar = getAttestationReport(hostInfo, details.tabId);
+            const ar = await getAssertedAttestationReport(hostInfo, details.tabId);
             // the ar could not be found, thus inform the user about its absence
             if (!ar) return {redirectUrl: MISSING_ATTESTATION_PAGE};
             await storage.newTrusted(hostInfo.host, new Date(), new Date(), hostInfo.technology, ar.arrayBuffer, hostInfo.ssl_sha512);
             await storage.setMeasurementRepo(hostInfo.host, hostInfo.attestationInfo.measurement_repo);
             await showPageAction(details.tabId, true);
             return {};
+        }
+        // check for author key
+        try {
+            const ar = await fetchAttestationReport(hostInfo.host, hostInfo.attestationInfo.path);
+            if (ar && await checkHost(host, ar) && ar.author_key_en) {
+                // host supplies an author key -> compare with known author keys
+                if (await storage.containsAuthorKey(arrayBufferToHex(ar.author_key_digest))) {
+                    // host's author key is known -> trust the host
+                    await storage.newTrusted(hostInfo.host, new Date(), new Date(), hostInfo.technology, ar.arrayBuffer, hostInfo.ssl_sha512);
+                    await storage.setAuthorKey(hostInfo.host, arrayBufferToHex(ar.author_key_digest));
+                    await showPageAction(details.tabId, true);
+                    return {};
+                }
+            }
+        } catch (e) {
+            console.log(e);
         }
         // if no measurement repo is found or validation fails, use default validation technique
         sessionStorage.setItem(details.tabId, JSON.stringify({
@@ -267,12 +284,24 @@ async function listenerOnHeadersReceived(details) {
             lastTrusted: new Date(),
             ssl_sha512: ssl_sha512
         });
+    } else if (await storage.getAuthorKey(hostInfo.host) &&
+        // be sure the author key is still trusted
+        await storage.containsAuthorKey(await storage.getAuthorKey(hostInfo.host))) {
+        console.log("author key of host is trusted");
+        // trusted author key -> store new measurement
+        const ar = await getAssertedAttestationReport(hostInfo, details.tabId);
+        if (!ar) return {redirectUrl: MISSING_ATTESTATION_PAGE};
+        await storage.setTrusted(host.href, {
+            lastTrusted: new Date(),
+            ssl_sha512: ssl_sha512,
+            ar_arrayBuffer: ar.arrayBuffer
+        });
     } else if (await storage.getMeasurementRepo(hostInfo.host) &&
         await validateMeasurement(hostInfo, await getMeasurementFromRepo(
             await storage.getMeasurementRepo(hostInfo.host), hostInfo.attestationInfo.version))) {
         console.log("fitting measurement found in repo");
         // known measurement repo contains fitting measurement -> store new measurement
-        const ar = getAttestationReport(hostInfo, details.tabId);
+        const ar = await getAssertedAttestationReport(hostInfo, details.tabId);
         if (!ar) return {redirectUrl: MISSING_ATTESTATION_PAGE};
         await storage.setTrusted(host.href, {
             lastTrusted: new Date(),

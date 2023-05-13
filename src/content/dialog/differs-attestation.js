@@ -4,9 +4,10 @@ import '../../style/button.css';
 import {getHostInfo, types} from "../../lib/messaging";
 import * as storage from "../../lib/storage";
 import {arrayBufferToHex} from "../../lib/util";
-import {checkHost, getReport, listenerTrustMeasurement, listenerTrustRepo} from "./dialog";
+import {getReport, listenerTrustMeasurement, listenerTrustRepo} from "./dialog";
 import {AttesationReport} from "../../lib/attestation";
 import {getMeasurementFromRepo} from "../../lib/net";
+import {checkHost} from "../../lib/crypto";
 
 const titleText = document.getElementById("title");
 const domainText = document.getElementById("domain");

@@ -5,8 +5,9 @@ import {types} from '../../lib/messaging';
 import * as storage from '../../lib/storage';
 import {arrayBufferToHex} from "../../lib/util";
 import {getHostInfo} from "../../lib/messaging";
-import {checkHost, getReport, listenerTrustAuthor, listenerTrustMeasurement, listenerTrustRepo} from "./dialog";
+import {getReport, listenerTrustAuthor, listenerTrustMeasurement, listenerTrustRepo} from "./dialog";
 import {getMeasurementFromRepo} from "../../lib/net";
+import {checkHost} from "../../lib/crypto";
 
 const titleText = document.getElementById("title");
 const domainText = document.getElementById("domain");
@@ -76,6 +77,7 @@ window.addEventListener("load", async () => {
             "<i>You may trust its measurement.</i>";
         makeVisible.push(ignoreButton, noTrustButton, trustMeasurementButton, measurementText.parentNode);
 
+        // TODO true for testing purposes -> remove
         if (true || ar.author_key_en) {
             // this host supplies an author key
             // 4. Trust the author key?
