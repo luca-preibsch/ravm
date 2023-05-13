@@ -60,6 +60,8 @@ async function init() {
     } else {
         icon.setAttribute("src", "./hazard-sign.svg");
         headerText.innerText = "Attestation Failed";
+        infoText.innerText = "";
+        removeButton.classList.add("invisible");
     }
 }
 

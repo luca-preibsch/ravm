@@ -16,18 +16,17 @@ const infoMethodText = document.getElementById("infoTrustMethod");
 
 async function onRemove() {
     let promises = [];
-    promises.push([...measurementTable.querySelectorAll(".removeCheckbox")]
+    promises.push(...[...measurementTable.querySelectorAll(".removeCheckbox")]
         .filter(el => el.checked)
         .map(async el => await storage.removeHost(el.value)));
 
-    promises.push([...repoTable.querySelectorAll(".removeCheckbox")]
+    promises.push(...[...repoTable.querySelectorAll(".removeCheckbox")]
         .filter(el => el.checked)
         .map(async el => await storage.removeMeasurementRepo(el.value)));
 
-    promises.push([...authorTable.querySelectorAll(".removeCheckbox")]
+    promises.push(...[...authorTable.querySelectorAll(".removeCheckbox")]
         .filter(el => el.checked)
         .map(async el => await storage.removeAuthorKey(el.value)));
-
     await Promise.all(promises);
     await loadAllItems();
 }
@@ -87,7 +86,8 @@ async function loadAllItems() {
     }
 }
 
-browser.storage.onChanged.addListener(loadAllItems);
+// this creates a racing condition, thus reload items after onRemove
+// browser.storage.onChanged.addListener(loadAllItems);
 window.addEventListener("focus", loadAllItems);
 
 window.addEventListener("load", () => {
