@@ -3,6 +3,8 @@ const CopyWebpackPlugin = require('copy-webpack-plugin')
 const TransformJson = require('transform-json-webpack-plugin')
 const node_package = require('./package.json')
 
+// base structure inspired by https://johnjonesfour.com/2020/05/13/building-browser-extensions-with-webpack/
+
 /**
  * Heads up:
  * Static files and assets like svg-, png-, html-files have to be placed into the static folder and are
@@ -13,7 +15,7 @@ const node_package = require('./package.json')
  * 
  * Disclaimer:
  * I would have liked to use the html-loader and using that automatically include scripts and graphics used
- * inside the html files, but there seems to be a problem with the extract-loader, that would also be needed for that
+ * inside the html files, but there seems to be a problem with the extract-loader, that would also be needed for that,
  * and thus I gave up and chose this configuration, that is not quite as automatic, but seems to be working fine.
  */
 

@@ -38,7 +38,7 @@
     background-color: #e6e6e6;
 }
 
-.measurement {
+.measurement, #author-key {
     font-style: italic;
     text-decoration: underline;
 }

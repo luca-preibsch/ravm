@@ -336,19 +336,19 @@ browser.webRequest.onHeadersReceived.addListener(listenerOnHeadersReceived, {url
 async function listenerOnMessageReceived(message, sender) {
     if (sender.id !== browser.runtime.id) {
         // only accept messages by this extension
-        console.log("Message by unknown sender received: " + message)
-        return
+        console.log("Message by unknown sender received: " + message);
+        return;
     }
 
     switch (message.type) {
         case messaging.types.getHostInfo:
             const hostInfo = JSON.parse(sessionStorage.getItem(sender.tab.id));
             // sendResponse() does not work
-            return Promise.resolve(hostInfo)
+            return Promise.resolve(hostInfo);
         case messaging.types.redirect:
             browser.tabs.update(sender.tab.id, {
                 url : message.url
-            })
+            });
     }
 }
 
