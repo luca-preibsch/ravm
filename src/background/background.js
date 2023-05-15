@@ -9,6 +9,7 @@ import {DialogType} from "../lib/ui";
 import {checkHost, validateMeasurement} from "../lib/crypto";
 import {AttesationReport} from "../lib/attestation";
 import {arrayBufferToHex, checkAttestationInfoFormat} from "../lib/util";
+import {pmark} from "../lib/evaluation";
 
 // Domain to observe
 const ALL_URLS = "https://*/*";
@@ -133,6 +134,8 @@ Thus, in here do:
  1. verify TLS connection with the SSL pub key in the attestation report
  */
 async function listenerOnHeadersReceived(details) {
+    pmark("onHeadersReceived-start", details);
+
     // origin contains scheme (protocol), domain and port
     const url = new URL(details.url);
     const host = new URL(url.origin);
@@ -147,12 +150,11 @@ async function listenerOnHeadersReceived(details) {
     if (await storage.isUnsupported(host.href)) {
         if (ssl_sha512 === await storage.getSSLKey(host.href)) {
             console.log(`skipped unsupported host: ${url.href}`);
+            pmark("onHeadersReceived-end:old-unsupported", details);
             return {};
         } else {
             // the ssl key has changed, thus check the host for remote attestation support again
             console.log(`ssl key for unsupported host ${url.href} has changed`);
-            console.log(ssl_sha512);
-            console.log(await storage.getSSLKey(host.href));
             await storage.setUnsupported(host.href, false);
         }
     }
@@ -161,6 +163,7 @@ async function listenerOnHeadersReceived(details) {
         url.href.includes("kdsintf.amd.com/vcek")) {
 
         console.log(`skipped meta request: ${url.href}`);
+        pmark("onHeadersReceived-end:meta-request", details);
         return {};
     }
 
@@ -185,7 +188,8 @@ async function listenerOnHeadersReceived(details) {
             sessionStorage.setItem(details.tabId, JSON.stringify({
                 ...hostInfo,
                 dialog_type : DialogType.attestationMissing,
-            }))
+            }));
+            pmark("onHeadersReceived-end:dialog:MISSING_ATTESTATION_PAGE", details);
             return { redirectUrl: MISSING_ATTESTATION_PAGE }
         } else {
             // let the plugin ignore this host, since it does not support remote attestation
@@ -194,6 +198,7 @@ async function listenerOnHeadersReceived(details) {
             await storage.setSSLKey(host.href, ssl_sha512);
         }
         console.log(`skipped host without attestation: ${host.href}`);
+        pmark("onHeadersReceived-end:new-unsupported", details);
         return {}
     }
 
@@ -218,13 +223,17 @@ async function listenerOnHeadersReceived(details) {
             // get the ar in order to store the trust in its measurement
             const ar = await getAssertedAttestationReport(hostInfo, details.tabId);
             // the ar could not be found, thus inform the user about its absence
-            if (!ar) return {redirectUrl: MISSING_ATTESTATION_PAGE};
+            if (!ar) {
+                pmark("onHeadersReceived-end:dialog:MISSING_ATTESTATION_PAGE", details);
+                return {redirectUrl: MISSING_ATTESTATION_PAGE};
+            }
             await storage.newTrusted(hostInfo.host, new Date(), new Date(), hostInfo.technology, ar.arrayBuffer, hostInfo.ssl_sha512);
             await storage.setMeasurementRepo(hostInfo.host, hostInfo.attestationInfo.measurement_repo);
             await showPageAction(details.tabId, true);
+            pmark("onHeadersReceived-end:success:known-repo", details);
             return {};
         }
-        // check for author key
+        // check for known author key
         try {
             const ar = await fetchAttestationReport(hostInfo.host, hostInfo.attestationInfo.path);
             if (ar && await checkHost(host, ar) && ar.author_key_en) {
@@ -234,6 +243,7 @@ async function listenerOnHeadersReceived(details) {
                     await storage.newTrusted(hostInfo.host, new Date(), new Date(), hostInfo.technology, ar.arrayBuffer, hostInfo.ssl_sha512);
                     await storage.setAuthorKey(hostInfo.host, arrayBufferToHex(ar.author_key_digest));
                     await showPageAction(details.tabId, true);
+                    pmark("onHeadersReceived-end:success:known-author", details);
                     return {};
                 }
             }
@@ -245,6 +255,7 @@ async function listenerOnHeadersReceived(details) {
             ...hostInfo,
             dialog_type : DialogType.newHost
         }));
+        pmark("onHeadersReceived-end:dialog:NEW_ATTESTATION_PAGE", details);
         return { redirectUrl: NEW_ATTESTATION_PAGE };
     }
 
@@ -253,6 +264,7 @@ async function listenerOnHeadersReceived(details) {
         // TODO don't show anymore when something changes
         // attestation ignored -> show page action
         await showPageAction(details.tabId, false);
+        pmark("onHeadersReceived-end:ignored", details);
         return {};
     }
 
@@ -261,7 +273,8 @@ async function listenerOnHeadersReceived(details) {
         sessionStorage.setItem(details.tabId, JSON.stringify({
             ...hostInfo,
             dialog_type : DialogType.blockedHost
-        }))
+        }));
+        pmark("onHeadersReceived-end:blocked", details);
         return { redirectUrl: BLOCKED_ATTESTATION_PAGE }
     }
 
@@ -276,6 +289,7 @@ async function listenerOnHeadersReceived(details) {
         // update lastTrusted
         console.log("known TLS key");
         await storage.setTrusted(host.href, { lastTrusted : new Date() });
+        pmark("onHeadersReceived-end:success:known-ssl", details);
     } else if (await validateMeasurement(hostInfo, arrayBufferToHex(new AttesationReport(storedHostInfo.ar_arrayBuffer).measurement))) {
         // the measurement is correct and the host can be trusted
         // -> store new TLS key, update lastTrusted
@@ -284,36 +298,46 @@ async function listenerOnHeadersReceived(details) {
             lastTrusted: new Date(),
             ssl_sha512: ssl_sha512
         });
+        pmark("onHeadersReceived-end:success:known-measurement", details);
     } else if (await storage.getAuthorKey(hostInfo.host) &&
         // be sure the author key is still trusted
         await storage.containsAuthorKey(await storage.getAuthorKey(hostInfo.host))) {
         console.log("author key of host is trusted");
         // trusted author key -> store new measurement
         const ar = await getAssertedAttestationReport(hostInfo, details.tabId);
-        if (!ar) return {redirectUrl: MISSING_ATTESTATION_PAGE};
+        if (!ar) {
+            pmark("onHeadersReceived-end:dialog:MISSING_ATTESTATION_PAGE", details);
+            return {redirectUrl: MISSING_ATTESTATION_PAGE};
+        }
         await storage.setTrusted(host.href, {
             lastTrusted: new Date(),
             ssl_sha512: ssl_sha512,
             ar_arrayBuffer: ar.arrayBuffer
         });
+        pmark("onHeadersReceived-end:success:known-author", details);
     } else if (await storage.getMeasurementRepo(hostInfo.host) &&
         await validateMeasurement(hostInfo, await getMeasurementFromRepo(
             await storage.getMeasurementRepo(hostInfo.host), hostInfo.attestationInfo.version))) {
         console.log("fitting measurement found in repo");
         // known measurement repo contains fitting measurement -> store new measurement
         const ar = await getAssertedAttestationReport(hostInfo, details.tabId);
-        if (!ar) return {redirectUrl: MISSING_ATTESTATION_PAGE};
+        if (!ar) {
+            pmark("onHeadersReceived-end:dialog:MISSING_ATTESTATION_PAGE", details);
+            return {redirectUrl: MISSING_ATTESTATION_PAGE};
+        }
         await storage.setTrusted(host.href, {
             lastTrusted: new Date(),
             ssl_sha512: ssl_sha512,
             ar_arrayBuffer: ar.arrayBuffer
         });
+        pmark("onHeadersReceived-end:success:known-repo", details);
     } else {
         console.log("attestation using stored measurement failed");
         sessionStorage.setItem(details.tabId, JSON.stringify({
             ...hostInfo,
             dialog_type : DialogType.measurementDiffers,
         }));
+        pmark("onHeadersReceived-end:dialog:DIFFERS_ATTESTATION_PAGE", details);
         return { redirectUrl: DIFFERS_ATTESTATION_PAGE };
     }
 
@@ -326,6 +350,7 @@ async function listenerOnHeadersReceived(details) {
 
     // attestation successful -> show checkmark page action
     await showPageAction(details.tabId, true);
+    // pmark in if-else statements above
     return {};
 }
 
@@ -353,3 +378,23 @@ async function listenerOnMessageReceived(message, sender) {
 }
 
 browser.runtime.onMessage.addListener(listenerOnMessageReceived);
+
+/**
+ * for performance evaluation only
+ */
+browser.webRequest.onBeforeRequest.addListener(details => {
+    pmark("onBeforeRequest", details);
+}, {urls: [ALL_URLS]}, ["blocking"]);
+
+/**
+ * for performance evaluation only
+ */
+browser.webRequest.onCompleted.addListener(details => {
+    pmark("onCompleted", details);
+    const performanceTimeStamps =
+        performance.getEntriesByType("mark").map(en => {
+            return {...en.toJSON(), detail: en.detail};
+        });
+    console.log(performanceTimeStamps);
+    console.log(JSON.stringify(performanceTimeStamps))
+}, {urls: [ALL_URLS]});
