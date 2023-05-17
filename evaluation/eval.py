@@ -3,6 +3,7 @@
 import sys
 import json
 import matplotlib.pyplot as plt
+from matplotlib.ticker import MultipleLocator
 
 filterHost = None
 # url for filtering given?
@@ -19,7 +20,7 @@ if filterHost:
 else:
     data = json.load(jsonFile)
 
-colors = ['red', 'green', 'blue', 'yellow', 'orange']
+colors = ['red', 'green', 'blue', 'yellow', 'orange', 'pink', 'lightgreen', 'lightblue', 'black', 'grey']
 urls = set(event['detail']['url'] for event in data)
 url_colors = {url: colors[i % len(colors)] for (i, url) in enumerate(urls)}
 
@@ -28,7 +29,8 @@ start_time = data[0]['startTime']
 for event in data:
     event['startTime'] -= start_time
 
-fig, ax = plt.subplots(figsize=(10, len(data) * 0.5))
+height = len(data) * 0.5
+fig, ax = plt.subplots(figsize=(height * 2, height))
 
 for i, event in enumerate(data):
     color = url_colors.get(event['detail']['url'], 'grey')
@@ -39,6 +41,7 @@ for i, event in enumerate(data):
 ax.set_xlabel('Time in ms')
 ax.set_ylabel('Event')
 ax.set_yticklabels([])
+ax.xaxis.set_major_locator(MultipleLocator(100))
 ax.grid(True)
 
 plt.tight_layout()

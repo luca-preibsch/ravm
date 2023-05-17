@@ -96,7 +96,7 @@ export async function getTrusted() {
 
 /**
  * returns all stored information about one host or about all hosts if host is left blank
- * @param host
+ * @param [host]
  * @returns {*|Promise<{}|*>}
  */
 export function getHost(host) {
@@ -169,7 +169,7 @@ export async function setMeasurementRepo(host, url) {
 
 /**
  * returns the measurement repo belonging to the host or all repos if no host is supplied
- * @param host
+ * @param [host]
  * @returns {Promise<[]|*>}
  */
 export async function getMeasurementRepo(host) {
@@ -202,7 +202,7 @@ export async function setAuthorKey(host, authorkey) {
 
 /**
  * returns the author key belonging to the host or all author keys if no host is supplied
- * @param host
+ * @param [host]
  * @returns {Promise<[]|*>}
  */
 export async function getAuthorKey(host) {

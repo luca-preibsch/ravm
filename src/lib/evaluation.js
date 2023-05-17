@@ -1,13 +1,14 @@
 /**
  * @param {string} name
- * @param {Object} webRequestDetails
+ * @param {Object} details
  */
-export function pmark(name, webRequestDetails) {
-    return performance.mark(name + webRequestDetails.requestId, {
+export function pmark(name, details) {
+    const requestId = (details.requestId) ? details.requestId : "";
+    return performance.mark(name + requestId, {
         detail: {
             name: name,
-            url: webRequestDetails.url,
-            requestId: webRequestDetails.requestId
+            url: details.url,
+            requestId: requestId
         }
     });
 }
@@ -15,23 +16,24 @@ export function pmark(name, webRequestDetails) {
 /**
  * @param {string} name
  * @param {string} startMark
- * @param {Object} webRequestDetails
+ * @param {Object} details
  * @param {string} [endMark]
  */
-export function pmeasure(name, startMark, webRequestDetails, endMark) {
+export function pmeasure(name, startMark, details, endMark) {
+    const requestId = (details.requestId) ? details.requestId : "";
     let options = {
-        start: startMark + webRequestDetails.requestId,
+        start: startMark + requestId,
         detail: {
             name: name,
-            url: webRequestDetails.url,
-            requestId: webRequestDetails.requestId
+            url: details.url,
+            requestId: requestId
         }
     };
     if (endMark)
         options =
             {
                 ...options,
-                end: endMark + webRequestDetails.requestId,
+                end: endMark + requestId,
             };
-    return performance.measure(name + webRequestDetails.requestId, options);
+    return performance.measure(name + requestId, options);
 }

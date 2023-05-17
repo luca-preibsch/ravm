@@ -371,6 +371,8 @@ async function listenerOnMessageReceived(message, sender) {
             // sendResponse() does not work
             return Promise.resolve(hostInfo);
         case messaging.types.redirect:
+            pmark("dialog:end", {url: message.url});
+            pmeasure("dialog", "dialog:start", {url: message.url}, "dialog:end");
             browser.tabs.update(sender.tab.id, {
                 url : message.url
             });
@@ -385,6 +387,18 @@ browser.runtime.onMessage.addListener(listenerOnMessageReceived);
 browser.webRequest.onBeforeRequest.addListener(details => {
     pmark("onBeforeRequest", details);
 }, {urls: [ALL_URLS]}, ["blocking"]);
+
+/**
+ * for performance evaluation only
+ * if user input is requested through redirect to a dialog this gets called instead of onCompleted
+ */
+browser.webRequest.onBeforeRedirect.addListener(details => {
+    pmark("onBeforeRedirect", details);
+    pmeasure("webRequest", "onBeforeRequest", details, "onBeforeRedirect");
+
+    // marks the start of the dialog; measured in onMessageReceived
+    pmark("dialog:start", {url: details.url});
+}, {urls: [ALL_URLS]});
 
 /**
  * for performance evaluation only

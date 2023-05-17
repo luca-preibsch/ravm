@@ -105,4 +105,7 @@ window.addEventListener("load", async () => {
             "You may ignore this host, but this could very well be a malicious attack.";
         ignoreButton.classList.remove("invisible");
     }
+
+    // for testing purposes only
+    // trustMeasurementButton.click();
 });
