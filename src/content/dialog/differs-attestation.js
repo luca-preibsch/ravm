@@ -26,14 +26,20 @@ let hostInfo;
 let ar;
 
 trustMeasurementButton.addEventListener("click", async () => {
+    // remove current form of trust
+    await storage.removeHost(hostInfo.host);
     await listenerTrustMeasurement(hostInfo, ar);
 });
 
 trustRepoButton.addEventListener("click", async () => {
+    // remove current form of trust
+    await storage.removeHost(hostInfo.host);
     await listenerTrustRepo(hostInfo, ar);
 });
 
 trustAuthorKeyButton.addEventListener("click", async () => {
+    // remove current form of trust
+    await storage.removeHost(hostInfo.host);
     await listenerTrustAuthor(hostInfo, ar);
 });
 
@@ -53,10 +59,8 @@ window.addEventListener("load", async () => {
     domainText.innerText = hostInfo.host;
 
     // check if the host supplies a measurement repo
-    if (hostInfo.attestationInfo.measurement_repo) {
+    if (hostInfo.attestationInfo.measurement_repo)
         measurement = await getMeasurementFromRepo(hostInfo.attestationInfo.measurement_repo, hostInfo.attestationInfo.version);
-        console.log(measurement);
-    }
 
     ar = await getReport(hostInfo);
     if (ar && await checkHost(hostInfo, ar)) {

@@ -187,12 +187,21 @@ export async function addMeasurementRepo(measurementRepo) {
     return arrayAdd(MEASUREMENT_REPOS, measurementRepo);
 }
 
-export async function removeMeasurementRepo(measurementRepo) {
-    const hosts = await getHost();
-    await Promise.all(Object.entries(hosts)
-        .filter(([, val]) => val.trusted_measurement_repo === measurementRepo)
-        .map(async ([host,]) => await removeObjectProperty(host, "trusted_measurement_repo")));
-    return arrayRemove(MEASUREMENT_REPOS, measurementRepo);
+/**
+ * @param measurementRepo
+ * @param [host]
+ * @returns {Promise<*>}
+ */
+export async function removeMeasurementRepo(measurementRepo, host) {
+    if (host) {
+        return removeObjectProperty(host, measurementRepo);
+    } else {
+        const hosts = await getHost();
+        await Promise.all(Object.entries(hosts)
+            .filter(([, val]) => val.trusted_measurement_repo === measurementRepo)
+            .map(async ([host,]) => await removeObjectProperty(host, "trusted_measurement_repo")));
+        return arrayRemove(MEASUREMENT_REPOS, measurementRepo);
+    }
 }
 
 export async function setAuthorKey(host, authorkey) {
@@ -220,10 +229,19 @@ export async function addAuthorKey(authorKey) {
     return arrayAdd(AUTHOR_KEYS, authorKey);
 }
 
-export async function removeAuthorKey(authorKey) {
-    const hosts = await getHost();
-    await Promise.all(Object.entries(hosts)
-        .filter(([, val]) => val.author_key === authorKey)
-        .map(async ([host,]) => await removeObjectProperty(host, "author_key")));
-    return arrayRemove(AUTHOR_KEYS, authorKey);
+/**
+ * @param authorKey
+ * @param [host]
+ * @returns {Promise<*>}
+ */
+export async function removeAuthorKey(authorKey, host) {
+    if (host) {
+        return removeObjectProperty(host, authorKey);
+    } else {
+        const hosts = await getHost();
+        await Promise.all(Object.entries(hosts)
+            .filter(([, val]) => val.author_key === authorKey)
+            .map(async ([host,]) => await removeObjectProperty(host, "author_key")));
+        return arrayRemove(AUTHOR_KEYS, authorKey);
+    }
 }
