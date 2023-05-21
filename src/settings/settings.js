@@ -9,7 +9,7 @@ const measurementTable = document.getElementById("measurement-table");
 const repoTable = document.getElementById("repo-table");
 const authorTable = document.getElementById("author-key-table");
 const submitButton = document.getElementById("submitButton");
-const modal = document.querySelector(".modal");
+const infoModal = document.getElementById("infoModal");
 const infoTitleText = document.getElementById("infoTitle");
 const infoDescriptionText = document.getElementById("infoDescription");
 const infoMethodText = document.getElementById("infoTrustMethod");
@@ -33,9 +33,11 @@ async function onRemove() {
 
 submitButton.addEventListener("click", onRemove);
 
-modal.addEventListener("click", (e) => {
-    if (!modal.querySelector("#modalContent").contains(e.target))
-        modal.close();
+document.querySelectorAll(".modal").forEach(modal => {
+    modal.addEventListener("click", (e) => {
+        if (!infoModal.querySelector(".modalContent").contains(e.target))
+            infoModal.close();
+    });
 });
 
 function initCollapsibles() {
@@ -112,7 +114,7 @@ function showModal(host, hostData) {
     else
         infoMethodText.innerText = "This host is trusted through it's measurement";
     infoDescriptionText.innerText = ar.parse_report;
-    modal.showModal();
+    infoModal.showModal();
 }
 
 function createTitleCell(title, isLink) {
