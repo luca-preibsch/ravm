@@ -6,7 +6,7 @@ import {fetchAttestationInfo, fetchAttestationReport, getMeasurementFromRepo} fr
 import * as storage from "../lib/storage";
 import * as messaging from "../lib/messaging";
 import {DialogType} from "../lib/ui";
-import {checkHost, validateMeasurement} from "../lib/crypto";
+import {checkHost, validateAuthorKey, validateMeasurement} from "../lib/crypto";
 import {AttestationReport} from "../lib/attestation";
 import {arrayBufferToHex, checkAttestationInfoFormat} from "../lib/util";
 import {pmark, pmeasure} from "../lib/evaluation";
@@ -217,36 +217,26 @@ async function listenerOnHeadersReceived(details) {
     //     - add current domain to the session storage
     //     - redirect to the DIALOG_PAGE where attestation for the domain in session storage takes place
     if (!isKnown) {
-        // check for measurement repo
-        if (hostInfo.attestationInfo.measurement_repo &&
+        if (hostInfo.attestationInfo.measurement_repo &&    // check for known measurement repo
             await storage.containsMeasurementRepo(hostInfo.attestationInfo.measurement_repo) &&
             (ar = await validateMeasurement(hostInfo, await getMeasurementFromRepo(hostInfo.attestationInfo.measurement_repo,
                 hostInfo.attestationInfo.version)))) {
+            console.log("new host gained trust from measurement repo");
             // a measurement repo has been found and validation was successful, thus store the given measurement
             await storage.newTrusted(hostInfo.host, new Date(), new Date(), hostInfo.technology, ar.arrayBuffer, hostInfo.ssl_sha512);
             await storage.setMeasurementRepo(hostInfo.host, hostInfo.attestationInfo.measurement_repo);
             await showPageAction(details.tabId, true);
             pmeasure("onHeadersReceived:success:known-repo", "onHeadersReceived", details);
             return {};
+        } else if ((ar = await validateAuthorKey(hostInfo))) {     // check for known author key
+            console.log("new host gained trust from measurement repo");
+            await storage.newTrusted(hostInfo.host, new Date(), new Date(), hostInfo.technology, ar.arrayBuffer, hostInfo.ssl_sha512);
+            await storage.setAuthorKey(hostInfo.host, arrayBufferToHex(ar.author_key_digest));
+            await showPageAction(details.tabId, true);
+            pmeasure("onHeadersReceived:success:known-author", "onHeadersReceived", details);
+            return {};
         }
-        // check for known author key
-        try {
-            const ar = await fetchAttestationReport(hostInfo.host, hostInfo.attestationInfo.path);
-            if (ar && await checkHost(host, ar) && ar.author_key_en) {
-                // host supplies an author key -> compare with known author keys
-                if (await storage.containsAuthorKey(arrayBufferToHex(ar.author_key_digest))) {
-                    // host's author key is known -> trust the host
-                    await storage.newTrusted(hostInfo.host, new Date(), new Date(), hostInfo.technology, ar.arrayBuffer, hostInfo.ssl_sha512);
-                    await storage.setAuthorKey(hostInfo.host, arrayBufferToHex(ar.author_key_digest));
-                    await showPageAction(details.tabId, true);
-                    pmeasure("onHeadersReceived:success:known-author", "onHeadersReceived", details);
-                    return {};
-                }
-            }
-        } catch (e) {
-            console.log(e);
-        }
-        // if no measurement repo is found or validation fails, use default validation technique
+        // if no measurement repo / author key is found or validation fails, use default validation technique
         sessionStorage.setItem(details.tabId, JSON.stringify({
             ...hostInfo,
             dialog_type : DialogType.newHost
@@ -309,16 +299,12 @@ async function listenerOnHeadersReceived(details) {
             ssl_sha512: ssl_sha512
         });
         pmeasure("onHeadersReceived:success:known-measurement", "onHeadersReceived", details);
-    } else if (await storage.getAuthorKey(hostInfo.host) &&
-        // be sure the author key is still trusted
-        await storage.containsAuthorKey(await storage.getAuthorKey(hostInfo.host))) {
+    } else if ((ar = await validateAuthorKey(hostInfo))) {
         console.log("author key of host is trusted");
         // trusted author key -> store new measurement
-        const ar = await getAssertedAttestationReport(hostInfo, details.tabId);
-        if (!ar) {
-            pmeasure("onHeadersReceived:dialog:MISSING_ATTESTATION_PAGE", "onHeadersReceived", details);
-            return {redirectUrl: MISSING_ATTESTATION_PAGE};
-        }
+        await storage.newTrusted(hostInfo.host, new Date(), new Date(), hostInfo.technology, ar.arrayBuffer, hostInfo.ssl_sha512);
+        await storage.setAuthorKey(hostInfo.host, arrayBufferToHex(ar.author_key_digest));
+        await showPageAction(details.tabId, true);
         await storage.setTrusted(host.href, {
             lastTrusted: new Date(),
             ssl_sha512: ssl_sha512,
