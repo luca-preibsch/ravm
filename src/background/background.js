@@ -206,6 +206,9 @@ async function listenerOnHeadersReceived(details) {
     // Safe it, so requests to this URL are not attested by the extension.
     await storage.setReportURL(host.href, new URL(attestationInfo.path, host.href).href)
 
+    // variable to save ar returned by validateMeasurement and store it later
+    let ar;
+
     // check if the host is already known by the extension
     // if not either:
     // - check for a measurement repo
@@ -217,16 +220,9 @@ async function listenerOnHeadersReceived(details) {
         // check for measurement repo
         if (hostInfo.attestationInfo.measurement_repo &&
             await storage.containsMeasurementRepo(hostInfo.attestationInfo.measurement_repo) &&
-            await validateMeasurement(hostInfo, await getMeasurementFromRepo(hostInfo.attestationInfo.measurement_repo,
-                hostInfo.attestationInfo.version))) {
+            (ar = await validateMeasurement(hostInfo, await getMeasurementFromRepo(hostInfo.attestationInfo.measurement_repo,
+                hostInfo.attestationInfo.version)))) {
             // a measurement repo has been found and validation was successful, thus store the given measurement
-            // get the ar in order to store the trust in its measurement
-            const ar = await getAssertedAttestationReport(hostInfo, details.tabId);
-            // the ar could not be found, thus inform the user about its absence
-            if (!ar) {
-                pmeasure("onHeadersReceived:dialog:MISSING_ATTESTATION_PAGE", "onHeadersReceived", details);
-                return {redirectUrl: MISSING_ATTESTATION_PAGE};
-            }
             await storage.newTrusted(hostInfo.host, new Date(), new Date(), hostInfo.technology, ar.arrayBuffer, hostInfo.ssl_sha512);
             await storage.setMeasurementRepo(hostInfo.host, hostInfo.attestationInfo.measurement_repo);
             await showPageAction(details.tabId, true);
@@ -284,28 +280,20 @@ async function listenerOnHeadersReceived(details) {
     // 2. else test if stored measurement equals the current => store new measurement + TLS key
     // 3. check measurement repo for fitting measurement
     // 4. else inform user via dialog
-    let ar;
     const storedHostInfo = await storage.getHost(host.href);
-    if (storedHostInfo.configMeasurement) {
+    if (storedHostInfo.configMeasurement &&
         // host measurement was added through settings -> validate host measurement with config measurement
-        if ((ar = await validateMeasurement(hostInfo, storedHostInfo.configMeasurement))) {
-            // the hosts measurement fits the configured one, thus store the actual attestation report,
-            // also remove the configMeasurement
-            await storage.setTrusted(host.href, {
-                lastTrusted: new Date(),
-                ssl_sha512: ssl_sha512,
-                ar_arrayBuffer: ar.arrayBuffer
-            });
-            await storage.removeConfigMeasurement(host.href);
-            pmeasure("onHeadersReceived:success:known-config-measurement", "onHeadersReceived", details);
-        } else {
-            sessionStorage.setItem(details.tabId, JSON.stringify({
-                ...hostInfo,
-                dialog_type : DialogType.measurementDiffers,
-            }));
-            pmeasure("onHeadersReceived:dialog:DIFFERS_ATTESTATION_PAGE", "onHeadersReceived", details);
-            return { redirectUrl: DIFFERS_ATTESTATION_PAGE };
-        }
+        (ar = await validateMeasurement(hostInfo, storedHostInfo.configMeasurement))) {
+
+        // the hosts measurement fits the configured one, thus store the actual attestation report,
+        // also remove the configMeasurement
+        await storage.setTrusted(host.href, {
+            lastTrusted: new Date(),
+            ssl_sha512: ssl_sha512,
+            ar_arrayBuffer: ar.arrayBuffer
+        });
+        await storage.removeConfigMeasurement(host.href);
+        pmeasure("onHeadersReceived:success:known-config-measurement", "onHeadersReceived", details);
     } else if (ssl_sha512 === storedHostInfo.ssl_sha512) {
         // TLS pub key did not change, thus the host can be trusted
         // update lastTrusted
@@ -338,15 +326,10 @@ async function listenerOnHeadersReceived(details) {
         });
         pmeasure("onHeadersReceived:success:known-author", "onHeadersReceived", details);
     } else if (await storage.getMeasurementRepo(hostInfo.host) &&
-        await validateMeasurement(hostInfo, await getMeasurementFromRepo(
-            await storage.getMeasurementRepo(hostInfo.host), hostInfo.attestationInfo.version))) {
+        (ar = await validateMeasurement(hostInfo, await getMeasurementFromRepo(
+            await storage.getMeasurementRepo(hostInfo.host), hostInfo.attestationInfo.version)))) {
         console.log("fitting measurement found in repo");
         // known measurement repo contains fitting measurement -> store new measurement
-        const ar = await getAssertedAttestationReport(hostInfo, details.tabId);
-        if (!ar) {
-            pmeasure("onHeadersReceived:dialog:MISSING_ATTESTATION_PAGE", "onHeadersReceived", details);
-            return {redirectUrl: MISSING_ATTESTATION_PAGE};
-        }
         await storage.setTrusted(host.href, {
             lastTrusted: new Date(),
             ssl_sha512: ssl_sha512,
