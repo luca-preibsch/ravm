@@ -37,7 +37,7 @@ export class TCBVersion {
 // Maps the attesation report of an SEV-SNP VM
 // Table 21. ATTESTATION_REPORT Structure
 // of https://www.amd.com/system/files/TechDocs/56860.pdf
-export class AttesationReport {
+export class AttestationReport {
 
     // uint32_t version;                  /* 0h */
     // uint32_t guest_svn;                /* 4h */

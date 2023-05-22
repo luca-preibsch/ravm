@@ -40,7 +40,8 @@
     </table>
 
 <div id="buttonContainer">
-    <button id="submitButton" class="action button-red">remove</button>
+    <button id="addButton" class="action button-red">add host</button>
+    <button id="removeButton" class="action button-red">remove selected</button>
 </div>
 
 <dialog class="modal" id="infoModal">
@@ -50,6 +51,25 @@
         <div id="infoDescription"></div>
     </div>
 </dialog>
+
+<dialog class="modal" id="addModal">
+    <div class="modalContent">
+        <h3>Add a new Host:</h3>
+        <label for="addHostUrl">Host Address:</label>
+        <input type="url" name="addHostUrl" id="addHostUrl"
+               placeholder="https://example.com/"
+               pattern="https://.*/"
+               size="30"
+               required>
+        <label for="addHostMeasurement">Host Measurement as Hex:</label>
+        <input type="text" id="addHostMeasurement" name="addHostMeasurement"
+               size="30"
+               minlength="1"
+               required>
+        <button id="addNewHostButton">add trusted host</button>
+    </div>
+</dialog>
+
 <script src="./settings.js"></script>
 </body>
 </html>

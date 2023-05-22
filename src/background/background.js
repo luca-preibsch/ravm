@@ -7,7 +7,7 @@ import * as storage from "../lib/storage";
 import * as messaging from "../lib/messaging";
 import {DialogType} from "../lib/ui";
 import {checkHost, validateMeasurement} from "../lib/crypto";
-import {AttesationReport} from "../lib/attestation";
+import {AttestationReport} from "../lib/attestation";
 import {arrayBufferToHex, checkAttestationInfoFormat} from "../lib/util";
 import {pmark, pmeasure} from "../lib/evaluation";
 
@@ -96,7 +96,7 @@ async function getAttestationInfo(url) {
  * If no ar is returned, the caller should redirect to the MISSING_ATTESTATION_PAGE. Session storage is prepared for that.
  * @param hostInfo
  * @param tabId
- * @returns {Promise<AttesationReport|undefined>}
+ * @returns {Promise<AttestationReport|undefined>}
  */
 async function getAssertedAttestationReport(hostInfo, tabId) {
     try {
@@ -279,18 +279,40 @@ async function listenerOnHeadersReceived(details) {
     }
 
     // can host be trusted?
+    // 0. was trust added through the settings
     // 1. for connections in the same session: test TLS pub key
     // 2. else test if stored measurement equals the current => store new measurement + TLS key
     // 3. check measurement repo for fitting measurement
     // 4. else inform user via dialog
+    let ar;
     const storedHostInfo = await storage.getHost(host.href);
-    if (ssl_sha512 === storedHostInfo.ssl_sha512) {
+    if (storedHostInfo.configMeasurement) {
+        // host measurement was added through settings -> validate host measurement with config measurement
+        if ((ar = await validateMeasurement(hostInfo, storedHostInfo.configMeasurement))) {
+            // the hosts measurement fits the configured one, thus store the actual attestation report,
+            // also remove the configMeasurement
+            await storage.setTrusted(host.href, {
+                lastTrusted: new Date(),
+                ssl_sha512: ssl_sha512,
+                ar_arrayBuffer: ar.arrayBuffer
+            });
+            await storage.removeConfigMeasurement(host.href);
+            pmeasure("onHeadersReceived:success:known-config-measurement", "onHeadersReceived", details);
+        } else {
+            sessionStorage.setItem(details.tabId, JSON.stringify({
+                ...hostInfo,
+                dialog_type : DialogType.measurementDiffers,
+            }));
+            pmeasure("onHeadersReceived:dialog:DIFFERS_ATTESTATION_PAGE", "onHeadersReceived", details);
+            return { redirectUrl: DIFFERS_ATTESTATION_PAGE };
+        }
+    } else if (ssl_sha512 === storedHostInfo.ssl_sha512) {
         // TLS pub key did not change, thus the host can be trusted
         // update lastTrusted
         console.log("known TLS key");
         await storage.setTrusted(host.href, { lastTrusted : new Date() });
         pmeasure("onHeadersReceived:success:known-ssl", "onHeadersReceived", details);
-    } else if (await validateMeasurement(hostInfo, arrayBufferToHex(new AttesationReport(storedHostInfo.ar_arrayBuffer).measurement))) {
+    } else if (await validateMeasurement(hostInfo, arrayBufferToHex(new AttestationReport(storedHostInfo.ar_arrayBuffer).measurement))) {
         // the measurement is correct and the host can be trusted
         // -> store new TLS key, update lastTrusted
         console.log("known measurement");

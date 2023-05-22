@@ -3,16 +3,19 @@ import '../style/table.css'
 import '../style/button.css'
 
 import * as storage from '../lib/storage'
-import {AttesationReport} from "../lib/attestation";
+import {AttestationReport} from "../lib/attestation";
 
 const measurementTable = document.getElementById("measurement-table");
 const repoTable = document.getElementById("repo-table");
 const authorTable = document.getElementById("author-key-table");
-const submitButton = document.getElementById("submitButton");
+const removeButton = document.getElementById("removeButton");
+const addButton = document.getElementById("addButton");
 const infoModal = document.getElementById("infoModal");
+const addModal = document.getElementById("addModal");
 const infoTitleText = document.getElementById("infoTitle");
 const infoDescriptionText = document.getElementById("infoDescription");
 const infoMethodText = document.getElementById("infoTrustMethod");
+const addNewHostButton = document.getElementById("addNewHostButton");
 
 async function onRemove() {
     let promises = [];
@@ -31,12 +34,34 @@ async function onRemove() {
     await loadAllItems();
 }
 
-submitButton.addEventListener("click", onRemove);
+removeButton.addEventListener("click", onRemove);
+
+addButton.addEventListener("click", () => {
+    addModal.querySelector("#addHostUrl").value = "";
+    addModal.querySelector("#addHostMeasurement").value = "";
+    addModal.showModal();
+});
+
+addNewHostButton.addEventListener("click", async () => {
+    let host = addModal.querySelector("#addHostUrl").value;
+    if (!host.endsWith("/"))
+        host += "/";
+    const measurement = addModal.querySelector("#addHostMeasurement").value;
+    if (!await storage.isKnownHost(host)) {
+        await storage.setObjectProperties(host, {
+            trustedSince: new Date(),
+            configMeasurement: measurement,
+            trusted: true
+        });
+    }
+    await loadAllItems();
+    addModal.close();
+});
 
 document.querySelectorAll(".modal").forEach(modal => {
     modal.addEventListener("click", (e) => {
-        if (!infoModal.querySelector(".modalContent").contains(e.target))
-            infoModal.close();
+        if (!modal.querySelector(".modalContent").contains(e.target))
+            modal.close();
     });
 });
 
@@ -68,8 +93,9 @@ async function loadAllItems() {
             const row = measurementTable.insertRow();
             row.insertCell().appendChild(createTitleCell(host, true));
             row.insertCell().innerHTML = hostData.trustedSince.toLocaleString();
-            row.insertCell().innerHTML = hostData.lastTrusted.toLocaleString();
-            row.insertCell().appendChild(createButton(host, hostData));
+            row.insertCell().innerHTML = (hostData.lastTrusted) ? hostData.lastTrusted.toLocaleString() : "never";
+            if (hostData.ar_arrayBuffer)
+                row.insertCell().appendChild(createButton(host, hostData));
         });
 
         clearTable(repoTable);
@@ -103,7 +129,7 @@ async function saveItem(domain, trustedSince, lastTrusted, type, ar_arrayBuffer)
 }
 
 function showModal(host, hostData) {
-    const ar = new AttesationReport(hostData.ar_arrayBuffer);
+    const ar = new AttestationReport(hostData.ar_arrayBuffer);
     infoTitleText.innerText = host;
     if (hostData.author_key)
         infoMethodText.innerHTML = "This host is trusted through an author key:<br>" +

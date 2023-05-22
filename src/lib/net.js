@@ -42,7 +42,7 @@ export async function fetchAttestationReport(url, path) {
     // treat non-ok responses as errors
     if (response.ok) {
         const arrayBuffer = await response.arrayBuffer();
-        return new attestation.AttesationReport(arrayBuffer);
+        return new attestation.AttestationReport(arrayBuffer);
     } else {
         throw new Error("failed to fetch attestation report");
     }

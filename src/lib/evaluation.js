@@ -29,11 +29,10 @@ export function pmeasure(name, startMark, details, endMark) {
             requestId: requestId
         }
     };
-    if (endMark)
-        options =
-            {
-                ...options,
-                end: endMark + requestId,
-            };
+    if (endMark) options =
+        {
+            ...options,
+            end: endMark + requestId,
+        };
     return performance.measure(name + requestId, options);
 }

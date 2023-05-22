@@ -5,7 +5,7 @@ import {getHostInfo, types} from "../../lib/messaging";
 import * as storage from "../../lib/storage";
 import {arrayBufferToHex} from "../../lib/util";
 import {getReport, listenerTrustAuthor, listenerTrustMeasurement, listenerTrustRepo} from "./dialog";
-import {AttesationReport} from "../../lib/attestation";
+import {AttestationReport} from "../../lib/attestation";
 import {getMeasurementFromRepo} from "../../lib/net";
 import {checkHost} from "../../lib/crypto";
 
@@ -65,6 +65,10 @@ window.addEventListener("load", async () => {
     ar = await getReport(hostInfo);
     if (ar && await checkHost(hostInfo, ar)) {
         let makeVisible = [];
+        const storedHostInfo = await storage.getHost(hostInfo.host);
+        const oldMeasurement = (storedHostInfo.ar_arrayBuffer) ?
+            arrayBufferToHex(new AttestationReport(storedHostInfo.ar_arrayBuffer).measurement) :
+            storedHostInfo.configMeasurement;
 
         // attestation of the new measurement was successful
         descriptionText.innerHTML =
@@ -72,7 +76,7 @@ window.addEventListener("load", async () => {
             "Do you want to trust the new measurement? This could be a malicious attack.<br>" +
             "<i>You may trust the new measurement.</i>";
         newMeasurementText.innerText = arrayBufferToHex(ar.measurement);
-        oldMeasurementText.innerText = arrayBufferToHex(new AttesationReport((await storage.getHost(hostInfo.host)).ar_arrayBuffer).measurement);
+        oldMeasurementText.innerText = oldMeasurement;
         makeVisible.push(noTrustButton, trustMeasurementButton, newMeasurementText.parentNode, oldMeasurementText.parentNode);
 
         // additionally to the changed measurement, the host now may supply a repo / author key or the user

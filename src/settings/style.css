@@ -75,6 +75,11 @@ td, th {
     background: #e6e6e6;
 }
 
+.modalContent {
+    display: grid;
+    grid-template-columns: auto;
+}
+
 .modal::backdrop {
     background: transparent;
 }
@@ -89,4 +94,8 @@ td, th {
     overflow-y: hidden;
     white-space: nowrap;
     padding-bottom: 15px;
+}
+
+#addNewHostButton, .modalContent label {
+    margin-top: 10px;
 }

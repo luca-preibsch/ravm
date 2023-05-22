@@ -86,6 +86,12 @@ export async function validateAttestationReport(ar, vcek) {
     return await verifyMessage(pubKey, ar.signature, ar.getSignedData)
 }
 
+/**
+ * validates hosts attestation report and compares its measurement to measurementHex
+ * @param hostInfo
+ * @param measurementHex
+ * @returns {Promise<AttestationReport|boolean>} the hosts attestation report on success, false on failure
+ */
 export async function validateMeasurement(hostInfo, measurementHex) {
     // Request attestation report from VM
     let ar;
@@ -130,7 +136,7 @@ export async function validateMeasurement(hostInfo, measurementHex) {
         return false;
     }
 
-    return true;
+    return ar;
 }
 
 export async function checkHost(hostInfo, ar) {

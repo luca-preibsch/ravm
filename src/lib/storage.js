@@ -1,4 +1,4 @@
-import {AttesationReport} from "./attestation";
+import {AttestationReport} from "./attestation";
 import {isEmpty} from "lodash";
 
 /**
@@ -30,7 +30,7 @@ async function getArray(request){
         return item[request];
 }
 
-async function setObjectProperties(key, object) {
+export async function setObjectProperties(key, object) {
     const old = await getObject(key);
     return browser.storage.local.set({
         [key]: {...old, ...object} // the latter overwrites the former
@@ -159,7 +159,7 @@ export async function getSSLKey(host) {
 
 export async function getAttestationReport(host) {
     const ar_arrayBuffer = getObjectProperty(host, "ar_arrayBuffer");
-    return new AttesationReport(ar_arrayBuffer);
+    return new AttestationReport(ar_arrayBuffer);
 }
 
 export async function setMeasurementRepo(host, url) {
@@ -244,4 +244,16 @@ export async function removeAuthorKey(authorKey, host) {
             .map(async ([host,]) => await removeObjectProperty(host, "author_key")));
         return arrayRemove(AUTHOR_KEYS, authorKey);
     }
+}
+
+export async function setConfigMeasurement(host, configMeasurement) {
+    return setObjectProperties(host, {configMeasurement: configMeasurement});
+}
+
+export async function getConfigMeasurement(host) {
+    return getObjectProperty(host, "configMeasurement");
+}
+
+export async function removeConfigMeasurement(host) {
+    return removeObjectProperty(host, "configMeasurement");
 }
