@@ -6,7 +6,6 @@ import {fetchArrayBuffer, fetchAttestationReport, fetchVCEK} from "./net";
 import * as util from "./util";
 import {arrayBufferToHex} from "./util";
 import * as storage from "./storage";
-import {pmeasure} from "./evaluation";
 
 // Validate the VCEK certificate using the AMD provided keys
 // and revocation list.
@@ -108,18 +107,36 @@ export async function checkHost(hostInfo, ar) {
         return false;
     }
 
-    // 2. Validate that the VCEK is correctly signed by AMD root cert
-    if (!await validateWithCertChain(vcek)) {
-        // vcek could not be verified
-        console.log("vcek invalid");
-        return false;
+    async function validation() {
+        // 2. Validate that the VCEK is correctly signed by AMD root cert
+        if (!await validateWithCertChain(vcek)) {
+            // vcek could not be verified
+            console.log("vcek invalid");
+            return false;
+        }
+
+        // 3. Validate that the attestation report is correctly signed using the VCEK
+        if (!await validateAttestationReport(ar, vcek)) {
+            // attestation report could not be verified using VCEK
+            console.log("attestation report invalid")
+            return false;
+        }
+
+        return true;
     }
 
-    // 3. Validate that the attestation report is correctly signed using the VCEK
-    if (!await validateAttestationReport(ar, vcek)) {
-        // attestation report could not be verified using VCEK
-        console.log("attestation report invalid")
-        return false;
+    // The VCEK is force cached, thus changes on the source are ignored.
+    // To solve this, reload the VCEK once, if the validation fails.
+    if (!await validation()) {
+        console.log("reload vcek");
+        try {
+            vcek = await fetchVCEK(ar.chip_id, ar.committedTCB, true);
+        } catch (e) {
+            // vcek could not be attained
+            console.log(e);
+            return false;
+        }
+        return validation();
     }
 
     return true;

@@ -48,7 +48,13 @@ export async function fetchAttestationReport(url, path) {
     }
 }
 
-export async function fetchVCEK(chipId, committedTCB) {
+/**
+ * @param chipId
+ * @param committedTCB
+ * @param {boolean} [reload]
+ * @return {Promise<Certificate>}
+ */
+export async function fetchVCEK(chipId, committedTCB, reload) {
     // AMD key server
     const KDSINF = "https://kdsintf.amd.com/vcek/v1/Milan/";
 
@@ -70,7 +76,7 @@ export async function fetchVCEK(chipId, committedTCB) {
     // let fetch-api cache the response
     const response = await fetch(kdsUrl, {
         method: "GET",
-        cache: "force-cache",
+        cache: (reload) ? "reload" : "force-cache",
         referrerPolicy: "no-referrer"
     });
     if (response.ok) {
