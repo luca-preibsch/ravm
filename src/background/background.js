@@ -341,7 +341,15 @@ async function listenerOnHeadersReceived(details) {
 
 // We need to register this listener, since we require the SecurityInfo object
 // to validate the public key of the SSL connection
-browser.webRequest.onHeadersReceived.addListener(listenerOnHeadersReceived, {urls: [ALL_URLS]}, ["blocking"]);
+browser.webRequest.onHeadersReceived.addListener(async details => {
+    try {
+        return await listenerOnHeadersReceived(details);
+    } catch (e) {
+        console.error(e);
+        // TODO: redirect to error page?
+        return {cancel: true};
+    }
+}, {urls: [ALL_URLS]}, ["blocking"]);
 
 async function listenerOnMessageReceived(message, sender) {
     if (sender.id !== browser.runtime.id) {
