@@ -63,7 +63,6 @@ window.addEventListener("load", async () => {
     // check if the host supplies a measurement repo
     if (hostInfo.attestationInfo.measurement_repo) {
         measurement = await getMeasurementFromRepo(hostInfo.attestationInfo.measurement_repo, hostInfo.attestationInfo.version);
-        console.log(measurement);
     }
 
     ar = await getReport(hostInfo);

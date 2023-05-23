@@ -157,9 +157,17 @@ export async function getSSLKey(host) {
     return getObjectProperty(host, "ssl_sha512");
 }
 
+export async function removeSSLKey(host) {
+    return removeObjectProperty(host, "ssl_sha512");
+}
+
 export async function getAttestationReport(host) {
     const ar_arrayBuffer = getObjectProperty(host, "ar_arrayBuffer");
     return new AttestationReport(ar_arrayBuffer);
+}
+
+export async function removeAttestationReport(host) {
+    return removeObjectProperty(host, "ar_arrayBuffer");
 }
 
 export async function setMeasurementRepo(host, url) {

@@ -2,13 +2,13 @@ import * as pkijs from "pkijs";
 import * as asn1js from "asn1js";
 
 import * as util from "../lib/util";
-import {fetchAttestationInfo, fetchAttestationReport, getMeasurementFromRepo} from "../lib/net";
+import {fetchAttestationInfo, getMeasurementFromRepo} from "../lib/net";
 import * as storage from "../lib/storage";
 import * as messaging from "../lib/messaging";
 import {DialogType} from "../lib/ui";
-import {checkHost, validateAuthorKey, validateMeasurement} from "../lib/crypto";
+import {validateAuthorKey, validateMeasurement} from "../lib/crypto";
 import {AttestationReport} from "../lib/attestation";
-import {arrayBufferToHex, checkAttestationInfoFormat} from "../lib/util";
+import {arrayBufferToHex, checkAttestationInfoFormat, hasDateChanged} from "../lib/util";
 import {pmark, pmeasure} from "../lib/evaluation";
 
 // Domain to observe
@@ -91,29 +91,6 @@ async function getAttestationInfo(url) {
     }
 }
 
-/**
- * This can be called if it is to be expected that an attestation report will be available.
- * If no ar is returned, the caller should redirect to the MISSING_ATTESTATION_PAGE. Session storage is prepared for that.
- * @param hostInfo
- * @param tabId
- * @returns {Promise<AttestationReport|undefined>}
- */
-async function getAssertedAttestationReport(hostInfo, tabId) {
-    try {
-        return await fetchAttestationReport(hostInfo.host, hostInfo.attestationInfo.path);
-    } catch (e) {
-        // no attestation report found, but was found before during validation
-        // thus something went terribly wrong -> remove trust completely and reload the page
-        console.log(e);
-        await storage.removeHost(hostInfo.host);
-        sessionStorage.setItem(tabId, JSON.stringify({
-            ...hostInfo,
-            dialog_type: DialogType.attestationMissing,
-        }));
-        return null;
-    }
-}
-
 async function showPageAction(tabId, success) {
     if (success)
         await browser.pageAction.setIcon({
@@ -149,7 +126,7 @@ async function listenerOnHeadersReceived(details) {
     // 4. skip if this is the AMD key server else it would get requested too often and reject future calls
     if (await storage.isUnsupported(host.href)) {
         if (ssl_sha512 === await storage.getSSLKey(host.href)) {
-            console.log(`skipped unsupported host: ${url.href}`);
+            // console.log(`skipped unsupported host: ${url.href}`);
             pmeasure("onHeadersReceived:old-unsupported", "onHeadersReceived", details);
             return {};
         } else {
@@ -162,7 +139,7 @@ async function listenerOnHeadersReceived(details) {
         await storage.isReportURL(url.href) ||
         url.href.includes("kdsintf.amd.com/vcek")) {
 
-        console.log(`skipped meta request: ${url.href}`);
+        // console.log(`skipped meta request: ${url.href}`);
         pmeasure("onHeadersReceived:meta-request", "onHeadersReceived", details);
         return {};
     }
@@ -197,7 +174,7 @@ async function listenerOnHeadersReceived(details) {
             await storage.setUnsupported(host.href, true);
             await storage.setSSLKey(host.href, ssl_sha512);
         }
-        console.log(`skipped host without attestation: ${host.href}`);
+        // console.log(`skipped host without attestation: ${host.href}`);
         pmeasure("onHeadersReceived:new-unsupported", "onHeadersReceived", details);
         return {}
     }
@@ -264,19 +241,35 @@ async function listenerOnHeadersReceived(details) {
         return { redirectUrl: BLOCKED_ATTESTATION_PAGE }
     }
 
+    // information about the host in extension storage like the trusted measurement
+    // needed in order to decide if the host should be trusted
+    let storedHostInfo = await storage.getHost(host.href);
+
+    // if trust is inherited from measurement repo:
+    // revoke trust into stored attestation report in order to force a check of the repo once a day
+    // this allows the extension to identify measurements that got revoked by the repository
+    if (storedHostInfo.trusted_measurement_repo && hasDateChanged(storedHostInfo.lastTrusted, new Date())) {
+        console.log("measurement repo: trust in measurement revoked")
+        await Promise.all([
+            await storage.removeAttestationReport(hostInfo.host),
+            await storage.removeSSLKey(hostInfo.host)
+        ]);
+        // update storedHostInfo to reflect the changes to extension storage
+        storedHostInfo = await storage.getHost(hostInfo.host);
+    }
+
     // can host be trusted?
     // 0. was trust added through the settings
     // 1. for connections in the same session: test TLS pub key
     // 2. else test if stored measurement equals the current => store new measurement + TLS key
     // 3. check measurement repo for fitting measurement
     // 4. else inform user via dialog
-    const storedHostInfo = await storage.getHost(host.href);
     if (storedHostInfo.configMeasurement &&
         // host measurement was added through settings -> validate host measurement with config measurement
         (ar = await validateMeasurement(hostInfo, storedHostInfo.configMeasurement))) {
-
         // the hosts measurement fits the configured one, thus store the actual attestation report,
         // also remove the configMeasurement
+        console.log("known config measurement " + details.url);
         await storage.setTrusted(host.href, {
             lastTrusted: new Date(),
             ssl_sha512: ssl_sha512,
@@ -287,34 +280,35 @@ async function listenerOnHeadersReceived(details) {
     } else if (ssl_sha512 === storedHostInfo.ssl_sha512) {
         // TLS pub key did not change, thus the host can be trusted
         // update lastTrusted
-        console.log("known TLS key");
+        console.log("known TLS key " + details.url);
         await storage.setTrusted(host.href, { lastTrusted : new Date() });
         pmeasure("onHeadersReceived:success:known-ssl", "onHeadersReceived", details);
-    } else if (await validateMeasurement(hostInfo, arrayBufferToHex(new AttestationReport(storedHostInfo.ar_arrayBuffer).measurement))) {
+    } else if (storedHostInfo.ar_arrayBuffer &&
+        (ar = await validateMeasurement(hostInfo,
+        arrayBufferToHex(new AttestationReport(storedHostInfo.ar_arrayBuffer).measurement)))) {
         // the measurement is correct and the host can be trusted
         // -> store new TLS key, update lastTrusted
-        console.log("known measurement");
-        await storage.setTrusted(host.href, {
-            lastTrusted: new Date(),
-            ssl_sha512: ssl_sha512
-        });
-        pmeasure("onHeadersReceived:success:known-measurement", "onHeadersReceived", details);
-    } else if ((ar = await validateAuthorKey(hostInfo))) {
-        console.log("author key of host is trusted");
-        // trusted author key -> store new measurement
-        await storage.newTrusted(hostInfo.host, new Date(), new Date(), hostInfo.technology, ar.arrayBuffer, hostInfo.ssl_sha512);
-        await storage.setAuthorKey(hostInfo.host, arrayBufferToHex(ar.author_key_digest));
-        await showPageAction(details.tabId, true);
+        console.log("known measurement " + details.url);
         await storage.setTrusted(host.href, {
             lastTrusted: new Date(),
             ssl_sha512: ssl_sha512,
             ar_arrayBuffer: ar.arrayBuffer
         });
+        pmeasure("onHeadersReceived:success:known-measurement", "onHeadersReceived", details);
+    } else if ((ar = await validateAuthorKey(hostInfo))) {
+        console.log("author key of host is trusted " + details.url);
+        // trusted author key -> store new measurement
+        await storage.setTrusted(host.href, {
+            lastTrusted: new Date(),
+            ssl_sha512: ssl_sha512,
+            ar_arrayBuffer: ar.arrayBuffer
+        });
+        await showPageAction(details.tabId, true);
         pmeasure("onHeadersReceived:success:known-author", "onHeadersReceived", details);
-    } else if (await storage.getMeasurementRepo(hostInfo.host) &&
+    } else if (storedHostInfo.trusted_measurement_repo &&
         (ar = await validateMeasurement(hostInfo, await getMeasurementFromRepo(
-            await storage.getMeasurementRepo(hostInfo.host), hostInfo.attestationInfo.version)))) {
-        console.log("fitting measurement found in repo");
+            storedHostInfo.trusted_measurement_repo, hostInfo.attestationInfo.version)))) {
+        console.log("fitting measurement found in repo " + details.url);
         // known measurement repo contains fitting measurement -> store new measurement
         await storage.setTrusted(host.href, {
             lastTrusted: new Date(),
@@ -323,7 +317,7 @@ async function listenerOnHeadersReceived(details) {
         });
         pmeasure("onHeadersReceived:success:known-repo", "onHeadersReceived", details);
     } else {
-        console.log("attestation using stored measurement failed");
+        console.log("attestation using stored measurement failed " + details.url);
         sessionStorage.setItem(details.tabId, JSON.stringify({
             ...hostInfo,
             dialog_type : DialogType.measurementDiffers,

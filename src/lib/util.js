@@ -50,3 +50,18 @@ export function checkAttestationInfoFormat(attestationInfo) {
         return false;
     }
 }
+
+/**
+ * Checks if since date1 one or multiple date changes have happened.
+ * @example date1: 2023-05-22T23:30Z; date2: 2023-05-23T00:00Z would return true
+ * @example date1: 2023-05-22T23:30Z; date2: 2023-05-22T23:35Z would return false
+ * @param {Date} date1
+ * @param {Date} date2
+ * @return {boolean} returns true if since date1 the date (ignoring time) has changed.
+ */
+export function hasDateChanged(date1, date2) {
+    // reset the time to zero for both dates, thus we can only compare date, month and year
+    const date1Zeroed = new Date(date1.toISOString().split('T')[0]);
+    const date2Zeroed = new Date(date2.toISOString().split('T')[0]);
+    return date2Zeroed > date1Zeroed;
+}
