@@ -92,6 +92,7 @@ export async function checkHost(hostInfo, ar) {
 
     let vcek;
     try {
+        // ! TODO das hier ist falsch! VCEK wird von reportedTCB abgeleitet!
         vcek = await fetchVCEK(ar.chip_id, ar.committedTCB);
     } catch (e) {
         // vcek could not be attained
