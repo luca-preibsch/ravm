@@ -44,7 +44,9 @@ export function zeroPad(num, places){
 export function checkAttestationInfoFormat(attestationInfo) {
     if (!attestationInfo) return false;
     try {
-        return [...Object.keys(format)].every(key => attestationInfo.hasOwnProperty(key));
+        return Object.entries(format)
+            .filter(([, val]) => val === "required")
+            .every(([key,]) => attestationInfo.hasOwnProperty(key));
     } catch (e) {
         console.log(e);
         return false;
