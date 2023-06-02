@@ -176,12 +176,11 @@ export async function validateMeasurement(hostInfo, measurementHex) {
 export async function validateAuthorKey(hostInfo) {
     try {
         const ar = await fetchAttestationReport(hostInfo.host, hostInfo.attestationInfo.path);
-        if (ar && ar.author_key_en && await checkHost(hostInfo.host, ar)) {
-            // host supplies an author key -> compare with known author keys
-            if (await storage.containsAuthorKey(arrayBufferToHex(ar.author_key_digest))) {
-                // host's author key is known -> trust the host
-                return ar;
-            }
+        if (ar && ar.author_key_en &&
+            await storage.containsAuthorKey(arrayBufferToHex(ar.author_key_digest)) &&
+            await checkHost(hostInfo.host, ar)) {
+            // host supplies a known author key
+            return ar;
         }
     } catch (e) {
         console.log(e);
