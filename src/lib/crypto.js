@@ -93,7 +93,8 @@ export async function checkHost(hostInfo, ar) {
     let vcek;
     try {
         // ! TODO das hier ist falsch! VCEK wird von reportedTCB abgeleitet!
-        vcek = await fetchVCEK(ar.chip_id, ar.committedTCB);
+        // Aus irgendeinem Grund wird VCEK im Fall der VM von currentTCB abgeleitet?
+        vcek = await fetchVCEK(ar.chip_id, ar.currentTCB);
     } catch (e) {
         // vcek could not be attained
         console.log(e);

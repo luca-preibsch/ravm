@@ -80,7 +80,15 @@ export class AttestationReport {
     }
 
     get committedTCB() {
-        return new TCBVersion(this.arrayBuffer.slice(480, 480 + 8));
+        return new TCBVersion(this.arrayBuffer.slice(0x1e0, 0x1e0 + 8));
+    }
+
+    get reportedTCB() {
+        return new TCBVersion(this.arrayBuffer.slice(0x180, 0x180 + 8));
+    }
+
+    get currentTCB() {
+        return new TCBVersion(this.arrayBuffer.slice(0x38, 0x38 + 8));
     }
 
     // uint8_t signature[0x4A0-0x2A0]; /* 2A0h-49Fh */
