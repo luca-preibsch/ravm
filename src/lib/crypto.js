@@ -28,6 +28,7 @@ export async function validateWithCertChain(vcek) {
     const ask_cert = decodeCert(await loadData(ask));
     const ark_cert = decodeCert(await loadData(ark));
 
+    // TODO revocation List async
     const text = await fetchArrayBuffer(AMD_ARK_ASK_REVOCATION);
 
     const crls = [];
