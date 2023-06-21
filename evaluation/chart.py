@@ -2,6 +2,7 @@
 
 import sys
 import json
+import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MultipleLocator
 
@@ -17,7 +18,17 @@ from matplotlib.ticker import MultipleLocator
 # filterHost = 'https://134.169.35.116/'
 filterHost = None
 dir = './final-data/fresh/0.json'
-removeKnownEvent = True
+removeKnownEvent = False
+exportToLatex = False
+
+if exportToLatex:
+    matplotlib.use("pgf")
+    matplotlib.rcParams.update({
+        "pgf.texsystem": "pdflatex",
+        'font.family': 'serif',
+        'text.usetex': True,
+        'pgf.rcfonts': False,
+    })
 
 jsonFile = open(dir)
 
@@ -60,4 +71,7 @@ ax.xaxis.set_major_locator(MultipleLocator(100)) # 25 for known, 100 for fresh
 ax.grid(True)
 
 plt.tight_layout()
-plt.show()
+if exportToLatex:
+    plt.savefig('plot.pgf')
+else:
+    plt.show()
