@@ -26,19 +26,18 @@
 
   "browser_specific_settings": {
     "gecko": {
+      "id": "ravm@dfinity.com",
       "strict_min_version": "57.0a1"
     }
   },
 
   "page_action": {
-    "browser_style" : true,
     "default_icon": "hazard-sign.svg",
     "default_title": "Attestation Popup",
     "default_popup": "popup.html"
   },
 
   "options_ui": {
-    "browser_style": true,
     "page": "settings.html"
   },
 
