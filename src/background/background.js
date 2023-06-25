@@ -11,14 +11,6 @@ import {AttestationReport} from "../lib/attestation";
 import {arrayBufferToHex, checkAttestationInfoFormat, hasDateChanged} from "../lib/util";
 import {pmark, pmeasure} from "../lib/evaluation";
 
-// Domain to observe
-const ALL_URLS = "https://*/*";
-const ATTESTATION_INFO_PATH = "/remote-attestation.json";
-const NEW_ATTESTATION_PAGE = browser.runtime.getURL("new-remote-attestation.html");
-const BLOCKED_ATTESTATION_PAGE = browser.runtime.getURL("blocked-remote-attestation.html");
-const MISSING_ATTESTATION_PAGE = browser.runtime.getURL("missing-remote-attestation.html");
-const DIFFERS_ATTESTATION_PAGE = browser.runtime.getURL("differs-remote-attestation.html");
-
 // Function requests the SecurityInfo of the established https connection
 // and extracts the public key.
 // return: sha521 of the public key
@@ -81,16 +73,6 @@ ${exportedAsBase64.substring(64 * 6, 64 * 6 + 8)}
     }
 }
 
-// checks if the host behind the url supports remote attestation
-async function getAttestationInfo(url) {
-    try {
-        return await fetchAttestationInfo(new URL(ATTESTATION_INFO_PATH, url.href).href)
-    } catch (e) {
-        // console.log(e)
-        return null
-    }
-}
-
 async function showPageAction(tabId, success) {
     if (success)
         await browser.pageAction.setIcon({
@@ -112,6 +94,12 @@ Thus, in here do:
  */
 async function listenerOnHeadersReceived(details) {
     pmark("onHeadersReceived", details);
+
+    const ATTESTATION_INFO_PATH = "/remote-attestation.json";
+    const NEW_ATTESTATION_PAGE = browser.runtime.getURL("new-remote-attestation.html");
+    const BLOCKED_ATTESTATION_PAGE = browser.runtime.getURL("blocked-remote-attestation.html");
+    const MISSING_ATTESTATION_PAGE = browser.runtime.getURL("missing-remote-attestation.html");
+    const DIFFERS_ATTESTATION_PAGE = browser.runtime.getURL("differs-remote-attestation.html");
 
     // origin contains scheme (protocol), domain and port
     const url = new URL(details.url);
@@ -145,6 +133,16 @@ async function listenerOnHeadersReceived(details) {
     }
 
     const isKnown = await storage.isKnownHost(host.href);
+
+    // checks if the host behind the url supports remote attestation
+    async function getAttestationInfo(url) {
+        try {
+            return await fetchAttestationInfo(new URL(ATTESTATION_INFO_PATH, url.href).href)
+        } catch (e) {
+            // console.log(e)
+            return null
+        }
+    }
     let attestationInfo = await getAttestationInfo(host);
 
     // ? handle the host as if it would not support remote attestation, if the info file has the wrong format
@@ -349,7 +347,7 @@ browser.webRequest.onHeadersReceived.addListener(async details => {
         // TODO: redirect to error page?
         return {cancel: true};
     }
-}, {urls: [ALL_URLS]}, ["blocking"]);
+}, {urls: ['https://*/*']}, ["blocking"]);
 
 async function listenerOnMessageReceived(message, sender) {
     if (sender.id !== browser.runtime.id) {
@@ -379,7 +377,7 @@ browser.runtime.onMessage.addListener(listenerOnMessageReceived);
  */
 browser.webRequest.onBeforeRequest.addListener(details => {
     pmark("onBeforeRequest", details);
-}, {urls: [ALL_URLS]}, ["blocking"]);
+}, {urls: ['https://*/*']}, ["blocking"]);
 
 /**
  * for performance evaluation only
@@ -391,7 +389,7 @@ browser.webRequest.onBeforeRedirect.addListener(details => {
 
     // marks the start of the dialog; measured in onMessageReceived
     pmark("dialog:start", {url: details.url});
-}, {urls: [ALL_URLS]});
+}, {urls: ['https://*/*']});
 
 /**
  * for performance evaluation only
@@ -405,4 +403,4 @@ browser.webRequest.onCompleted.addListener(details => {
         });
     // console.log(performanceTimeStamps);
     // console.log(JSON.stringify(performanceTimeStamps));
-}, {urls: [ALL_URLS]});
+}, {urls: ['https://*/*']});
