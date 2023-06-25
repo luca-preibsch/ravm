@@ -61,6 +61,8 @@ ${exportedAsBase64.substring(64 * 6, 64 * 6 + 8)}
             }
             const cert_simpl = new pkijs.Certificate({schema: asn1.result});
             var pubKey = await cert_simpl.getPublicKey();
+            // TODO: securityInfo already has the "subjectPublicKeyInfoDigest" field, which is
+            // "Base64 encoded SHA-256 hash of the DER-encoded public key info"
 
             const exported = await exportAndFormatCryptoKey(pubKey);
             // console.log(exported);

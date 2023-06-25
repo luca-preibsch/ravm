@@ -76,7 +76,7 @@ window.addEventListener("load", async () => {
             "Do you want to trust the new measurement? This could be a malicious attack.<br>" +
             "<i>You may trust the new measurement.</i>";
         newMeasurementText.innerText = arrayBufferToHex(ar.measurement);
-        oldMeasurementText.innerText = oldMeasurement;
+        oldMeasurementText.innerText = oldMeasurement;//"da6d6b4dba2a053729026159d2f5ad12b85fb045366f200846edac079e74ade6cfc54f77a95a062534402987c2f5b9a522";//oldMeasurement;
         makeVisible.push(noTrustButton, trustMeasurementButton, newMeasurementText.parentNode, oldMeasurementText.parentNode);
 
         // additionally to the changed measurement, the host now may supply a repo / author key or the user
