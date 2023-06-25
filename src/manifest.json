@@ -26,7 +26,7 @@
 
   "browser_specific_settings": {
     "gecko": {
-      "id": "ravm@dfinity.com",
+      "id": "ravm@fau.de",
       "strict_min_version": "57.0a1"
     }
   },
