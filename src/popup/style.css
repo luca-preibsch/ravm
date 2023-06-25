@@ -58,3 +58,22 @@
     justify-self: end;
     font-size: smaller;
 }
+
+/* from https://hg.mozilla.org/mozilla-central/raw-file/a445f1762c895000bcdabd9d95697522359d41ed/browser/components/extensions/extension.css */
+body {
+    background: transparent;
+    box-sizing: border-box;
+    color: #222426;
+    cursor: default;
+    display: flex;
+    flex-direction: column;
+    font: caption;
+    margin: 0;
+    padding: 0;
+    user-select: none;
+}
+
+body * {
+    box-sizing: border-box;
+    text-align: start;
+}

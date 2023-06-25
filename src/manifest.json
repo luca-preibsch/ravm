@@ -34,11 +34,13 @@
   "page_action": {
     "default_icon": "hazard-sign.svg",
     "default_title": "Attestation Popup",
-    "default_popup": "popup.html"
+    "default_popup": "popup.html",
+    "browser_style": false
   },
 
   "options_ui": {
-    "page": "settings.html"
+    "page": "settings.html",
+    "browser_style": false
   },
 
   "web_accessible_resources": [
