@@ -9,52 +9,53 @@ import {AttestationReport} from "../../lib/attestation";
 import {getMeasurementFromRepo} from "../../lib/net";
 import {checkHost} from "../../lib/crypto";
 
-const titleText = document.getElementById("title");
-const domainText = document.getElementById("domain");
-const descriptionText = document.getElementById("description");
-const oldMeasurementText = document.getElementById("old-measurement");
-const newMeasurementText = document.getElementById("new-measurement");
-const measurementRepoText = document.getElementById("measurement-repo");
-const authorKeyText = document.getElementById("author-key");
-
-const noTrustButton = document.getElementById("do-not-trust-button");
-const trustMeasurementButton = document.getElementById("trust-measurement-button");
-const trustRepoButton = document.getElementById("trust-repo-button");
-const trustAuthorKeyButton = document.getElementById("trust-author-key-button");
-
-let hostInfo;
-let ar;
-
-trustMeasurementButton.addEventListener("click", async () => {
-    // remove current form of trust
-    await storage.removeHost(hostInfo.host);
-    await listenerTrustMeasurement(hostInfo, ar);
-});
-
-trustRepoButton.addEventListener("click", async () => {
-    // remove current form of trust
-    await storage.removeHost(hostInfo.host);
-    await listenerTrustRepo(hostInfo, ar);
-});
-
-trustAuthorKeyButton.addEventListener("click", async () => {
-    // remove current form of trust
-    await storage.removeHost(hostInfo.host);
-    await listenerTrustAuthor(hostInfo, ar);
-});
-
-noTrustButton.addEventListener("click", async () => {
-    await storage.setUntrusted(hostInfo.host, true);
-    browser.runtime.sendMessage({
-        type : types.redirect,
-        url : hostInfo.url
-    });
-});
-
 window.addEventListener("load", async () => {
-    hostInfo = await getHostInfo();
-    let measurement;
+    // constants:
+    const titleText = document.getElementById("title");
+    const domainText = document.getElementById("domain");
+    const descriptionText = document.getElementById("description");
+    const oldMeasurementText = document.getElementById("old-measurement");
+    const newMeasurementText = document.getElementById("new-measurement");
+    const measurementRepoText = document.getElementById("measurement-repo");
+    const authorKeyText = document.getElementById("author-key");
 
+    const noTrustButton = document.getElementById("do-not-trust-button");
+    const trustMeasurementButton = document.getElementById("trust-measurement-button");
+    const trustRepoButton = document.getElementById("trust-repo-button");
+    const trustAuthorKeyButton = document.getElementById("trust-author-key-button");
+
+    // global variables
+    let ar, measurement;
+    let hostInfo = await getHostInfo();
+
+    // listeners:
+    trustMeasurementButton.addEventListener("click", async () => {
+        // remove current form of trust
+        await storage.removeHost(hostInfo.host);
+        await listenerTrustMeasurement(hostInfo, ar);
+    });
+
+    trustRepoButton.addEventListener("click", async () => {
+        // remove current form of trust
+        await storage.removeHost(hostInfo.host);
+        await listenerTrustRepo(hostInfo, ar);
+    });
+
+    trustAuthorKeyButton.addEventListener("click", async () => {
+        // remove current form of trust
+        await storage.removeHost(hostInfo.host);
+        await listenerTrustAuthor(hostInfo, ar);
+    });
+
+    noTrustButton.addEventListener("click", async () => {
+        await storage.setUntrusted(hostInfo.host, true);
+        browser.runtime.sendMessage({
+            type : types.redirect,
+            url : hostInfo.url
+        });
+    });
+
+    // remote attestation process:
     // init UI
     domainText.innerText = hostInfo.host;
 

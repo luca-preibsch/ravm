@@ -350,6 +350,7 @@ browser.webRequest.onHeadersReceived.addListener(async details => {
 }, {urls: ['https://*/*']}, ["blocking"]);
 
 async function listenerOnMessageReceived(message, sender) {
+    // TODO remove this? Not needed anymore, because I don't use content scripts anymore
     if (sender.id !== browser.runtime.id) {
         // only accept messages by this extension
         console.log("Message by unknown sender received: " + message);
