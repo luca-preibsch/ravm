@@ -3,22 +3,6 @@ import '../style/button.css';
 
 import * as storage from '../lib/storage';
 
-const icon = document.getElementById("attestation-icon");
-const headerText = document.getElementById("attestation-header");
-const urlText = document.getElementById("attestation-url");
-const infoText = document.getElementById("attestation-info");
-const removeButton = document.getElementById("button-remove-trust");
-const settingsButton = document.getElementById("button-settings");
-
-let tab, host;
-
-removeButton.addEventListener("click", async () => {
-    await storage.removeHost(host.href);
-    browser.tabs.reload(tab.id);
-});
-
-settingsButton.addEventListener("click", () => browser.runtime.openOptionsPage());
-
 async function getTab() {
     try {
         const tabs = await browser.tabs.query({currentWindow: true, active: true});
@@ -30,11 +14,27 @@ async function getTab() {
 }
 
 async function init() {
-    tab = await getTab();
+    // constants:
+    const icon = document.getElementById("attestation-icon");
+    const headerText = document.getElementById("attestation-header");
+    const urlText = document.getElementById("attestation-url");
+    const infoText = document.getElementById("attestation-info");
+    const removeButton = document.getElementById("button-remove-trust");
+    const settingsButton = document.getElementById("button-settings");
+
+    const tab = await getTab();
     const url = new URL(tab.url)
-    host = new URL(url.origin);
+    const host = new URL(url.origin);
     const hostInfo = await storage.getHost(host.href);
 
+    // listeners:
+    removeButton.addEventListener("click", async () => {
+        await storage.removeHost(host.href);
+        browser.tabs.reload(tab.id);
+    });
+    settingsButton.addEventListener("click", () => browser.runtime.openOptionsPage());
+
+    // logic:
     urlText.innerText = host.href;
 
     if (hostInfo.author_key) {
