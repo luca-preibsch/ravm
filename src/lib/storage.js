@@ -254,14 +254,14 @@ export async function removeAuthorKey(authorKey, host) {
     }
 }
 
-export async function setConfigMeasurement(host, configMeasurement) {
-    return setObjectProperties(host, {configMeasurement: configMeasurement});
+export async function setConfigMeasurement(host, config_measurement) {
+    return setObjectProperties(host, {config_measurement: config_measurement});
 }
 
 export async function getConfigMeasurement(host) {
-    return getObjectProperty(host, "configMeasurement");
+    return getObjectProperty(host, "config_measurement");
 }
 
 export async function removeConfigMeasurement(host) {
-    return removeObjectProperty(host, "configMeasurement");
+    return removeObjectProperty(host, "config_measurement");
 }

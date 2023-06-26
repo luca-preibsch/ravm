@@ -14,7 +14,7 @@ import {pmark, pmeasure} from "../lib/evaluation";
 // Function requests the SecurityInfo of the established https connection
 // and extracts the public key.
 // return: sha521 of the public key
-// TODO: refactor / rewrite to return a Promise?
+// TODO: refactor / rewrite?
 async function querySSLFingerprint(requestId) {
     async function exportAndFormatCryptoKey(key) {
         const exported = await window.crypto.subtle.exportKey(
@@ -97,6 +97,7 @@ Thus, in here do:
 async function listenerOnHeadersReceived(details) {
     pmark("onHeadersReceived", details);
 
+    // TODO: can constants be at top level with manifest v3?
     const ATTESTATION_INFO_PATH = "/remote-attestation.json";
     const NEW_ATTESTATION_PAGE = browser.runtime.getURL("new-remote-attestation.html");
     const BLOCKED_ATTESTATION_PAGE = browser.runtime.getURL("blocked-remote-attestation.html");
@@ -136,6 +137,7 @@ async function listenerOnHeadersReceived(details) {
 
     const isKnown = await storage.isKnownHost(host.href);
 
+    // TODO: move to toplevel if constants can be placed at top level with manifest v3
     // checks if the host behind the url supports remote attestation
     async function getAttestationInfo(url) {
         try {
@@ -264,11 +266,11 @@ async function listenerOnHeadersReceived(details) {
     // 2. else test if stored measurement equals the current => store new measurement + TLS key
     // 3. check measurement repo for fitting measurement
     // 4. else inform user via dialog
-    if (storedHostInfo.configMeasurement &&
+    if (storedHostInfo.config_measurement &&
         // host measurement was added through settings -> validate host measurement with config measurement
-        (ar = await validateMeasurement(hostInfo, storedHostInfo.configMeasurement))) {
+        (ar = await validateMeasurement(hostInfo, storedHostInfo.config_measurement))) {
         // the hosts measurement fits the configured one, thus store the actual attestation report,
-        // also remove the configMeasurement
+        // also remove the config_measurement
         console.log("known config measurement " + details.url);
         await storage.setTrusted(host.href, {
             lastTrusted: new Date(),

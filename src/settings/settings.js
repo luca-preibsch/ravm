@@ -50,7 +50,7 @@ addNewHostButton.addEventListener("click", async () => {
     if (!await storage.isKnownHost(host)) {
         await storage.setObjectProperties(host, {
             trustedSince: new Date(),
-            configMeasurement: measurement,
+            config_measurement: measurement,
             trusted: true
         });
     }
