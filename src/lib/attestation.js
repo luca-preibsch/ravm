@@ -129,7 +129,7 @@ export class AttestationReport {
 
     // uint32_t author_key_en : 1;     /* 48h */
     get author_key_en() {
-        // TODO: endian correct?
+        // TODO: endian correct? could not test, because host did not support author key
         const reserved_author_key_en = this.view.getUint32(0x48, true);
         return reserved_author_key_en & 0b1;
     }

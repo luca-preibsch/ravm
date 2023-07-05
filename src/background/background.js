@@ -11,6 +11,12 @@ import {AttestationReport} from "../lib/attestation";
 import {arrayBufferToHex, checkAttestationInfoFormat, hasDateChanged} from "../lib/util";
 import {pmark, pmeasure} from "../lib/evaluation";
 
+const ATTESTATION_INFO_PATH = "/remote-attestation.json";
+const NEW_ATTESTATION_PAGE = browser.runtime.getURL("new-remote-attestation.html");
+const BLOCKED_ATTESTATION_PAGE = browser.runtime.getURL("blocked-remote-attestation.html");
+const MISSING_ATTESTATION_PAGE = browser.runtime.getURL("missing-remote-attestation.html");
+const DIFFERS_ATTESTATION_PAGE = browser.runtime.getURL("differs-remote-attestation.html");
+
 // Function requests the SecurityInfo of the established https connection
 // and extracts the public key.
 // return: sha521 of the public key
@@ -56,13 +62,12 @@ ${exportedAsBase64.substring(64 * 6, 64 * 6 + 8)}
             // We collect the rawDER encoded certificate
             const asn1 = asn1js.fromBER(rawDER);
             if (asn1.offset === -1) {
-                // TODO: variable caught locally
+                // TODO: exception caught locally
                 throw new Error("Incorrect encoded ASN.1 data");
             }
             const cert_simpl = new pkijs.Certificate({schema: asn1.result});
             var pubKey = await cert_simpl.getPublicKey();
-            // TODO: securityInfo already has the "subjectPublicKeyInfoDigest" field, which is
-            // "Base64 encoded SHA-256 hash of the DER-encoded public key info"
+            // TODO: securityInfo already has the "subjectPublicKeyInfoDigest" field, which is "Base64 encoded SHA-256 hash of the DER-encoded public key info"
 
             const exported = await exportAndFormatCryptoKey(pubKey);
             // console.log(exported);
@@ -72,6 +77,16 @@ ${exportedAsBase64.substring(64 * 6, 64 * 6 + 8)}
         }
     } catch (error) {
         console.error("querySSLFingerprint: " + error);
+    }
+}
+
+// checks if the host behind the url supports remote attestation
+async function getAttestationInfo(url) {
+    try {
+        return await fetchAttestationInfo(new URL(ATTESTATION_INFO_PATH, url.href).href)
+    } catch (e) {
+        // console.log(e)
+        return null
     }
 }
 
@@ -96,13 +111,6 @@ Thus, in here do:
  */
 async function listenerOnHeadersReceived(details) {
     pmark("onHeadersReceived", details);
-
-    // TODO: can constants be at top level with manifest v3?
-    const ATTESTATION_INFO_PATH = "/remote-attestation.json";
-    const NEW_ATTESTATION_PAGE = browser.runtime.getURL("new-remote-attestation.html");
-    const BLOCKED_ATTESTATION_PAGE = browser.runtime.getURL("blocked-remote-attestation.html");
-    const MISSING_ATTESTATION_PAGE = browser.runtime.getURL("missing-remote-attestation.html");
-    const DIFFERS_ATTESTATION_PAGE = browser.runtime.getURL("differs-remote-attestation.html");
 
     // origin contains scheme (protocol), domain and port
     const url = new URL(details.url);
@@ -137,16 +145,6 @@ async function listenerOnHeadersReceived(details) {
 
     const isKnown = await storage.isKnownHost(host.href);
 
-    // TODO: move to toplevel if constants can be placed at top level with manifest v3
-    // checks if the host behind the url supports remote attestation
-    async function getAttestationInfo(url) {
-        try {
-            return await fetchAttestationInfo(new URL(ATTESTATION_INFO_PATH, url.href).href)
-        } catch (e) {
-            // console.log(e)
-            return null
-        }
-    }
     let attestationInfo = await getAttestationInfo(host);
 
     // ? handle the host as if it would not support remote attestation, if the info file has the wrong format
@@ -348,8 +346,7 @@ browser.webRequest.onHeadersReceived.addListener(async details => {
         return await listenerOnHeadersReceived(details);
     } catch (e) {
         console.error(e);
-        // TODO: redirect to error page?
-        return {cancel: true};
+        return {cancel: true}; // cancel web request if any error occurs
     }
 }, {urls: ['https://*/*']}, ["blocking"]);
 

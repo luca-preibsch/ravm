@@ -28,7 +28,7 @@ export async function validateWithCertChain(vcek) {
     const ask_cert = decodeCert(await loadData(ask));
     const ark_cert = decodeCert(await loadData(ark));
 
-    // TODO revocation List async
+    // TODO revocation List async, not during every attestation
     const text = await fetchArrayBuffer(AMD_ARK_ASK_REVOCATION);
 
     const crls = [];
@@ -104,7 +104,7 @@ export async function checkHost(hostInfo, ar) {
 
     // 1. verify TLS connection
     // ! TODO trick ssl connection is correct for now
-    if (false && util.arrayBufferToHex(ar.report_data) !== ssl_sha512) {
+    if (/*false && */util.arrayBufferToHex(ar.report_data) !== ssl_sha512) {
         // TLS connection pubkey is not equal to pubkey in attestation report
         console.log("TLS connection invalid");
         return false;
