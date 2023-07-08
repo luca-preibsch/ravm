@@ -17,7 +17,7 @@ from matplotlib.ticker import MultipleLocator
 # filter for a specific host url, such that other urls like the request for the favicon are filtered out
 # filterHost = 'https://134.169.35.116/'
 filterHost = None
-dir = './final-data/fresh/0.json'
+dir = './final-data/known/0'
 removeKnownEvent = False
 exportToLatex = False
 
@@ -54,8 +54,8 @@ start_time = data[0]['startTime']
 for event in data:
     event['startTime'] -= start_time
 
-height = len(data) * 0.5
-fig, ax = plt.subplots(figsize=(height * 2, height)) # * 2 for fresh, * 4 for known
+height = len(data) * 0.5 + .15
+fig, ax = plt.subplots(figsize=(height * 4, height)) # * 2 for fresh, * 4 for known
 
 for i, event in enumerate(data):
     color = url_colors.get(event['detail']['url'], 'grey')
@@ -67,8 +67,9 @@ for i, event in enumerate(data):
 ax.set_xlabel('Time in ms')
 ax.set_ylabel('Event')
 ax.set_yticklabels([])
-ax.xaxis.set_major_locator(MultipleLocator(100)) # 25 for known, 100 for fresh
+ax.xaxis.set_major_locator(MultipleLocator(25)) # 25 for known, 100 for fresh
 ax.grid(True)
+ax.margins(y=.15)
 
 plt.tight_layout()
 if exportToLatex:
