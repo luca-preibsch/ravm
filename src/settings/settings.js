@@ -51,6 +51,7 @@ addButton.addEventListener("click", () => {
 
 addNewHostButton.addEventListener("click", async () => {
     let host = addModal.querySelector("#addHostUrl").value;
+    // TODO: parse with URL class
     if (!host.endsWith("/"))
         host += "/";
     const measurement = addModal.querySelector("#addHostMeasurement").value;
@@ -118,7 +119,7 @@ async function loadAllItems() {
         });
 
         clearTable(unsupportedTable);
-        Object.entries(await storage.getUnsupported()).forEach(([, host]) => {
+        Object.entries(await storage.getUnsupported()).forEach(([host,]) => {
             const row = unsupportedTable.insertRow();
             row.insertCell().appendChild(createTitleCell(host, true));
         });

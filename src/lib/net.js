@@ -86,7 +86,7 @@ export async function fetchVCEK(chipId, committedTCB, reload) {
             throw new Error("Incorrect encoded ASN.1 data");
         return new pkijs.Certificate({schema: asn1.result})
     } else {
-        throw new Error("failed to fetch VCEK")
+        throw new Error("failed to fetch VCEK");
     }
 }
 

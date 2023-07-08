@@ -17,6 +17,10 @@ table {
     width: 100%;
 }
 
+#end-of-page {
+    margin-bottom: 65px;
+}
+
 td, th {
     padding-left: 5px;
     padding-right: 5px;

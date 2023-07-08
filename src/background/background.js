@@ -375,7 +375,6 @@ async function listenerOnMessageReceived(message, sender) {
 browser.runtime.onMessage.addListener(listenerOnMessageReceived);
 
 browser.runtime.onStartup.addListener(async () => {
-    console.log("Startup");
     // clear the list of unsupported hosts on browser startup, so that the extension
     // does not acquire huge amounts of user data and storage.
     await removeUnsupported();

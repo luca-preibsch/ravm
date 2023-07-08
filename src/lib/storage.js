@@ -156,9 +156,7 @@ export async function getUnsupported() {
 
 export async function removeUnsupported() {
     const hosts = await getUnsupported();
-    return await Promise.all(hosts.map(async ([host,]) =>
-        await removeHost(host)
-    ));
+    return await Promise.all(Object.keys(hosts).map(async host => await removeHost(host)));
 }
 
 export async function setSSLKey(host, ssl_sha512) {
