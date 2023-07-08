@@ -10,6 +10,7 @@ import {validateAuthorKey, validateMeasurement} from "../lib/crypto";
 import {AttestationReport} from "../lib/attestation";
 import {arrayBufferToHex, checkAttestationInfoFormat, hasDateChanged} from "../lib/util";
 import {pmark, pmeasure} from "../lib/evaluation";
+import {removeUnsupported} from "../lib/storage";
 
 const ATTESTATION_INFO_PATH = "/remote-attestation.json";
 const NEW_ATTESTATION_PAGE = browser.runtime.getURL("new-remote-attestation.html");
@@ -372,6 +373,13 @@ async function listenerOnMessageReceived(message, sender) {
 }
 
 browser.runtime.onMessage.addListener(listenerOnMessageReceived);
+
+browser.runtime.onStartup.addListener(async () => {
+    console.log("Startup");
+    // clear the list of unsupported hosts on browser startup, so that the extension
+    // does not acquire huge amounts of user data and storage.
+    await removeUnsupported();
+});
 
 /**
  * for performance evaluation only
