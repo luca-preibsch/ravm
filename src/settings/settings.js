@@ -8,6 +8,8 @@ import {AttestationReport} from "../lib/attestation";
 const measurementTable = document.getElementById("measurement-table");
 const repoTable = document.getElementById("repo-table");
 const authorTable = document.getElementById("author-key-table");
+const unsupportedTable = document.getElementById("unsupported-table");
+
 const removeButton = document.getElementById("removeButton");
 const addButton = document.getElementById("addButton");
 const infoModal = document.getElementById("infoModal");
@@ -30,6 +32,11 @@ async function onRemove() {
     promises.push(...[...authorTable.querySelectorAll(".removeCheckbox")]
         .filter(el => el.checked)
         .map(async el => await storage.removeAuthorKey(el.value)));
+
+    promises.push(...[...unsupportedTable.querySelectorAll(".removeCheckbox")]
+        .filter(el => el.checked)
+        .map(async el => await storage.removeHost(el.value)));
+
     await Promise.all(promises);
     await loadAllItems();
 }
@@ -108,6 +115,12 @@ async function loadAllItems() {
         Object.entries(await storage.getAuthorKey()).forEach(([, authorKey]) => {
             const row = authorTable.insertRow();
             row.insertCell().appendChild(createTitleCell(authorKey, false));
+        });
+
+        clearTable(unsupportedTable);
+        Object.entries(await storage.getUnsupported()).forEach(([, host]) => {
+            const row = unsupportedTable.insertRow();
+            row.insertCell().appendChild(createTitleCell(host, true));
         });
     } catch (e) {
         console.error(e);

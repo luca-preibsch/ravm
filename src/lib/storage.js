@@ -149,6 +149,11 @@ export async function isUnsupported(host) {
     return getObjectProperty(host, "unsupported");
 }
 
+export async function getUnsupported() {
+    const hosts = await getHost();
+    return Object.fromEntries(Object.entries(hosts).filter(([, val]) => val.unsupported));
+}
+
 export async function setSSLKey(host, ssl_sha512) {
     return setObjectProperties(host, {ssl_sha512: ssl_sha512});
 }
