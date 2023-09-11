@@ -98,13 +98,13 @@ window.addEventListener("load", async () => {
         }
 
         makeVisible.forEach(el => el.classList.remove("invisible"));
+
+        // for testing purposes only
+        // trustMeasurementButton.click();
     } else {
         titleText.innerText = "Warning: Attestation Failed";
         descriptionText.innerText = "This host offers remote attestation, but the hosts implementation is broken! " +
             "You may ignore this host, but this could very well be a malicious attack.";
         ignoreButton.classList.remove("invisible");
     }
-
-    // for testing purposes only
-    // trustMeasurementButton.click();
 });
