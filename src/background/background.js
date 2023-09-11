@@ -118,6 +118,18 @@ async function listenerOnHeadersReceived(details) {
     const host = new URL(url.origin);
 
     const ssl_sha512 = await querySSLFingerprint(details.requestId);
+    const stored_ssl_sha512 = storage.getSSLKey(host.href);
+
+    // for connections in the same session: test TLS pub key
+    if (await storage.isTrusted(host.href) && ssl_sha512 === await stored_ssl_sha512) {
+        // TLS pub key did not change, thus the host can be trusted
+        // update lastTrusted
+        console.log("known TLS key " + details.url);
+        await storage.setTrusted(host.href, {lastTrusted: new Date()});
+        pmeasure("onHeadersReceived:success:known-ssl", "onHeadersReceived", details);
+        await showPageAction(details.tabId, true);
+        return {};
+    }
 
     // skip URLS that are needed for the extension to work
     // 1. skip if this host did not support attestation before -> performance benefit for non-ra hosts
@@ -278,12 +290,12 @@ async function listenerOnHeadersReceived(details) {
         });
         await storage.removeConfigMeasurement(host.href);
         pmeasure("onHeadersReceived:success:known-config-measurement", "onHeadersReceived", details);
-    } else if (ssl_sha512 === storedHostInfo.ssl_sha512) {
-        // TLS pub key did not change, thus the host can be trusted
-        // update lastTrusted
-        console.log("known TLS key " + details.url);
-        await storage.setTrusted(host.href, { lastTrusted : new Date() });
-        pmeasure("onHeadersReceived:success:known-ssl", "onHeadersReceived", details);
+    // } else if (ssl_sha512 === storedHostInfo.ssl_sha512) {
+    //     // TLS pub key did not change, thus the host can be trusted
+    //     // update lastTrusted
+    //     console.log("known TLS key " + details.url);
+    //     await storage.setTrusted(host.href, { lastTrusted : new Date() });
+    //     pmeasure("onHeadersReceived:success:known-ssl", "onHeadersReceived", details);
     } else if (storedHostInfo.ar_arrayBuffer &&
         (ar = await validateMeasurement(hostInfo,
         arrayBufferToHex(new AttestationReport(storedHostInfo.ar_arrayBuffer).measurement)))) {
