@@ -30,7 +30,7 @@ options.profile = firefox_profile_path
 # options.add_argument("-profile firefox_profile_path")
 
 # Anzahl der Wiederholungen
-anzahl_wiederholungen = 3
+anzahl_wiederholungen = 20
 
 # Liste zur Speicherung der Ladezeiten
 ladezeiten = {}
@@ -45,20 +45,23 @@ for testcase in testcases:
         # Lade die Erweiterung
         if testcase != "raw":
             driver.install_addon(erweiterung_pfad)
+        else:
+            driver.get(url)
 
         # be sure the browser was already open before starting the measurement
-        driver.get("https://example.com")
+        for _ in range(50):
+            driver.get("https://example.com")
 
         # Navigiere zur Webseite
         startzeit = time.time()  # Startzeit messen
-
         driver.get(url)
-
         if testcase != "raw":
             WebDriverWait(driver, timeout=10, poll_frequency=1/1000).until(waiting_condition)
-
         endzeit = time.time()  # Endzeit messen
+
         if testcase == "known":
+            for _ in range(50):
+                driver.get("https://example.com")
             startzeit = time.time()
             driver.get(url)
             endzeit = time.time()
@@ -81,4 +84,5 @@ for testcase in testcases:
     print(f'Testcase: {testcase}')
     print(f'Durchschnittliche Ladezeit nach {anzahl_wiederholungen} Versuchen: {durchschnittliche_ladezeit} ms')
     print(f'Lowest: {min(ladezeiten[testcase])}, highest: {max(ladezeiten[testcase])}')
+    print(str(ladezeiten[testcase]))
     print()
