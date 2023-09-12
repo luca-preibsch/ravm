@@ -10,16 +10,20 @@ erweiterung_pfad = '/Users/luca/Library/CloudStorage/OneDrive-Persönlich/Dokum
 firefox_profile_path = './firefox-profile'
 # URL der zu testenden Webseite
 url = 'https://transparent-vm.net:8080'
+# waiting condition to detect the main site
+waiting_condition = EC.presence_of_element_located((By.ID, 'test123'))
+
+testcases = ["raw", "unknown", "known"]
 
 # options = Options()
 options = webdriver.FirefoxOptions()
 
 # Definiere Optionen, um den Cache zu deaktivieren
 # Nicht mehr nötig, da Browser für jeden Test neu gestartet wird
-# options.set_preference("browser.cache.disk.enable", False)
-# options.set_preference("browser.cache.memory.enable", False)
-# options.set_preference("browser.cache.offline.enable", False)
-# options.set_preference("network.http.use-cache", False)
+options.set_preference("browser.cache.disk.enable", False)
+options.set_preference("browser.cache.memory.enable", False)
+options.set_preference("browser.cache.offline.enable", False)
+options.set_preference("network.http.use-cache", False)
 
 # options.set_preference("profile", firefox_profile_path)
 options.profile = firefox_profile_path
@@ -29,40 +33,52 @@ options.profile = firefox_profile_path
 anzahl_wiederholungen = 3
 
 # Liste zur Speicherung der Ladezeiten
-ladezeiten = []
+ladezeiten = {}
 
 # Starte den Testschleife
-for _ in range(anzahl_wiederholungen):
-    driver = webdriver.Firefox(options=options)
+for testcase in testcases:
+    ladezeiten[testcase] = []
+    print(f'testing: {testcase}')
+    for _ in range(anzahl_wiederholungen):
+        driver = webdriver.Firefox(options=options)
 
-    # Lade die Erweiterung
-    driver.install_addon(erweiterung_pfad)
+        # Lade die Erweiterung
+        if testcase != "raw":
+            driver.install_addon(erweiterung_pfad)
 
-    # be sure the browser was already open before starting the measurement
-    driver.get("https://example.com")
+        # be sure the browser was already open before starting the measurement
+        driver.get("https://example.com")
 
-    # Navigiere zur Webseite
-    startzeit = time.time()  # Startzeit messen
-    driver.get(url)
+        # Navigiere zur Webseite
+        startzeit = time.time()  # Startzeit messen
 
-    WebDriverWait(driver, timeout=10, poll_frequency=1/1000).until(
-        EC.presence_of_element_located((By.ID, 'test123'))
-    )
+        driver.get(url)
 
-    endzeit = time.time()  # Endzeit messen
-    ladezeit = (endzeit - startzeit) * 1000  # Ladezeit berechnen
-    ladezeiten.append(ladezeit)
+        if testcase != "raw":
+            WebDriverWait(driver, timeout=10, poll_frequency=1/1000).until(waiting_condition)
 
-    # Lösche Cookies und Local Storage
-    driver.quit()
+        endzeit = time.time()  # Endzeit messen
+        if testcase == "known":
+            startzeit = time.time()
+            driver.get(url)
+            endzeit = time.time()
 
-    # Nicht mehr nötig, da Browser neu gestartet wird
-    # driver.delete_all_cookies()
-    # driver.execute_script('window.localStorage.clear();')
+        ladezeit = (endzeit - startzeit) * 1000  # Ladezeit berechnen
+        ladezeiten[testcase].append(ladezeit)
 
-# Berechne Durchschnittliche Ladezeit
-durchschnittliche_ladezeit = sum(ladezeiten) / len(ladezeiten)
+        # Lösche Cookies und Local Storage
+        driver.quit()
 
-# Gib die Ergebnisse aus
-print(f'Durchschnittliche Ladezeit nach {anzahl_wiederholungen} Versuchen: {durchschnittliche_ladezeit} ms')
-print(f'Lowest: {min(ladezeiten)}, highest: {max(ladezeiten)}')
+        # Nicht mehr nötig, da Browser neu gestartet wird
+        # driver.delete_all_cookies()
+        # driver.execute_script('window.localStorage.clear();')
+
+for testcase in testcases:
+    # Berechne Durchschnittliche Ladezeit
+    durchschnittliche_ladezeit = sum(ladezeiten[testcase]) / len(ladezeiten[testcase])
+
+    # Gib die Ergebnisse aus
+    print(f'Testcase: {testcase}')
+    print(f'Durchschnittliche Ladezeit nach {anzahl_wiederholungen} Versuchen: {durchschnittliche_ladezeit} ms')
+    print(f'Lowest: {min(ladezeiten[testcase])}, highest: {max(ladezeiten[testcase])}')
+    print()
