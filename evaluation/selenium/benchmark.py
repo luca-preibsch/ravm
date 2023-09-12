@@ -5,7 +5,8 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
 # Pfad zur Firefox-Erweiterung (.xpi-Datei)
-erweiterung_pfad = '/Users/luca/Library/CloudStorage/OneDrive-Persönlich/Dokumente/Uni/BA/Builds/17840039dd4943e1851d-1.1.2.xpi'
+erweiterung_unknown = '/Users/luca/Library/CloudStorage/OneDrive-Persönlich/Dokumente/Uni/BA/Builds/17840039dd4943e1851d-1.1.2.xpi'
+erweiterung_known = '/Users/luca/Library/CloudStorage/OneDrive-Persönlich/Dokumente/Uni/BA/Builds/17840039dd4943e1851d-1.1.3.xpi'
 # firefox_profile_path = '../../firefox-profile'
 firefox_profile_path = './firefox-profile'
 # URL der zu testenden Webseite
@@ -30,7 +31,7 @@ options.profile = firefox_profile_path
 # options.add_argument("-profile firefox_profile_path")
 
 # Anzahl der Wiederholungen
-anzahl_wiederholungen = 20
+anzahl_wiederholungen = 10
 
 # Liste zur Speicherung der Ladezeiten
 ladezeiten = {}
@@ -43,28 +44,20 @@ for testcase in testcases:
         driver = webdriver.Firefox(options=options)
 
         # Lade die Erweiterung
-        if testcase != "raw":
-            driver.install_addon(erweiterung_pfad)
-        else:
-            driver.get(url)
+        if testcase == "unknown":
+            driver.install_addon(erweiterung_unknown)
+        elif testcase == "known":
+            driver.install_addon(erweiterung_known)
 
         # be sure the browser was already open before starting the measurement
-        for _ in range(50):
-            driver.get("https://example.com")
+        driver.get("https://example.com")
 
         # Navigiere zur Webseite
         startzeit = time.time()  # Startzeit messen
         driver.get(url)
-        if testcase != "raw":
+        if testcase == "unknown":
             WebDriverWait(driver, timeout=10, poll_frequency=1/1000).until(waiting_condition)
         endzeit = time.time()  # Endzeit messen
-
-        if testcase == "known":
-            for _ in range(50):
-                driver.get("https://example.com")
-            startzeit = time.time()
-            driver.get(url)
-            endzeit = time.time()
 
         ladezeit = (endzeit - startzeit) * 1000  # Ladezeit berechnen
         ladezeiten[testcase].append(ladezeit)
