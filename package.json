@@ -1,6 +1,6 @@
 {
   "name": "ravm",
-  "version": "1.1.4",
+  "version": "1.4.2",
   "description": "Enables to perform remote attesation on AMD SEV-SNP secured Boundary Node virtual machine of the IC",
   "private": true,
   "scripts": {
@@ -11,8 +11,8 @@
     "lint": "npx eslint src",
     "lint:fix": "npx eslint --fix src",
     "build": "webpack build",
-    "debug": "cd ./build && web-ext run --url https://transparent-vm.net --devtools -p ../firefox-profile/ --profile-create-if-missing",
-    "sign": "cd ./build && web-ext sign --api-key=$AMO_JWT_ISSUER --api-secret=$AMO_JWT_SECRET"
+    "debug": "cd ./build && web-ext run --url https://i4epyc1.cs.fau.de --devtools -p ../firefox-profile/ --profile-create-if-missing",
+    "sign": "cd ./build && web-ext sign --channel=unlisted --api-key=$AMO_JWT_ISSUER --api-secret=$AMO_JWT_SECRET"
   },
   "keywords": [],
   "author": "",
@@ -30,6 +30,7 @@
   },
   "dependencies": {
     "asn1js": "^3.0.5",
+    "http-server": "^14.1.1",
     "install": "^0.13.0",
     "lodash": "^4.17.21",
     "node-forge": "^1.3.1",

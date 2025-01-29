@@ -12,7 +12,7 @@ import * as storage from "./storage";
 // returns boolean
 export async function validateWithCertChain(vcek) {
     // AMD key server
-    const AMD_ARK_ASK_REVOCATION = "https://kdsintf.amd.com/vcek/v1/Milan/crl"
+    const AMD_ARK_ASK_REVOCATION = "https://kdsintf.amd.com/vcek/v1/Genoa/crl"
 
     // Fetch assets of the web extension such as ask and ark
     async function loadData(resourcePath) {
@@ -106,6 +106,8 @@ export async function checkHost(hostInfo, ar) {
     // ! TODO trick ssl connection is correct for now
     if (/*false && */util.arrayBufferToHex(ar.report_data) !== ssl_sha512) {
         // TLS connection pubkey is not equal to pubkey in attestation report
+        console.log(util.arrayBufferToHex(ar.report_data));
+        console.log(ssl_sha512);
         console.log("TLS connection invalid");
         return false;
     }

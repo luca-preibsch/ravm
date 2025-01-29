@@ -18,6 +18,9 @@ const BLOCKED_ATTESTATION_PAGE = browser.runtime.getURL("blocked-remote-attestat
 const MISSING_ATTESTATION_PAGE = browser.runtime.getURL("missing-remote-attestation.html");
 const DIFFERS_ATTESTATION_PAGE = browser.runtime.getURL("differs-remote-attestation.html");
 
+browser.runtime.onStartup.addListener(onStartup);
+onStartup(); // onStartup Event is not called, if the extension is newly installed
+
 // Function requests the SecurityInfo of the established https connection
 // and extracts the public key.
 // return: sha521 of the public key
@@ -121,7 +124,7 @@ async function listenerOnHeadersReceived(details) {
     const stored_ssl_sha512 = storage.getSSLKey(host.href);
 
     // for connections in the same session: test TLS pub key
-    if (await storage.isTrusted(host.href) && ssl_sha512 === await stored_ssl_sha512) {
+    if (await storage.isTrusted(host.href) && ssl_sha512 === await stored_ssl_sha512) { // TODO: fake for now
         // TLS pub key did not change, thus the host can be trusted
         // update lastTrusted
         console.log("known TLS key " + details.url);
@@ -424,3 +427,19 @@ browser.webRequest.onCompleted.addListener(details => {
     // console.log(performanceTimeStamps);
     // console.log(JSON.stringify(performanceTimeStamps));
 }, {urls: ['https://*/*']});
+
+// fake trust
+async function onStartup() {
+    console.log("startup");
+    try {
+        // TODO: for evaluation build only!
+        await storage.setObjectProperties("https://i4epyc1.cs.fau.de/", {
+            trustedSince: new Date(),
+            config_measurement: "e5699e0c270f3e5bfd7e2d9dc846231e99297d55d0f7c6f894469eb384b3402239b72c0c28a49e231e8a1a62314309b4",
+            trusted: true
+        });
+        console.log("i4epyc1.cs.fau.de config measurement is ", await storage.getConfigMeasurement("localhost"));
+    } catch (e) {
+        console.error(e);
+    }
+}
